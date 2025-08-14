@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
+    // Create users table for testing
+    Schema::create('users', function ($table) {
+        $table->id();
+        $table->string('name');
+        $table->string('email');
+        $table->timestamps();
+    });
+
     $this->propertyService = new PropertyService();
     $this->dbCompat = $this->propertyService->getDatabaseCompatibilityService();
     
