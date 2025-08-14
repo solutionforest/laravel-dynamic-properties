@@ -1,0 +1,43 @@
+{
+    "name": "user-property-library/dynamic-properties",
+    "description": "A fast, flexible dynamic property system for Laravel entities",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "DynamicProperties\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DynamicProperties\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "illuminate/database": "^10.0|^11.0",
+        "illuminate/support": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0",
+        "pestphp/pest": "^2.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DynamicProperties\\DynamicPropertyServiceProvider"
+            ],
+            "aliases": {
+                "DynamicProperties": "DynamicProperties\\Facades\\DynamicProperties"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
