@@ -334,7 +334,7 @@ class PropertyValidationService
         return is_bool($value) || 
                $value === 1 || $value === 0 || 
                $value === '1' || $value === '0' ||
-               strtolower($value) === 'true' || strtolower($value) === 'false';
+               (is_string($value) && (strtolower($value) === 'true' || strtolower($value) === 'false'));
     }
 
     /**
