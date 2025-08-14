@@ -26,14 +26,25 @@ class DatabaseCompatibilityService
     {
         $cacheKey = 'dynamic_properties.db_features.' . $this->driver;
         
-        return Cache::remember($cacheKey, 3600, function () {
+        // Try to use cache, but fallback if cache is not available (e.g., in tests)
+        try {
+            return Cache::remember($cacheKey, 3600, function () {
+                return match($this->driver) {
+                    'mysql' => $this->detectMySQLFeatures(),
+                    'sqlite' => $this->detectSQLiteFeatures(),
+                    'pgsql' => $this->detectPostgreSQLFeatures(),
+                    default => $this->getDefaultFeatures()
+                };
+            });
+        } catch (\Exception $e) {
+            // Fallback to direct detection if cache is not available
             return match($this->driver) {
                 'mysql' => $this->detectMySQLFeatures(),
                 'sqlite' => $this->detectSQLiteFeatures(),
                 'pgsql' => $this->detectPostgreSQLFeatures(),
                 default => $this->getDefaultFeatures()
             };
-        });
+        }
     }
 
     /**
@@ -93,12 +104,19 @@ class DatabaseCompatibilityService
 
         try {
             // Check for FTS extension
-            DB::select("CREATE VIRTUAL TABLE IF NOT EXISTS test_fts USING fts5(content)");
-            DB::select("DROP TABLE IF EXISTS test_fts");
+            // Use a safer method to test FTS5 support
+            $testTable = 'test_fts_' . uniqid();
+            DB::statement("CREATE VIRTUAL TABLE IF NOT EXISTS {$testTable} USING fts5(content)");
+            // Test basic FTS functionality
+            DB::statement("INSERT INTO {$testTable}(content) VALUES('test')");
+            DB::select("SELECT * FROM {$testTable} WHERE {$testTable} MATCH 'test'");
+            DB::statement("DROP TABLE IF EXISTS {$testTable}");
             $features['fts_extension'] = true;
             $features['fulltext_search'] = true;
         } catch (\Exception $e) {
             // FTS extension not available
+            $features['fts_extension'] = false;
+            $features['fulltext_search'] = false;
         }
 
         return $features;
@@ -360,7 +378,11 @@ class DatabaseCompatibilityService
     public function clearFeatureCache(): void
     {
         $cacheKey = 'dynamic_properties.db_features.' . $this->driver;
-        Cache::forget($cacheKey);
+        try {
+            Cache::forget($cacheKey);
+        } catch (\Exception $e) {
+            // Cache might not be available in test environments
+        }
         $this->features = $this->detectFeatures();
     }
 }

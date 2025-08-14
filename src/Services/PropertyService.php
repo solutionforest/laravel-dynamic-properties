@@ -534,7 +534,12 @@ class PropertyService
      */
     private function applySimpleFilter($query, Property $property, mixed $value)
     {
-        $this->applyOperatorFilter($query, $property, $value, '=');
+        // Handle NULL values specifically
+        if ($value === null) {
+            $this->applyNullFilter($query, $property, true);
+        } else {
+            $this->applyOperatorFilter($query, $property, $value, '=');
+        }
     }
 
     /**

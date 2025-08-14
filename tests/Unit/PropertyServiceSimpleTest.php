@@ -39,6 +39,9 @@ describe('PropertyService - Comprehensive Tests', function () {
             'required' => false
         ]);
 
+        // Create PropertyService instance
+        $this->service = new PropertyService();
+
         // Create test user
         $this->user = new class extends \Illuminate\Database\Eloquent\Model {
             use \DynamicProperties\Traits\HasProperties;
