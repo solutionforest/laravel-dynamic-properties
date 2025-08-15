@@ -1,9 +1,9 @@
 <?php
 
-use DynamicProperties\Models\Property;
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Services\PropertyService;
 use DynamicProperties\DynamicPropertyServiceProvider;
+use DynamicProperties\Models\EntityProperty;
+use DynamicProperties\Models\Property;
+use DynamicProperties\Services\PropertyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 
@@ -16,13 +16,13 @@ beforeEach(function () {
     // Setup database
     config(['database.default' => 'testbench']);
     config(['database.connections.testbench' => [
-        'driver'   => 'sqlite',
+        'driver' => 'sqlite',
         'database' => ':memory:',
-        'prefix'   => '',
+        'prefix' => '',
     ]]);
 
     // Run the package migrations
-    $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+    $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
     // Create users table for testing
     Schema::create('users', function ($table) {
@@ -37,39 +37,42 @@ beforeEach(function () {
         'name' => 'phone',
         'label' => 'Phone Number',
         'type' => 'text',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'age',
         'label' => 'Age',
         'type' => 'number',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'active',
         'label' => 'Active Status',
         'type' => 'boolean',
-        'required' => false
+        'required' => false,
     ]);
 });
 
 function createTestUser(array $attributes = [])
 {
     // Create a simple test user model
-    return new class($attributes) extends \Illuminate\Database\Eloquent\Model {
+    return new class($attributes) extends \Illuminate\Database\Eloquent\Model
+    {
         use \DynamicProperties\Traits\HasProperties;
 
         protected $table = 'users';
+
         protected $fillable = ['name', 'email', 'dynamic_properties'];
+
         protected $casts = ['dynamic_properties' => 'array'];
 
         public function __construct(array $attributes = [])
         {
             parent::__construct($attributes + [
                 'name' => 'Test User',
-                'email' => 'test@example.com'
+                'email' => 'test@example.com',
             ]);
 
             // Save to database
@@ -123,7 +126,7 @@ it('prefers json column over entity properties table', function () {
     $user->update(['dynamic_properties' => [
         'phone' => '+9876543210',
         'age' => 30,
-        'extra' => 'json_only_value'
+        'extra' => 'json_only_value',
     ]]);
 
     // Refresh the user

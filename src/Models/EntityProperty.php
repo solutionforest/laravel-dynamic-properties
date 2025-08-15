@@ -10,13 +10,13 @@ class EntityProperty extends Model
 {
     protected $fillable = [
         'entity_id',
-        'entity_type', 
+        'entity_type',
         'property_id',
         'property_name',
         'string_value',
         'number_value',
         'date_value',
-        'boolean_value'
+        'boolean_value',
     ];
 
     protected $casts = [
@@ -51,15 +51,15 @@ class EntityProperty extends Model
         if ($this->string_value !== null) {
             return $this->string_value;
         }
-        
+
         if ($this->number_value !== null) {
             return $this->number_value;
         }
-        
+
         if ($this->date_value !== null) {
             return $this->date_value;
         }
-        
+
         if ($this->boolean_value !== null) {
             return $this->boolean_value;
         }
@@ -73,12 +73,12 @@ class EntityProperty extends Model
      */
     public function getTypedValueAttribute(): mixed
     {
-        if (!$this->property) {
+        if (! $this->property) {
             return $this->value;
         }
 
         $rawValue = $this->value;
-        
+
         if ($rawValue === null) {
             return null;
         }
@@ -98,7 +98,7 @@ class EntityProperty extends Model
         $this->boolean_value = null;
 
         // Set the appropriate column based on property type
-        match($propertyType) {
+        match ($propertyType) {
             'text', 'select' => $this->string_value = $value,
             'number' => $this->number_value = $value,
             'date' => $this->date_value = $value,
@@ -111,9 +111,9 @@ class EntityProperty extends Model
      */
     public static function getValueColumnForType(string $type): string
     {
-        return match($type) {
+        return match ($type) {
             'text', 'select' => 'string_value',
-            'number' => 'number_value', 
+            'number' => 'number_value',
             'date' => 'date_value',
             'boolean' => 'boolean_value',
             default => 'string_value'
@@ -125,36 +125,36 @@ class EntityProperty extends Model
      */
     public static function getValueColumnsForType(string $type, mixed $value): array
     {
-        return match($type) {
+        return match ($type) {
             'text', 'select' => [
                 'string_value' => $value,
                 'number_value' => null,
                 'date_value' => null,
-                'boolean_value' => null
+                'boolean_value' => null,
             ],
             'number' => [
                 'string_value' => null,
                 'number_value' => $value,
                 'date_value' => null,
-                'boolean_value' => null
+                'boolean_value' => null,
             ],
             'date' => [
                 'string_value' => null,
                 'number_value' => null,
                 'date_value' => $value,
-                'boolean_value' => null
+                'boolean_value' => null,
             ],
             'boolean' => [
                 'string_value' => null,
                 'number_value' => null,
                 'date_value' => null,
-                'boolean_value' => $value
+                'boolean_value' => $value,
             ],
             default => [
                 'string_value' => $value,
                 'number_value' => null,
                 'date_value' => null,
-                'boolean_value' => null
+                'boolean_value' => null,
             ]
         };
     }
@@ -165,6 +165,6 @@ class EntityProperty extends Model
     public function scopeForEntity($query, Model $entity)
     {
         return $query->where('entity_id', $entity->id)
-                    ->where('entity_type', get_class($entity));
+            ->where('entity_type', get_class($entity));
     }
 }

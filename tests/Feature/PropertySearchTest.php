@@ -1,10 +1,9 @@
 <?php
 
+use DynamicProperties\DynamicPropertyServiceProvider;
 use DynamicProperties\Models\Property;
-
 use DynamicProperties\Services\PropertyService;
 use DynamicProperties\Traits\HasProperties;
-use DynamicProperties\DynamicPropertyServiceProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +13,7 @@ class SearchTestUser extends Model
     use HasProperties;
 
     protected $table = 'users';
+
     protected $fillable = ['name', 'email'];
 }
 
@@ -22,17 +22,17 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     // Setup package providers
     $this->app->register(DynamicPropertyServiceProvider::class);
-    
+
     // Setup database
     config(['database.default' => 'testbench']);
     config(['database.connections.testbench' => [
-        'driver'   => 'sqlite',
+        'driver' => 'sqlite',
         'database' => ':memory:',
-        'prefix'   => '',
+        'prefix' => '',
     ]]);
-    
+
     // Run the package migrations
-    $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+    $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
     // Create users table for testing
     Schema::create('users', function ($table) {
@@ -42,35 +42,35 @@ beforeEach(function () {
         $table->timestamps();
     });
 
-    $this->propertyService = new PropertyService();
+    $this->propertyService = new PropertyService;
 
     // Create test properties
     Property::create([
         'name' => 'age',
         'label' => 'Age',
         'type' => 'number',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'city',
         'label' => 'City',
         'type' => 'text',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'active',
         'label' => 'Active',
         'type' => 'boolean',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'birth_date',
         'label' => 'Birth Date',
         'type' => 'date',
-        'required' => false
+        'required' => false,
     ]);
 });
 
@@ -114,7 +114,7 @@ it('can search by multiple properties', function () {
     // Search for users in New York who are active
     $results = $this->propertyService->search(SearchTestUser::class, [
         'city' => 'New York',
-        'active' => true
+        'active' => true,
     ]);
 
     expect($results)->toContain($user1->id);
@@ -152,19 +152,19 @@ it('can use query scopes for multiple properties', function () {
     $this->propertyService->setProperties($user1, [
         'age' => 25,
         'city' => 'New York',
-        'active' => true
+        'active' => true,
     ]);
 
     $this->propertyService->setProperties($user2, [
         'age' => 30,
         'city' => 'Los Angeles',
-        'active' => true
+        'active' => true,
     ]);
 
     // Test whereProperties scope
     $results = SearchTestUser::whereProperties([
         'city' => 'New York',
-        'active' => true
+        'active' => true,
     ])->get();
 
     expect($results)->toHaveCount(1);
@@ -184,7 +184,7 @@ it('can search with advanced criteria', function () {
 
     // Test advanced search with operator
     $results = $this->propertyService->search(SearchTestUser::class, [
-        'age' => ['value' => 30, 'operator' => '>']
+        'age' => ['value' => 30, 'operator' => '>'],
     ]);
 
     expect($results)->not->toContain($user1->id);
@@ -229,14 +229,14 @@ it('can search text with like', function () {
 
 describe('Advanced Search Features', function () {
     beforeEach(function () {
-        $this->propertyService = new PropertyService();
+        $this->propertyService = new PropertyService;
 
         // Create additional properties for comprehensive testing
         Property::create([
             'name' => 'salary',
             'label' => 'Salary',
             'type' => 'number',
-            'required' => false
+            'required' => false,
         ]);
 
         Property::create([
@@ -244,14 +244,14 @@ describe('Advanced Search Features', function () {
             'label' => 'Department',
             'type' => 'select',
             'required' => false,
-            'options' => ['engineering', 'marketing', 'sales', 'hr']
+            'options' => ['engineering', 'marketing', 'sales', 'hr'],
         ]);
 
         Property::create([
             'name' => 'remote',
             'label' => 'Remote Worker',
             'type' => 'boolean',
-            'required' => false
+            'required' => false,
         ]);
     });
 
@@ -268,8 +268,8 @@ describe('Advanced Search Features', function () {
             'salary' => [
                 'operator' => 'between',
                 'min' => 60000,
-                'max' => 90000
-            ]
+                'max' => 90000,
+            ],
         ]);
 
         expect($results)->not->toContain($user1->id);
@@ -289,8 +289,8 @@ describe('Advanced Search Features', function () {
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'department' => [
                 'operator' => 'in',
-                'value' => ['engineering', 'sales']
-            ]
+                'value' => ['engineering', 'sales'],
+            ],
         ]);
 
         expect($results)->toContain($user1->id);
@@ -311,8 +311,8 @@ describe('Advanced Search Features', function () {
             'city' => [
                 'operator' => 'like',
                 'value' => 'New',
-                'options' => ['case_sensitive' => false]
-            ]
+                'options' => ['case_sensitive' => false],
+            ],
         ]);
 
         expect($results)->toContain($user1->id);
@@ -327,10 +327,11 @@ describe('Advanced Search Features', function () {
 
         $this->propertyService->setProperty($user1, 'remote', true);
         $this->propertyService->setProperty($user2, 'remote', false);
-        // user3 has no remote property set
+        // user3 has no remote property set, but has another property so it exists in the table
+        $this->propertyService->setProperty($user3, 'age', 30);
 
         $resultsWithRemote = $this->propertyService->advancedSearch(SearchTestUser::class, [
-            'remote' => ['operator' => 'not null']
+            'remote' => ['operator' => 'not null'],
         ]);
 
         expect($resultsWithRemote)->toContain($user1->id);
@@ -338,7 +339,7 @@ describe('Advanced Search Features', function () {
         expect($resultsWithRemote)->not->toContain($user3->id);
 
         $resultsWithoutRemote = $this->propertyService->advancedSearch(SearchTestUser::class, [
-            'remote' => ['operator' => 'null']
+            'remote' => ['operator' => 'null'],
         ]);
 
         expect($resultsWithoutRemote)->not->toContain($user1->id);
@@ -357,28 +358,28 @@ describe('Advanced Search Features', function () {
             'department' => 'engineering',
             'salary' => 80000,
             'remote' => true,
-            'city' => 'San Francisco'
+            'city' => 'San Francisco',
         ]);
 
         $this->propertyService->setProperties($user2, [
             'department' => 'engineering',
             'salary' => 70000,
             'remote' => false,
-            'city' => 'New York'
+            'city' => 'New York',
         ]);
 
         $this->propertyService->setProperties($user3, [
             'department' => 'marketing',
             'salary' => 85000,
             'remote' => true,
-            'city' => 'San Francisco'
+            'city' => 'San Francisco',
         ]);
 
         $this->propertyService->setProperties($user4, [
             'department' => 'engineering',
             'salary' => 90000,
             'remote' => true,
-            'city' => 'Austin'
+            'city' => 'Austin',
         ]);
 
         // Search for: Engineering department, salary > 75000, remote workers, in San Francisco or Austin
@@ -386,7 +387,7 @@ describe('Advanced Search Features', function () {
             'department' => 'engineering',
             'salary' => ['value' => 75000, 'operator' => '>'],
             'remote' => true,
-            'city' => ['operator' => 'in', 'value' => ['San Francisco', 'Austin']]
+            'city' => ['operator' => 'in', 'value' => ['San Francisco', 'Austin']],
         ]);
 
         expect($results)->toContain($user1->id); // Engineering, 80k, remote, SF
@@ -398,13 +399,13 @@ describe('Advanced Search Features', function () {
 
 describe('Date Range Search', function () {
     beforeEach(function () {
-        $this->propertyService = new PropertyService();
+        $this->propertyService = new PropertyService;
 
         Property::create([
             'name' => 'hire_date',
             'label' => 'Hire Date',
             'type' => 'date',
-            'required' => false
+            'required' => false,
         ]);
     });
 
@@ -438,11 +439,11 @@ describe('Performance and Edge Cases', function () {
 
     it('handles search for non-existent properties gracefully', function () {
         $user = SearchTestUser::create(['name' => 'John', 'email' => 'john@example.com']);
-        
+
         $results = $this->propertyService->search(SearchTestUser::class, [
-            'non_existent_property' => 'some_value'
+            'non_existent_property' => 'some_value',
         ]);
-        
+
         expect($results)->toBeEmpty();
     });
 
@@ -452,7 +453,7 @@ describe('Performance and Edge Cases', function () {
         for ($i = 1; $i <= 50; $i++) {
             $user = SearchTestUser::create([
                 'name' => "User $i",
-                'email' => "user$i@example.com"
+                'email' => "user$i@example.com",
             ]);
             $this->propertyService->setProperty($user, 'age', 20 + ($i % 30));
             $users[] = $user;
@@ -460,7 +461,7 @@ describe('Performance and Edge Cases', function () {
 
         // Search should handle large datasets
         $results = $this->propertyService->search(SearchTestUser::class, [
-            'age' => ['value' => 25, 'operator' => '>']
+            'age' => ['value' => 25, 'operator' => '>'],
         ]);
 
         expect($results)->not->toBeEmpty();
@@ -476,7 +477,7 @@ describe('Performance and Edge Cases', function () {
         $this->propertyService->setProperty($user2, 'age', 25.7);
 
         $results = $this->propertyService->search(SearchTestUser::class, [
-            'age' => ['value' => 25.6, 'operator' => '>']
+            'age' => ['value' => 25.6, 'operator' => '>'],
         ]);
 
         expect($results)->not->toContain($user1->id);

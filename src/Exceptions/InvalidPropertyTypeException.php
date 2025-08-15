@@ -10,10 +10,10 @@ class InvalidPropertyTypeException extends PropertyException
     public function __construct(string $type, array $validTypes = [], array $context = [])
     {
         $message = "Invalid property type '{$type}'.";
-        if (!empty($validTypes)) {
-            $message .= ' Valid types are: ' . implode(', ', $validTypes);
+        if (! empty($validTypes)) {
+            $message .= ' Valid types are: '.implode(', ', $validTypes);
         }
-        
+
         parent::__construct($message, 400, null, array_merge([
             'invalid_type' => $type,
             'valid_types' => $validTypes,
@@ -24,12 +24,12 @@ class InvalidPropertyTypeException extends PropertyException
     {
         $invalidType = $this->context['invalid_type'] ?? 'unknown';
         $validTypes = $this->context['valid_types'] ?? [];
-        
+
         $message = "The property type '{$invalidType}' is not supported.";
-        if (!empty($validTypes)) {
-            $message .= ' Supported types are: ' . implode(', ', $validTypes) . '.';
+        if (! empty($validTypes)) {
+            $message .= ' Supported types are: '.implode(', ', $validTypes).'.';
         }
-        
+
         return $message;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
-use DynamicProperties\Models\Property;
 use DynamicProperties\Models\EntityProperty;
+use DynamicProperties\Models\Property;
 use DynamicProperties\Traits\HasProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
@@ -12,14 +12,16 @@ class SimpleTestUser extends Model
     use HasProperties;
 
     protected $table = 'users';
+
     protected $fillable = ['name', 'email', 'dynamic_properties'];
+
     protected $casts = ['dynamic_properties' => 'array'];
 }
 
 describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     beforeEach(function () {
         // Create users table for testing
-        if (!Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             Schema::create('users', function ($table) {
                 $table->id();
                 $table->string('name');
@@ -28,86 +30,83 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             });
         }
 
-        // Create test properties
-        Property::create([
-            'name' => 'bio',
+        // Create test properties with unique names for this test suite
+        Property::firstOrCreate(['name' => 'simple_bio'], [
             'label' => 'Biography',
             'type' => 'text',
-            'required' => false
+            'required' => false,
         ]);
 
-        Property::create([
-            'name' => 'age',
+        Property::firstOrCreate(['name' => 'simple_age'], [
             'label' => 'Age',
             'type' => 'number',
-            'required' => false
+            'required' => false,
         ]);
 
-        Property::create([
-            'name' => 'active',
+        Property::firstOrCreate(['name' => 'simple_active'], [
             'label' => 'Active',
             'type' => 'boolean',
-            'required' => false
+            'required' => false,
         ]);
 
         // Create test user
         $this->user = SimpleTestUser::create([
             'name' => 'Test User',
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     });
 
     it('can set and get properties using trait methods', function () {
-        $this->user->setProperty('bio', 'My biography');
-        $this->user->setProperty('age', 25);
-        $this->user->setProperty('active', true);
+        $this->user->setProperty('simple_bio', 'My biography');
+        $this->user->setProperty('simple_age', 25);
+        $this->user->setProperty('simple_active', true);
 
-        expect($this->user->getProperty('bio'))->toBe('My biography');
-        expect($this->user->getProperty('age'))->toBe(25.0);
-        expect($this->user->getProperty('active'))->toBeTrue();
+        expect($this->user->getProperty('simple_bio'))->toBe('My biography');
+        expect($this->user->getProperty('simple_age'))->toBe(25.0);
+        expect($this->user->getProperty('simple_active'))->toBeTrue();
     });
 
     it('can use magic methods with prop_ prefix', function () {
-        $this->user->prop_bio = 'Magic biography';
-        $this->user->prop_age = 30;
-        $this->user->prop_active = true;
+        $this->user->prop_simple_bio = 'Magic biography';
+        $this->user->prop_simple_age = 30;
+        $this->user->prop_simple_active = true;
 
-        expect($this->user->prop_bio)->toBe('Magic biography');
-        expect($this->user->prop_age)->toBe(30.0);
-        expect($this->user->prop_active)->toBeTrue();
+        expect($this->user->prop_simple_bio)->toBe('Magic biography');
+        expect($this->user->prop_simple_age)->toBe(30.0);
+        expect($this->user->prop_simple_active)->toBeTrue();
     });
 
     it('returns all properties as array', function () {
         $this->user->setProperties([
-            'bio' => 'My biography',
-            'age' => 25,
-            'active' => true
+            'simple_bio' => 'My biography',
+            'simple_age' => 25,
+            'simple_active' => true,
         ]);
 
         $properties = $this->user->properties;
 
         expect($properties)->toBeArray();
-        expect($properties)->toHaveKey('bio');
-        expect($properties)->toHaveKey('age');
-        expect($properties)->toHaveKey('active');
-        expect($properties['bio'])->toBe('My biography');
-        expect($properties['age'])->toBe(25.0);
-        expect($properties['active'])->toBeTrue();
+        expect($properties)->toHaveKey('simple_bio');
+        expect($properties)->toHaveKey('simple_age');
+        expect($properties)->toHaveKey('simple_active');
+        expect($properties['simple_bio'])->toBe('My biography');
+        expect($properties['simple_age'])->toBe(25.0);
+        expect($properties['simple_active'])->toBeTrue();
     });
 
     it('can filter using whereProperty scope', function () {
         // Create another user
         $user2 = SimpleTestUser::create([
             'name' => 'User 2',
-            'email' => 'user2@example.com'
+            'email' => 'user2@example.com',
         ]);
 
         // Set properties
-        $this->user->setProperty('active', true);
-        $user2->setProperty('active', false);
+        $this->user->setProperty('simple_active', true);
+        $user2->setProperty('simple_active', false);
 
         // Test scope
-        $activeUsers = SimpleTestUser::whereProperty('active', true)->get();
+        $activeUsers = SimpleTestUser::whereProperty('simple_active', true)->get();
 
         expect($activeUsers)->toHaveCount(1);
         expect($activeUsers->first()->id)->toBe($this->user->id);
@@ -117,24 +116,24 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         // Create another user
         $user2 = SimpleTestUser::create([
             'name' => 'User 2',
-            'email' => 'user2@example.com'
+            'email' => 'user2@example.com',
         ]);
 
         // Set properties
         $this->user->setProperties([
-            'age' => 25,
-            'active' => true
+            'simple_age' => 25,
+            'simple_active' => true,
         ]);
 
         $user2->setProperties([
-            'age' => 30,
-            'active' => true
+            'simple_age' => 30,
+            'simple_active' => true,
         ]);
 
         // Test scope with multiple properties
         $youngActiveUsers = SimpleTestUser::whereProperties([
-            'age' => 25,
-            'active' => true
+            'simple_age' => 25,
+            'simple_active' => true,
         ])->get();
 
         expect($youngActiveUsers)->toHaveCount(1);
@@ -142,16 +141,16 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     });
 
     it('can remove properties', function () {
-        $this->user->setProperty('bio', 'My biography');
-        expect($this->user->getProperty('bio'))->toBe('My biography');
+        $this->user->setProperty('simple_bio', 'My biography');
+        expect($this->user->getProperty('simple_bio'))->toBe('My biography');
 
-        $this->user->removeProperty('bio');
-        expect($this->user->getProperty('bio'))->toBeNull();
+        $this->user->removeProperty('simple_bio');
+        expect($this->user->getProperty('simple_bio'))->toBeNull();
     });
 
     it('works with JSON column when available', function () {
         // Add JSON column
-        if (!Schema::hasColumn('users', 'dynamic_properties')) {
+        if (! Schema::hasColumn('users', 'dynamic_properties')) {
             Schema::table('users', function ($table) {
                 $table->json('dynamic_properties')->nullable();
             });
@@ -159,44 +158,76 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
         expect($this->user->hasJsonPropertiesColumn())->toBeTrue();
 
-        $this->user->setProperty('bio', 'My biography');
-        $this->user->setProperty('age', 25);
+        $this->user->setProperty('simple_bio', 'My biography');
+        $this->user->setProperty('simple_age', 25);
 
         $this->user->refresh();
 
         expect($this->user->dynamic_properties)->not->toBeNull();
-        expect($this->user->dynamic_properties['bio'])->toBe('My biography');
-        expect($this->user->dynamic_properties['age'])->toBe(25); // JSON stores as integer
+        expect($this->user->dynamic_properties['simple_bio'])->toBe('My biography');
+        expect($this->user->dynamic_properties['simple_age'])->toBe(25); // JSON stores as integer
     });
 
     it('has polymorphic relationship to entity properties', function () {
-        $this->user->setProperty('bio', 'Test biography');
+        $this->user->setProperty('simple_bio', 'Test biography');
 
         $entityProperties = $this->user->entityProperties;
-        
+
         expect($entityProperties)->toHaveCount(1);
         expect($entityProperties->first()->string_value)->toBe('Test biography');
     });
 
     describe('Advanced Query Scopes', function () {
         beforeEach(function () {
-            // Create additional test users
+            // Ensure users table exists
+            Schema::dropIfExists('users');
+            Schema::create('users', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email');
+                $table->timestamps();
+            });
+
+            // Create test properties
+            Property::firstOrCreate(['name' => 'bio'], [
+                'label' => 'Biography',
+                'type' => 'text',
+                'required' => false,
+            ]);
+
+            Property::firstOrCreate(['name' => 'age'], [
+                'label' => 'Age',
+                'type' => 'number',
+                'required' => false,
+            ]);
+
+            Property::firstOrCreate(['name' => 'active'], [
+                'label' => 'Active',
+                'type' => 'boolean',
+                'required' => false,
+            ]);
+
+            // Create date property for testing
+            Property::firstOrCreate(['name' => 'birth_date'], [
+                'label' => 'Birth Date',
+                'type' => 'date',
+                'required' => false,
+            ]);
+
+            // Create test users
+            $this->user = SimpleTestUser::create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+
             $this->user2 = SimpleTestUser::create([
                 'name' => 'User 2',
-                'email' => 'user2@example.com'
+                'email' => 'user2@example.com',
             ]);
 
             $this->user3 = SimpleTestUser::create([
                 'name' => 'User 3',
-                'email' => 'user3@example.com'
-            ]);
-
-            // Create date property for testing
-            Property::create([
-                'name' => 'birth_date',
-                'label' => 'Birth Date',
-                'type' => 'date',
-                'required' => false
+                'email' => 'user3@example.com',
             ]);
         });
 
@@ -249,9 +280,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         it('can use hasAnyProperty scope', function () {
             $this->user->setProperty('bio', 'Test bio');
             $this->user->setProperty('age', 25);
-            
+
             $this->user2->setProperty('active', true);
-            
+
             $this->user3->setProperty('bio', 'Another bio');
 
             $results = SimpleTestUser::hasAnyProperty(['bio', 'age'])->get();
@@ -265,11 +296,11 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             $this->user->setProperty('bio', 'Test bio');
             $this->user->setProperty('age', 25);
             $this->user->setProperty('active', true);
-            
+
             $this->user2->setProperty('bio', 'Another bio');
             $this->user2->setProperty('age', 30);
             // Missing 'active' property
-            
+
             $this->user3->setProperty('bio', 'Third bio');
             $this->user3->setProperty('active', false);
             // Missing 'age' property
@@ -294,15 +325,46 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
     describe('Magic Methods Edge Cases', function () {
         beforeEach(function () {
+            // Ensure users table exists
+            Schema::dropIfExists('users');
+            Schema::create('users', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email');
+                $table->timestamps();
+            });
+
+            // Create test properties
+            Property::create([
+                'name' => 'bio',
+                'label' => 'Biography',
+                'type' => 'text',
+                'required' => false,
+            ]);
+
+            Property::create([
+                'name' => 'age',
+                'label' => 'Age',
+                'type' => 'number',
+                'required' => false,
+            ]);
+
+            Property::create([
+                'name' => 'active',
+                'label' => 'Active',
+                'type' => 'boolean',
+                'required' => false,
+            ]);
+
             $this->user = SimpleTestUser::create([
                 'name' => 'Test User',
-                'email' => 'test@example.com'
+                'email' => 'test@example.com',
             ]);
         });
 
         it('handles magic isset correctly', function () {
             $this->user->setProperty('bio', 'Test bio');
-            
+
             expect(isset($this->user->prop_bio))->toBeTrue();
             expect(isset($this->user->prop_non_existent))->toBeFalse();
         });
@@ -310,13 +372,13 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         it('handles magic unset correctly', function () {
             $this->user->setProperty('bio', 'Test bio');
             expect($this->user->getProperty('bio'))->toBe('Test bio');
-            
+
             unset($this->user->prop_bio);
             expect($this->user->getProperty('bio'))->toBeNull();
         });
 
         it('throws appropriate exceptions for magic setter with invalid properties', function () {
-            expect(fn() => $this->user->prop_non_existent = 'value')
+            expect(fn () => $this->user->prop_non_existent = 'value')
                 ->toThrow(\InvalidArgumentException::class);
         });
 
@@ -324,7 +386,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             // Test that normal model attributes still work
             $this->user->name = 'Updated Name';
             expect($this->user->name)->toBe('Updated Name');
-            
+
             expect(isset($this->user->name))->toBeTrue();
             expect(isset($this->user->non_existent_attribute))->toBeFalse();
         });
@@ -332,15 +394,46 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
     describe('Performance and Caching', function () {
         beforeEach(function () {
+            // Ensure users table exists
+            Schema::dropIfExists('users');
+            Schema::create('users', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email');
+                $table->timestamps();
+            });
+
+            // Create test properties
+            Property::create([
+                'name' => 'bio',
+                'label' => 'Biography',
+                'type' => 'text',
+                'required' => false,
+            ]);
+
+            Property::create([
+                'name' => 'age',
+                'label' => 'Age',
+                'type' => 'number',
+                'required' => false,
+            ]);
+
+            Property::create([
+                'name' => 'active',
+                'label' => 'Active',
+                'type' => 'boolean',
+                'required' => false,
+            ]);
+
             $this->user = SimpleTestUser::create([
                 'name' => 'Test User',
-                'email' => 'test@example.com'
+                'email' => 'test@example.com',
             ]);
         });
 
         it('prefers JSON column over entity properties queries', function () {
             // Add JSON column
-            if (!Schema::hasColumn('users', 'dynamic_properties')) {
+            if (! Schema::hasColumn('users', 'dynamic_properties')) {
                 Schema::table('users', function ($table) {
                     $table->json('dynamic_properties')->nullable();
                 });
@@ -350,7 +443,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             $this->user->setProperties([
                 'bio' => 'Original bio',
                 'age' => 25,
-                'active' => true
+                'active' => true,
             ]);
 
             // Manually update JSON column with different values
@@ -358,7 +451,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
                 'bio' => 'JSON bio',
                 'age' => 30,
                 'active' => false,
-                'extra' => 'JSON only'
+                'extra' => 'JSON only',
             ]]);
 
             $this->user->refresh();
@@ -372,7 +465,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
         it('can manually sync properties to JSON', function () {
             // Add JSON column
-            if (!Schema::hasColumn('users', 'dynamic_properties')) {
+            if (! Schema::hasColumn('users', 'dynamic_properties')) {
                 Schema::table('users', function ($table) {
                     $table->json('dynamic_properties')->nullable();
                 });
@@ -399,7 +492,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             expect($this->user->hasJsonPropertiesColumn())->toBeFalse();
 
             // Add JSON column
-            if (!Schema::hasColumn('users', 'dynamic_properties')) {
+            if (! Schema::hasColumn('users', 'dynamic_properties')) {
                 Schema::table('users', function ($table) {
                     $table->json('dynamic_properties')->nullable();
                 });
@@ -413,29 +506,63 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
     describe('Complex Integration Scenarios', function () {
         beforeEach(function () {
+            // Ensure users table exists
+            Schema::dropIfExists('users');
+            Schema::create('users', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email');
+                $table->timestamps();
+            });
+
+            // Create test properties
+            Property::firstOrCreate(['name' => 'bio'], [
+                'label' => 'Biography',
+                'type' => 'text',
+                'required' => false,
+            ]);
+
+            Property::firstOrCreate(['name' => 'age'], [
+                'label' => 'Age',
+                'type' => 'number',
+                'required' => false,
+            ]);
+
+            Property::firstOrCreate(['name' => 'active'], [
+                'label' => 'Active',
+                'type' => 'boolean',
+                'required' => false,
+            ]);
+
+            // Create date property for testing
+            Property::firstOrCreate(['name' => 'join_date'], [
+                'label' => 'Join Date',
+                'type' => 'date',
+                'required' => false,
+            ]);
+
             $this->user = SimpleTestUser::create([
                 'name' => 'Test User',
-                'email' => 'test@example.com'
+                'email' => 'test@example.com',
             ]);
-            
+
             $this->user2 = SimpleTestUser::create([
                 'name' => 'User 2',
-                'email' => 'user2@example.com'
+                'email' => 'user2@example.com',
             ]);
 
             $this->user3 = SimpleTestUser::create([
                 'name' => 'User 3',
-                'email' => 'user3@example.com'
+                'email' => 'user3@example.com',
             ]);
         });
 
         it('handles mixed property types in complex queries', function () {
             // Create date property
-            Property::create([
-                'name' => 'join_date',
+            Property::firstOrCreate(['name' => 'join_date'], [
                 'label' => 'Join Date',
                 'type' => 'date',
-                'required' => false
+                'required' => false,
             ]);
 
             // Set mixed properties
@@ -443,22 +570,41 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
                 'bio' => 'Senior Developer',
                 'age' => 30,
                 'active' => true,
-                'join_date' => '2020-01-15'
+                'join_date' => '2020-01-15',
             ]);
 
             $this->user2->setProperties([
                 'bio' => 'Junior Developer',
                 'age' => 25,
                 'active' => true,
-                'join_date' => '2022-06-01'
+                'join_date' => '2022-06-01',
             ]);
 
             $this->user3->setProperties([
                 'bio' => 'Senior Manager',
                 'age' => 40,
                 'active' => false,
-                'join_date' => '2018-03-10'
+                'join_date' => '2018-03-10',
             ]);
+
+            // Debug: Check if properties were set correctly
+            expect($this->user->getProperty('active'))->toBeTrue();
+            expect($this->user->getProperty('join_date')->format('Y-m-d'))->toBe('2020-01-15');
+            expect($this->user->getProperty('bio'))->toContain('Developer');
+
+            expect($this->user2->getProperty('active'))->toBeTrue();
+            expect($this->user2->getProperty('join_date')->format('Y-m-d'))->toBe('2022-06-01');
+            expect($this->user2->getProperty('bio'))->toContain('Developer');
+
+            // Test individual scopes first
+            $activeUsers = SimpleTestUser::whereProperty('active', true)->get();
+            expect($activeUsers)->toHaveCount(2); // user1 and user2 are active
+
+            $recentUsers = SimpleTestUser::whereProperty('join_date', '2020-01-01', '>')->get();
+            expect($recentUsers)->toHaveCount(2); // user1 and user2 joined after 2020
+
+            $developers = SimpleTestUser::wherePropertyText('bio', 'Developer')->get();
+            expect($developers)->toHaveCount(2); // user1 and user2 are developers
 
             // Complex query: Active users who joined after 2020 and are developers
             $results = SimpleTestUser::whereProperty('active', true)
@@ -476,7 +622,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             $this->user->setProperties([
                 'bio' => 'Initial bio',
                 'age' => 25,
-                'active' => true
+                'active' => true,
             ]);
 
             // Update some properties

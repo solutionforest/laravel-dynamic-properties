@@ -2,9 +2,9 @@
 
 namespace DynamicProperties\Services;
 
-use DynamicProperties\Models\Property;
-use DynamicProperties\Exceptions\PropertyValidationException;
 use DynamicProperties\Exceptions\InvalidPropertyTypeException;
+use DynamicProperties\Exceptions\PropertyValidationException;
+use DynamicProperties\Models\Property;
 
 class PropertyValidationService
 {
@@ -23,7 +23,7 @@ class PropertyValidationService
         // Validate required fields
         if (empty($data['name'])) {
             $errors['name'] = 'Property name is required.';
-        } elseif (!is_string($data['name']) || !preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $data['name'])) {
+        } elseif (! is_string($data['name']) || ! preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $data['name'])) {
             $errors['name'] = 'Property name must start with a letter and contain only letters, numbers, and underscores.';
         }
 
@@ -33,20 +33,20 @@ class PropertyValidationService
 
         if (empty($data['type'])) {
             $errors['type'] = 'Property type is required.';
-        } elseif (!in_array($data['type'], self::VALID_TYPES)) {
-            $errors['type'] = 'Property type must be one of: ' . implode(', ', self::VALID_TYPES);
+        } elseif (! in_array($data['type'], self::VALID_TYPES)) {
+            $errors['type'] = 'Property type must be one of: '.implode(', ', self::VALID_TYPES);
         }
 
         // Validate type-specific requirements
-        if (!empty($data['type'])) {
+        if (! empty($data['type'])) {
             $typeErrors = $this->validateTypeSpecificRequirements($data);
             $errors = array_merge($errors, $typeErrors);
         }
 
         // Validate validation rules
-        if (!empty($data['validation']) && is_array($data['validation'])) {
+        if (! empty($data['validation']) && is_array($data['validation'])) {
             $validationErrors = $this->validateValidationRules($data['validation'], $data['type'] ?? null);
-            if (!empty($validationErrors)) {
+            if (! empty($validationErrors)) {
                 $errors['validation'] = $validationErrors;
             }
         }
@@ -64,14 +64,14 @@ class PropertyValidationService
 
         switch ($type) {
             case 'select':
-                if (empty($data['options']) || !is_array($data['options'])) {
+                if (empty($data['options']) || ! is_array($data['options'])) {
                     $errors['options'] = 'Select properties must have at least one option.';
                 } elseif (count($data['options']) === 0) {
                     $errors['options'] = 'Select properties must have at least one option.';
                 } else {
                     // Validate that all options are strings
                     foreach ($data['options'] as $index => $option) {
-                        if (!is_string($option) || trim($option) === '') {
+                        if (! is_string($option) || trim($option) === '') {
                             $errors['options'] = "Option at index {$index} must be a non-empty string.";
                             break;
                         }
@@ -95,11 +95,11 @@ class PropertyValidationService
                 case 'min':
                 case 'max':
                     if ($type === 'text') {
-                        if (!is_int($value) || $value < 0) {
+                        if (! is_int($value) || $value < 0) {
                             $errors[$rule] = "Text {$rule} length must be a non-negative integer.";
                         }
                     } elseif ($type === 'number') {
-                        if (!is_numeric($value)) {
+                        if (! is_numeric($value)) {
                             $errors[$rule] = "Number {$rule} value must be numeric.";
                         }
                     } else {
@@ -111,7 +111,7 @@ class PropertyValidationService
                 case 'max_length':
                     if ($type !== 'text') {
                         $errors[$rule] = "{$rule} validation is only supported for text properties.";
-                    } elseif (!is_int($value) || $value < 0) {
+                    } elseif (! is_int($value) || $value < 0) {
                         $errors[$rule] = "{$rule} must be a non-negative integer.";
                     }
                     break;
@@ -120,7 +120,7 @@ class PropertyValidationService
                 case 'before':
                     if ($type !== 'date') {
                         $errors[$rule] = "{$rule} validation is only supported for date properties.";
-                    } elseif (!is_string($value) || ($value !== 'today' && strtotime($value) === false)) {
+                    } elseif (! is_string($value) || ($value !== 'today' && strtotime($value) === false)) {
                         $errors[$rule] = "{$rule} must be 'today' or a valid date string.";
                     }
                     break;
@@ -165,7 +165,7 @@ class PropertyValidationService
         }
 
         // Allow null/empty values for non-required properties
-        if (!$property->required && $this->isEmpty($value)) {
+        if (! $property->required && $this->isEmpty($value)) {
             return;
         }
 
@@ -181,7 +181,7 @@ class PropertyValidationService
             $errors = array_merge($errors, $ruleErrors);
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new PropertyValidationException($property->name, $value, $errors, $property);
         }
     }
@@ -203,25 +203,25 @@ class PropertyValidationService
 
         switch ($property->type) {
             case 'text':
-                if (!is_string($value) && !is_numeric($value)) {
+                if (! is_string($value) && ! is_numeric($value)) {
                     return "The {$label} must be text.";
                 }
                 break;
 
             case 'number':
-                if (!is_numeric($value)) {
+                if (! is_numeric($value)) {
                     return "The {$label} must be a number.";
                 }
                 break;
 
             case 'date':
-                if (!$this->isValidDate($value)) {
+                if (! $this->isValidDate($value)) {
                     return "The {$label} must be a valid date.";
                 }
                 break;
 
             case 'boolean':
-                if (!$this->isValidBoolean($value)) {
+                if (! $this->isValidBoolean($value)) {
                     return "The {$label} must be true or false.";
                 }
                 break;
@@ -230,8 +230,9 @@ class PropertyValidationService
                 if ($this->isEmpty($value)) {
                     return "The {$label} must have a value selected.";
                 }
-                if (!in_array($value, $property->options ?? [])) {
+                if (! in_array($value, $property->options ?? [])) {
                     $options = implode(', ', $property->options ?? []);
+
                     return "The {$label} must be one of: {$options}.";
                 }
                 break;
@@ -257,11 +258,11 @@ class PropertyValidationService
             switch ($rule) {
                 case 'min':
                     if ($property->type === 'text') {
-                        if (strlen((string)$value) < $constraint) {
+                        if (strlen((string) $value) < $constraint) {
                             $errors[] = "The {$label} must be at least {$constraint} characters.";
                         }
                     } elseif ($property->type === 'number') {
-                        if ((float)$value < $constraint) {
+                        if ((float) $value < $constraint) {
                             $errors[] = "The {$label} must be at least {$constraint}.";
                         }
                     }
@@ -269,37 +270,37 @@ class PropertyValidationService
 
                 case 'max':
                     if ($property->type === 'text') {
-                        if (strlen((string)$value) > $constraint) {
+                        if (strlen((string) $value) > $constraint) {
                             $errors[] = "The {$label} may not be greater than {$constraint} characters.";
                         }
                     } elseif ($property->type === 'number') {
-                        if ((float)$value > $constraint) {
+                        if ((float) $value > $constraint) {
                             $errors[] = "The {$label} may not be greater than {$constraint}.";
                         }
                     }
                     break;
 
                 case 'min_length':
-                    if (strlen((string)$value) < $constraint) {
+                    if (strlen((string) $value) < $constraint) {
                         $errors[] = "The {$label} must be at least {$constraint} characters.";
                     }
                     break;
 
                 case 'max_length':
-                    if (strlen((string)$value) > $constraint) {
+                    if (strlen((string) $value) > $constraint) {
                         $errors[] = "The {$label} may not be greater than {$constraint} characters.";
                     }
                     break;
 
                 case 'after':
-                    if (!$this->isDateAfter($value, $constraint)) {
+                    if (! $this->isDateAfter($value, $constraint)) {
                         $constraintText = $constraint === 'today' ? 'today' : $constraint;
                         $errors[] = "The {$label} must be after {$constraintText}.";
                     }
                     break;
 
                 case 'before':
-                    if (!$this->isDateBefore($value, $constraint)) {
+                    if (! $this->isDateBefore($value, $constraint)) {
                         $constraintText = $constraint === 'today' ? 'today' : $constraint;
                         $errors[] = "The {$label} must be before {$constraintText}.";
                     }
@@ -331,8 +332,8 @@ class PropertyValidationService
      */
     private function isValidBoolean(mixed $value): bool
     {
-        return is_bool($value) || 
-               $value === 1 || $value === 0 || 
+        return is_bool($value) ||
+               $value === 1 || $value === 0 ||
                $value === '1' || $value === '0' ||
                (is_string($value) && (strtolower($value) === 'true' || strtolower($value) === 'false'));
     }
@@ -345,6 +346,7 @@ class PropertyValidationService
         try {
             $date = \Carbon\Carbon::parse($value);
             $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+
             return $date->isAfter($constraintDate);
         } catch (\Exception $e) {
             return false;
@@ -359,6 +361,7 @@ class PropertyValidationService
         try {
             $date = \Carbon\Carbon::parse($value);
             $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+
             return $date->isBefore($constraintDate);
         } catch (\Exception $e) {
             return false;

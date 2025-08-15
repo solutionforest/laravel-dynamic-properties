@@ -1,10 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use DynamicProperties\Services\DatabaseCompatibilityService;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,15 +10,15 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->dbCompat = new DatabaseCompatibilityService();
+        $this->dbCompat = new DatabaseCompatibilityService;
     }
 
     public function up(): void
     {
         $driver = $this->dbCompat->getDriver();
-        
+
         // Apply database-specific optimizations
-        match($driver) {
+        match ($driver) {
             'mysql' => $this->optimizeMySQL(),
             'sqlite' => $this->optimizeSQLite(),
             'pgsql' => $this->optimizePostgreSQL(),
@@ -31,9 +29,9 @@ return new class extends Migration
     public function down(): void
     {
         $driver = $this->dbCompat->getDriver();
-        
+
         // Remove database-specific optimizations
-        match($driver) {
+        match ($driver) {
             'mysql' => $this->rollbackMySQL(),
             'sqlite' => $this->rollbackSQLite(),
             'pgsql' => $this->rollbackPostgreSQL(),
@@ -44,7 +42,7 @@ return new class extends Migration
     protected function optimizeMySQL(): void
     {
         // Add full-text index if not already exists (handled in original migration conditionally)
-        if (!$this->indexExists('entity_properties', 'ft_string_content')) {
+        if (! $this->indexExists('entity_properties', 'ft_string_content')) {
             DB::statement('ALTER TABLE entity_properties ADD FULLTEXT INDEX ft_string_content (string_value)');
         }
 
@@ -55,7 +53,7 @@ return new class extends Migration
         }
 
         // Add composite indexes for common search patterns
-        if (!$this->indexExists('entity_properties', 'idx_entity_property_value')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_property_value')) {
             DB::statement('ALTER TABLE entity_properties ADD INDEX idx_entity_property_value (entity_type, property_name, string_value(100))');
         }
 
@@ -71,7 +69,7 @@ return new class extends Migration
             try {
                 // Create FTS virtual table for full-text search
                 DB::statement('CREATE VIRTUAL TABLE IF NOT EXISTS entity_properties_fts USING fts5(string_value, content="entity_properties", content_rowid="id")');
-                
+
                 // Create triggers to keep FTS table in sync
                 DB::statement('
                     CREATE TRIGGER IF NOT EXISTS entity_properties_fts_insert 
@@ -82,7 +80,7 @@ return new class extends Migration
                         VALUES (new.id, new.string_value); 
                     END
                 ');
-                
+
                 DB::statement('
                     CREATE TRIGGER IF NOT EXISTS entity_properties_fts_delete 
                     AFTER DELETE ON entity_properties 
@@ -92,7 +90,7 @@ return new class extends Migration
                         VALUES("delete", old.id, old.string_value); 
                     END
                 ');
-                
+
                 DB::statement('
                     CREATE TRIGGER IF NOT EXISTS entity_properties_fts_update 
                     AFTER UPDATE ON entity_properties 
@@ -107,14 +105,14 @@ return new class extends Migration
 
                 // Populate existing data
                 DB::statement('INSERT INTO entity_properties_fts(rowid, string_value) SELECT id, string_value FROM entity_properties WHERE string_value IS NOT NULL');
-                
+
             } catch (\Exception $e) {
                 // FTS setup failed, continue without it
             }
         }
 
         // Add additional indexes for SQLite
-        if (!$this->indexExists('entity_properties', 'idx_sqlite_text_search')) {
+        if (! $this->indexExists('entity_properties', 'idx_sqlite_text_search')) {
             DB::statement('CREATE INDEX IF NOT EXISTS idx_sqlite_text_search ON entity_properties (entity_type, property_name, string_value COLLATE NOCASE)');
         }
 
@@ -131,24 +129,24 @@ return new class extends Migration
     protected function optimizePostgreSQL(): void
     {
         // Add GIN indexes for full-text search
-        if (!$this->indexExists('entity_properties', 'idx_entity_properties_gin_string')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_properties_gin_string')) {
             DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entity_properties_gin_string ON entity_properties USING gin(to_tsvector(\'english\', string_value)) WHERE string_value IS NOT NULL');
         }
 
         // Add partial indexes for better performance
-        if (!$this->indexExists('entity_properties', 'idx_entity_properties_partial_string')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_properties_partial_string')) {
             DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entity_properties_partial_string ON entity_properties (entity_type, property_name, string_value) WHERE string_value IS NOT NULL');
         }
 
-        if (!$this->indexExists('entity_properties', 'idx_entity_properties_partial_number')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_properties_partial_number')) {
             DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entity_properties_partial_number ON entity_properties (entity_type, property_name, number_value) WHERE number_value IS NOT NULL');
         }
 
-        if (!$this->indexExists('entity_properties', 'idx_entity_properties_partial_date')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_properties_partial_date')) {
             DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entity_properties_partial_date ON entity_properties (entity_type, property_name, date_value) WHERE date_value IS NOT NULL');
         }
 
-        if (!$this->indexExists('entity_properties', 'idx_entity_properties_partial_boolean')) {
+        if (! $this->indexExists('entity_properties', 'idx_entity_properties_partial_boolean')) {
             DB::statement('CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entity_properties_partial_boolean ON entity_properties (entity_type, property_name, boolean_value) WHERE boolean_value IS NOT NULL');
         }
     }
@@ -191,12 +189,12 @@ return new class extends Migration
     protected function indexExists(string $table, string $index): bool
     {
         $driver = $this->dbCompat->getDriver();
-        
+
         try {
-            return match($driver) {
-                'mysql' => !empty(DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])),
-                'sqlite' => !empty(DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name=?", [$index])),
-                'pgsql' => !empty(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?", [$table, $index])),
+            return match ($driver) {
+                'mysql' => ! empty(DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])),
+                'sqlite' => ! empty(DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name=?", [$index])),
+                'pgsql' => ! empty(DB::select('SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?', [$table, $index])),
                 default => false
             };
         } catch (\Exception $e) {

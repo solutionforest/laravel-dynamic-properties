@@ -43,12 +43,14 @@ class PropertyCreateCommand extends Command
             foreach ($validator->errors()->all() as $error) {
                 $this->error("  - {$error}");
             }
+
             return 1;
         }
 
         // Validate select type has options
         if ($type === 'select' && empty($options)) {
             $this->error('Select type properties must have at least one option. Use --options=option1 --options=option2');
+
             return 1;
         }
 
@@ -76,6 +78,7 @@ class PropertyCreateCommand extends Command
             return 0;
         } catch (\Exception $e) {
             $this->error("Failed to create property: {$e->getMessage()}");
+
             return 1;
         }
     }
@@ -89,6 +92,7 @@ class PropertyCreateCommand extends Command
                 $parsed[$key] = is_numeric($value) ? (float) $value : $value;
             }
         }
+
         return $parsed;
     }
 }

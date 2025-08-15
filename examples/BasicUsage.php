@@ -2,15 +2,15 @@
 
 /**
  * Basic Usage Examples for Dynamic Properties Package
- * 
+ *
  * This file demonstrates common usage patterns for the Dynamic Properties package.
  * These examples assume you have installed the package and run the migrations.
  */
 
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
+use App\Models\User;
 use DynamicProperties\Facades\DynamicProperties;
-use App\Models\User; // Assuming User model uses HasProperties trait
+use DynamicProperties\Models\Property;
+use DynamicProperties\Services\PropertyService; // Assuming User model uses HasProperties trait
 
 // Example 1: Creating Properties Programmatically
 function createProperties()
@@ -21,7 +21,7 @@ function createProperties()
         'type' => 'text',
         'label' => 'Phone Number',
         'required' => true,
-        'validation' => ['min_length' => 10, 'max_length' => 15]
+        'validation' => ['min_length' => 10, 'max_length' => 15],
     ]);
 
     Property::create([
@@ -29,7 +29,7 @@ function createProperties()
         'type' => 'number',
         'label' => 'Age',
         'required' => false,
-        'validation' => ['min' => 0, 'max' => 120]
+        'validation' => ['min' => 0, 'max' => 120],
     ]);
 
     Property::create([
@@ -37,21 +37,21 @@ function createProperties()
         'type' => 'select',
         'label' => 'User Status',
         'required' => true,
-        'options' => ['active', 'inactive', 'pending', 'suspended']
+        'options' => ['active', 'inactive', 'pending', 'suspended'],
     ]);
 
     Property::create([
         'name' => 'verified',
         'type' => 'boolean',
         'label' => 'Email Verified',
-        'required' => false
+        'required' => false,
     ]);
 
     Property::create([
         'name' => 'birth_date',
         'type' => 'date',
         'label' => 'Birth Date',
-        'required' => false
+        'required' => false,
     ]);
 }
 
@@ -80,7 +80,7 @@ function setUserProperties()
         'age' => 25,
         'status' => 'active',
         'verified' => true,
-        'birth_date' => '1999-01-15'
+        'birth_date' => '1999-01-15',
     ]);
 
     // Method 4: Using the facade
@@ -89,7 +89,7 @@ function setUserProperties()
         'age' => 25,
         'status' => 'active',
         'verified' => true,
-        'birth_date' => '1999-01-15'
+        'birth_date' => '1999-01-15',
     ]);
 }
 
@@ -112,7 +112,7 @@ function getUserProperties()
     return [
         'phone' => $phone,
         'age' => $age,
-        'all' => $allProperties
+        'all' => $allProperties,
     ];
 }
 
@@ -127,7 +127,7 @@ function searchUsersByProperties()
     // Multiple property search (AND logic)
     $activeVerifiedUsers = User::whereProperties([
         'status' => 'active',
-        'verified' => true
+        'verified' => true,
     ])->get();
 
     // Advanced search using PropertyService
@@ -137,7 +137,7 @@ function searchUsersByProperties()
     $results = $propertyService->search('App\\Models\\User', [
         'age' => ['value' => 25, 'operator' => '>='],
         'status' => 'active',
-        'verified' => true
+        'verified' => true,
     ]);
 
     // Get the actual User models
@@ -187,7 +187,7 @@ function advancedSearchExamples()
     // OR logic search - users who are either young OR verified
     $results = $propertyService->advancedSearch('App\\Models\\User', [
         'age' => ['value' => 25, 'operator' => '<'],
-        'verified' => true
+        'verified' => true,
     ], 'OR');
 
     // Complex search with BETWEEN operator
@@ -195,12 +195,12 @@ function advancedSearchExamples()
         'age' => [
             'operator' => 'between',
             'min' => 25,
-            'max' => 35
+            'max' => 35,
         ],
         'status' => [
             'operator' => 'in',
-            'value' => ['active', 'pending']
-        ]
+            'value' => ['active', 'pending'],
+        ],
     ]);
 
     // Text search with LIKE operator
@@ -208,8 +208,8 @@ function advancedSearchExamples()
         'bio' => [
             'operator' => 'like',
             'value' => 'developer',
-            'options' => ['case_sensitive' => false]
-        ]
+            'options' => ['case_sensitive' => false],
+        ],
     ]);
 
     return [
@@ -231,7 +231,7 @@ function jsonCacheExamples()
     $user->setProperties([
         'phone' => '+1234567890',
         'age' => 25,
-        'status' => 'active'
+        'status' => 'active',
     ]);
 
     // Get properties (reads from JSON cache if available, falls back to entity_properties table)
@@ -246,7 +246,7 @@ function jsonCacheExamples()
 
     return [
         'properties' => $properties,
-        'synced_count' => $syncedCount
+        'synced_count' => $syncedCount,
     ];
 }
 
@@ -259,21 +259,21 @@ function propertyValidationExamples()
         // This will validate against property definition
         $user->setProperty('age', 150); // Will fail if max validation is 120
     } catch (InvalidArgumentException $e) {
-        echo "Validation failed: " . $e->getMessage();
+        echo 'Validation failed: '.$e->getMessage();
     }
 
     try {
         // This will fail if property doesn't exist
         $user->setProperty('nonexistent_property', 'value');
     } catch (InvalidArgumentException $e) {
-        echo "Property not found: " . $e->getMessage();
+        echo 'Property not found: '.$e->getMessage();
     }
 
     try {
         // This will fail for select properties with invalid options
         $user->setProperty('status', 'invalid_status');
     } catch (InvalidArgumentException $e) {
-        echo "Invalid option: " . $e->getMessage();
+        echo 'Invalid option: '.$e->getMessage();
     }
 }
 
@@ -298,19 +298,19 @@ function bulkOperationExamples()
 {
     // Set properties for multiple users
     $users = User::limit(100)->get();
-    
+
     foreach ($users as $user) {
         $user->setProperties([
             'status' => 'active',
             'verified' => true,
-            'last_updated' => now()->toDateString()
+            'last_updated' => now()->toDateString(),
         ]);
     }
 
     // Search and update
     $propertyService = app(PropertyService::class);
     $inactiveUserIds = $propertyService->search('App\\Models\\User', [
-        'status' => 'inactive'
+        'status' => 'inactive',
     ]);
 
     $inactiveUsers = User::whereIn('id', $inactiveUserIds)->get();
@@ -328,22 +328,22 @@ function performanceExamples()
     $start = microtime(true);
     $properties = $user->properties; // Should be <1ms with JSON cache, ~20ms without
     $end = microtime(true);
-    
+
     $accessTime = ($end - $start) * 1000; // Convert to milliseconds
-    
+
     echo "Property access took: {$accessTime}ms\n";
 
     // Measure search performance
     $propertyService = app(PropertyService::class);
-    
+
     $start = microtime(true);
     $results = $propertyService->search('App\\Models\\User', [
         'status' => 'active',
-        'verified' => true
+        'verified' => true,
     ]);
     $end = microtime(true);
-    
+
     $searchTime = ($end - $start) * 1000;
-    
-    echo "Search took: {$searchTime}ms for " . $results->count() . " results\n";
+
+    echo "Search took: {$searchTime}ms for ".$results->count()." results\n";
 }

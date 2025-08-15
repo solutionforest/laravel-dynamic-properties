@@ -1,50 +1,44 @@
 <?php
 
-use DynamicProperties\Models\Property;
-use DynamicProperties\Models\EntityProperty;
-use Illuminate\Database\QueryException;
 use Carbon\Carbon;
+use DynamicProperties\Models\Property;
+use Illuminate\Database\QueryException;
 
 describe('Property Model - Comprehensive Tests', function () {
     beforeEach(function () {
-        // Create test properties for each test
-        $this->textProperty = Property::create([
-            'name' => 'description',
+        // Create test properties for each test with unique names
+        $this->textProperty = Property::firstOrCreate(['name' => 'model_description'], [
             'label' => 'Description',
             'type' => 'text',
             'required' => false,
-            'validation' => ['min' => 5, 'max' => 100]
+            'validation' => ['min' => 5, 'max' => 100],
         ]);
 
-        $this->numberProperty = Property::create([
-            'name' => 'age',
+        $this->numberProperty = Property::firstOrCreate(['name' => 'model_age'], [
             'label' => 'Age',
             'type' => 'number',
             'required' => true,
-            'validation' => ['min' => 0, 'max' => 120]
+            'validation' => ['min' => 0, 'max' => 120],
         ]);
 
-        $this->selectProperty = Property::create([
-            'name' => 'status',
+        $this->selectProperty = Property::firstOrCreate(['name' => 'model_status'], [
             'label' => 'Status',
             'type' => 'select',
             'required' => false,
-            'options' => ['active', 'inactive', 'pending']
+            'options' => ['active', 'inactive', 'pending'],
         ]);
 
-        $this->booleanProperty = Property::create([
-            'name' => 'verified',
+        $this->booleanProperty = Property::firstOrCreate(['name' => 'model_verified'], [
             'label' => 'Verified',
             'type' => 'boolean',
-            'required' => false
+            'required' => false,
         ]);
 
-        $this->dateProperty = Property::create([
-            'name' => 'birth_date',
+        $this->dateProperty = Property::firstOrCreate(['name' => 'model_birth_date'], [
             'label' => 'Birth Date',
             'type' => 'date',
             'required' => false,
-            'validation' => ['after' => '1900-01-01', 'before' => 'today']
+            'validation' => ['after' => '1900-01-01', 'before' => 'today'],
         ]);
     });
 
@@ -53,7 +47,7 @@ describe('Property Model - Comprehensive Tests', function () {
             'name' => 'test_property',
             'label' => 'Test Property',
             'type' => 'text',
-            'required' => false
+            'required' => false,
         ]);
 
         expect($property)->toBeInstanceOf(Property::class)
@@ -67,13 +61,13 @@ describe('Property Model - Comprehensive Tests', function () {
         Property::create([
             'name' => 'unique_test',
             'label' => 'First Property',
-            'type' => 'text'
+            'type' => 'text',
         ]);
 
         expect(fn() => Property::create([
             'name' => 'unique_test',
             'label' => 'Second Property',
-            'type' => 'number'
+            'type' => 'number',
         ]))->toThrow(QueryException::class);
     });
 
@@ -91,33 +85,33 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('can validate text property constraints', function () {
         $property = $this->textProperty;
-        
+
         // Valid text
         expect($property->validateValue('Hello World'))->toBeTrue();
-        
+
         // Too short
         expect($property->validateValue('Hi'))->toBeFalse();
-        
+
         // Too long
         expect($property->validateValue(str_repeat('a', 101)))->toBeFalse();
-        
+
         // Non-string
         expect($property->validateValue(123))->toBeFalse();
     });
 
     it('can validate number property constraints', function () {
         $property = $this->numberProperty;
-        
+
         // Valid numbers
         expect($property->validateValue(25))->toBeTrue();
         expect($property->validateValue(0))->toBeTrue();
         expect($property->validateValue(120))->toBeTrue();
         expect($property->validateValue('25'))->toBeTrue(); // String numbers should be valid
-        
+
         // Out of range
         expect($property->validateValue(-1))->toBeFalse();
         expect($property->validateValue(121))->toBeFalse();
-        
+
         // Non-numeric
         expect($property->validateValue('not a number'))->toBeFalse();
         expect($property->validateValue(true))->toBeFalse();
@@ -125,23 +119,23 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('can validate select property options', function () {
         $property = $this->selectProperty;
-        
+
         // Valid options
         expect($property->validateValue('active'))->toBeTrue();
         expect($property->validateValue('inactive'))->toBeTrue();
         expect($property->validateValue('pending'))->toBeTrue();
-        
+
         // Invalid options
         expect($property->validateValue('invalid'))->toBeFalse();
         expect($property->validateValue(''))->toBeFalse();
-        
+
         // Null should be valid for optional select properties
         expect($property->validateValue(null))->toBeTrue();
     });
 
     it('can validate boolean property values', function () {
         $property = $this->booleanProperty;
-        
+
         // Valid booleans
         expect($property->validateValue(true))->toBeTrue();
         expect($property->validateValue(false))->toBeTrue();
@@ -149,7 +143,7 @@ describe('Property Model - Comprehensive Tests', function () {
         expect($property->validateValue(0))->toBeTrue();
         expect($property->validateValue('1'))->toBeTrue();
         expect($property->validateValue('0'))->toBeTrue();
-        
+
         // Invalid values
         expect($property->validateValue('true'))->toBeFalse();
         expect($property->validateValue('false'))->toBeFalse();
@@ -159,11 +153,11 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('can validate date property values', function () {
         $property = $this->dateProperty;
-        
+
         // Valid dates
         expect($property->validateValue('1990-05-15'))->toBeTrue();
         expect($property->validateValue('2000-12-31'))->toBeTrue();
-        
+
         // Invalid dates
         expect($property->validateValue('1899-12-31'))->toBeFalse(); // Before min
         expect($property->validateValue('2050-01-01'))->toBeFalse(); // After max (assuming today is before 2050)
@@ -174,11 +168,11 @@ describe('Property Model - Comprehensive Tests', function () {
     it('handles required validation', function () {
         $requiredProperty = $this->numberProperty; // This one is required
         $optionalProperty = $this->textProperty; // This one is not required
-        
+
         // Required property should fail with null/empty
         expect($requiredProperty->validateValue(null))->toBeFalse();
         expect($requiredProperty->validateValue(''))->toBeFalse();
-        
+
         // Optional property should pass with null/empty
         expect($optionalProperty->validateValue(null))->toBeTrue();
         expect($optionalProperty->validateValue(''))->toBeTrue();
@@ -186,11 +180,11 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('can get validation error messages', function () {
         $property = $this->textProperty;
-        
+
         $message = $property->getValidationError('Hi');
         expect($message)->toContain('minimum')
             ->and($message)->toContain('5');
-        
+
         $message = $property->getValidationError(str_repeat('a', 101));
         expect($message)->toContain('maximum')
             ->and($message)->toContain('100');
@@ -200,17 +194,17 @@ describe('Property Model - Comprehensive Tests', function () {
         // Text property
         expect($this->textProperty->castValue('Hello'))->toBe('Hello');
         expect($this->textProperty->castValue(123))->toBe('123');
-        
+
         // Number property
         expect($this->numberProperty->castValue('25'))->toBe(25.0);
         expect($this->numberProperty->castValue(25))->toBe(25.0);
-        
+
         // Boolean property
         expect($this->booleanProperty->castValue('1'))->toBeTrue();
         expect($this->booleanProperty->castValue('0'))->toBeFalse();
         expect($this->booleanProperty->castValue(1))->toBeTrue();
         expect($this->booleanProperty->castValue(0))->toBeFalse();
-        
+
         // Date property
         $date = $this->dateProperty->castValue('2023-05-15');
         expect($date)->toBeInstanceOf(\Carbon\Carbon::class);
@@ -224,11 +218,11 @@ describe('Property Model - Comprehensive Tests', function () {
             'entity_type' => 'App\\Models\\User',
             'property_id' => $this->textProperty->id,
             'property_name' => $this->textProperty->name,
-            'string_value' => 'Test value'
+            'string_value' => 'Test value',
         ]);
 
         $property = Property::with('entityProperties')->find($this->textProperty->id);
-        
+
         expect($property->entityProperties)->toHaveCount(1);
         expect($property->entityProperties->first()->id)->toBe($entityProperty->id);
     });
@@ -238,7 +232,7 @@ describe('Property Model - Comprehensive Tests', function () {
             $property = Property::create([
                 'name' => 'test_date',
                 'label' => 'Test Date',
-                'type' => 'date'
+                'type' => 'date',
             ]);
 
             $result = $property->castValue('2023-12-25');
@@ -250,7 +244,7 @@ describe('Property Model - Comprehensive Tests', function () {
             $property = Property::create([
                 'name' => 'test_date',
                 'label' => 'Test Date',
-                'type' => 'date'
+                'type' => 'date',
             ]);
 
             $result = $property->castValue('invalid-date');
@@ -261,7 +255,7 @@ describe('Property Model - Comprehensive Tests', function () {
             $property = Property::create([
                 'name' => 'test_number',
                 'label' => 'Test Number',
-                'type' => 'number'
+                'type' => 'number',
             ]);
 
             expect($property->castValue('123.45'))->toBe(123.45);
@@ -273,7 +267,7 @@ describe('Property Model - Comprehensive Tests', function () {
             $property = Property::create([
                 'name' => 'test_bool',
                 'label' => 'Test Boolean',
-                'type' => 'boolean'
+                'type' => 'boolean',
             ]);
 
             expect($property->castValue(true))->toBeTrue();
@@ -291,7 +285,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'name' => 'future_date',
                 'label' => 'Future Date',
                 'type' => 'date',
-                'validation' => ['after' => 'today']
+                'validation' => ['after' => 'today'],
             ]);
 
             $tomorrow = Carbon::tomorrow()->format('Y-m-d');
@@ -306,7 +300,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'name' => 'past_date',
                 'label' => 'Past Date',
                 'type' => 'date',
-                'validation' => ['before' => 'today']
+                'validation' => ['before' => 'today'],
             ]);
 
             $tomorrow = Carbon::tomorrow()->format('Y-m-d');
@@ -321,7 +315,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'name' => 'description',
                 'label' => 'Description',
                 'type' => 'text',
-                'validation' => ['min_length' => 10, 'max_length' => 50]
+                'validation' => ['min_length' => 10, 'max_length' => 50],
             ]);
 
             expect($property->validateValue('This is a valid description'))->toBeTrue();
@@ -335,7 +329,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'label' => 'Score',
                 'type' => 'number',
                 'required' => true,
-                'validation' => ['min' => 0, 'max' => 100]
+                'validation' => ['min' => 0, 'max' => 100],
             ]);
 
             expect($property->validateValue(50))->toBeTrue();
@@ -352,7 +346,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'label' => 'Age',
                 'type' => 'number',
                 'required' => true,
-                'validation' => ['min' => 0, 'max' => 120]
+                'validation' => ['min' => 0, 'max' => 120],
             ]);
 
             $message = $numberProperty->getValidationError(null);
@@ -372,7 +366,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'name' => 'empty_select',
                 'label' => 'Empty Select',
                 'type' => 'select',
-                'options' => []
+                'options' => [],
             ]);
 
             expect($property->validateValue('any_value'))->toBeFalse();
@@ -384,7 +378,7 @@ describe('Property Model - Comprehensive Tests', function () {
                 'name' => 'null_select',
                 'label' => 'Null Select',
                 'type' => 'select',
-                'options' => null
+                'options' => null,
             ]);
 
             expect($property->validateValue('any_value'))->toBeFalse();
@@ -394,7 +388,7 @@ describe('Property Model - Comprehensive Tests', function () {
             $property = Property::create([
                 'name' => 'text_field',
                 'label' => 'Text Field',
-                'type' => 'text'
+                'type' => 'text',
             ]);
 
             expect($property->validateValue(123))->toBeTrue();

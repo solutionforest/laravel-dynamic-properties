@@ -9,11 +9,11 @@ class Property extends Model
 {
     protected $fillable = [
         'name',
-        'label', 
+        'label',
         'type',
         'required',
         'options',
-        'validation'
+        'validation',
     ];
 
     protected $casts = [
@@ -41,22 +41,22 @@ class Property extends Model
         }
 
         // Allow null for optional fields, but not empty string for select types
-        if (!$this->required && $value === null) {
+        if (! $this->required && $value === null) {
             return true;
         }
 
         // For select types, empty string is not valid even if optional
-        if (!$this->required && $value === '' && $this->type === 'select') {
+        if (! $this->required && $value === '' && $this->type === 'select') {
             return false;
         }
 
         // Allow empty string for other optional field types
-        if (!$this->required && $value === '' && $this->type !== 'select') {
+        if (! $this->required && $value === '' && $this->type !== 'select') {
             return true;
         }
 
         // Type validation
-        $typeValid = match($this->type) {
+        $typeValid = match ($this->type) {
             'text' => is_string($value) || is_numeric($value),
             'number' => is_numeric($value),
             'date' => $this->isValidDate($value),
@@ -65,7 +65,7 @@ class Property extends Model
             default => false
         };
 
-        if (!$typeValid) {
+        if (! $typeValid) {
             return false;
         }
 
@@ -82,7 +82,7 @@ class Property extends Model
      */
     public function castValue(mixed $value): mixed
     {
-        return match($this->type) {
+        return match ($this->type) {
             'text', 'select' => (string) $value,
             'number' => is_numeric($value) ? (float) $value : $value,
             'date' => $this->castToDate($value),
@@ -126,8 +126,8 @@ class Property extends Model
      */
     private function isValidBoolean(mixed $value): bool
     {
-        return is_bool($value) || 
-               $value === 1 || $value === 0 || 
+        return is_bool($value) ||
+               $value === 1 || $value === 0 ||
                $value === '1' || $value === '0';
     }
 
@@ -139,7 +139,7 @@ class Property extends Model
         if (is_bool($value)) {
             return $value;
         }
-        
+
         return in_array($value, [1, '1', true], true);
     }
 
@@ -189,7 +189,7 @@ class Property extends Model
     private function validateAgainstRules(mixed $value, array $rules): bool
     {
         foreach ($rules as $rule => $constraint) {
-            $valid = match($rule) {
+            $valid = match ($rule) {
                 'min' => $this->type === 'text' ? strlen($value) >= $constraint : $value >= $constraint,
                 'max' => $this->type === 'text' ? strlen($value) <= $constraint : $value <= $constraint,
                 'min_length' => is_string($value) && strlen($value) >= $constraint,
@@ -199,7 +199,7 @@ class Property extends Model
                 default => true
             };
 
-            if (!$valid) {
+            if (! $valid) {
                 return false;
             }
         }
@@ -215,6 +215,7 @@ class Property extends Model
         try {
             $date = \Carbon\Carbon::parse($value);
             $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+
             return $date->isAfter($constraintDate);
         } catch (\Exception $e) {
             return false;
@@ -229,6 +230,7 @@ class Property extends Model
         try {
             $date = \Carbon\Carbon::parse($value);
             $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+
             return $date->isBefore($constraintDate);
         } catch (\Exception $e) {
             return false;

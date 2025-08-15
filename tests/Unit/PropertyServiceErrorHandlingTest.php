@@ -1,16 +1,18 @@
 <?php
 
-use DynamicProperties\Services\PropertyService;
-use DynamicProperties\Models\Property;
 use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyValidationException;
 use DynamicProperties\Exceptions\PropertyOperationException;
+use DynamicProperties\Exceptions\PropertyValidationException;
+use DynamicProperties\Models\Property;
+use DynamicProperties\Services\PropertyService;
 use Illuminate\Database\Eloquent\Model;
 
 class TestModel extends Model
 {
     use \DynamicProperties\Traits\HasProperties;
+
     protected $table = 'test_models';
+
     protected $fillable = ['name'];
 }
 
@@ -22,37 +24,37 @@ beforeEach(function () {
         $table->timestamps();
     });
 
-    $this->service = new PropertyService();
+    $this->service = new PropertyService;
     $this->model = TestModel::create(['name' => 'Test']);
-    
+
     // Create a test property
     $this->property = Property::create([
         'name' => 'test_prop',
         'label' => 'Test Property',
         'type' => 'text',
         'required' => true,
-        'validation' => ['min' => 3]
+        'validation' => ['min' => 3],
     ]);
 });
 
 describe('PropertyService Error Handling', function () {
     it('throws PropertyNotFoundException for non-existent property', function () {
-        expect(fn() => $this->service->setProperty($this->model, 'non_existent', 'value'))
+        expect(fn () => $this->service->setProperty($this->model, 'non_existent', 'value'))
             ->toThrow(PropertyNotFoundException::class);
     });
 
     it('throws PropertyValidationException for invalid values', function () {
-        expect(fn() => $this->service->setProperty($this->model, 'test_prop', ''))
+        expect(fn () => $this->service->setProperty($this->model, 'test_prop', ''))
             ->toThrow(PropertyValidationException::class);
-            
-        expect(fn() => $this->service->setProperty($this->model, 'test_prop', 'ab'))
+
+        expect(fn () => $this->service->setProperty($this->model, 'test_prop', 'ab'))
             ->toThrow(PropertyValidationException::class);
     });
 
     it('throws PropertyOperationException for unsaved entity', function () {
         $unsavedModel = new TestModel(['name' => 'Unsaved']);
-        
-        expect(fn() => $this->service->setProperty($unsavedModel, 'test_prop', 'value'))
+
+        expect(fn () => $this->service->setProperty($unsavedModel, 'test_prop', 'value'))
             ->toThrow(PropertyOperationException::class);
     });
 
@@ -68,7 +70,7 @@ describe('PropertyService Error Handling', function () {
     });
 
     it('validates property creation', function () {
-        expect(fn() => $this->service->createProperty([]))
+        expect(fn () => $this->service->createProperty([]))
             ->toThrow(PropertyValidationException::class);
     });
 });

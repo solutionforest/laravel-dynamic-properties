@@ -2,9 +2,9 @@
 
 namespace DynamicProperties\Console\Commands;
 
-use Illuminate\Console\Command;
-use DynamicProperties\Services\PropertyService;
 use DynamicProperties\Services\DatabaseCompatibilityService;
+use DynamicProperties\Services\PropertyService;
+use Illuminate\Console\Command;
 
 class DatabaseOptimizeCommand extends Command
 {
@@ -15,6 +15,7 @@ class DatabaseOptimizeCommand extends Command
     protected $description = 'Optimize database for dynamic properties with database-specific enhancements';
 
     protected PropertyService $propertyService;
+
     protected DatabaseCompatibilityService $dbCompat;
 
     public function __construct(PropertyService $propertyService)
@@ -34,6 +35,7 @@ class DatabaseOptimizeCommand extends Command
 
         if ($this->option('check')) {
             $this->info('Database compatibility check completed.');
+
             return 0;
         }
 
@@ -44,7 +46,7 @@ class DatabaseOptimizeCommand extends Command
     protected function showDatabaseInfo(): void
     {
         $info = $this->propertyService->getDatabaseInfo();
-        
+
         $this->info("Database Driver: {$info['driver']}");
         $this->newLine();
 
@@ -70,9 +72,10 @@ class DatabaseOptimizeCommand extends Command
 
         try {
             $optimizations = $this->propertyService->optimizeDatabase();
-            
+
             if (empty($optimizations)) {
                 $this->warn('No optimizations were applied. Database may already be optimized or driver not supported.');
+
                 return 0;
             }
 
@@ -83,21 +86,23 @@ class DatabaseOptimizeCommand extends Command
 
             $this->newLine();
             $this->info('Database optimization completed successfully!');
-            
+
             // Show recommendations
             $this->showRecommendations();
-            
+
             return 0;
 
         } catch (\Exception $e) {
-            $this->error('Database optimization failed: ' . $e->getMessage());
-            
-            if (!$this->option('force')) {
+            $this->error('Database optimization failed: '.$e->getMessage());
+
+            if (! $this->option('force')) {
                 $this->warn('Use --force to continue despite errors.');
+
                 return 1;
             }
 
             $this->warn('Continuing despite errors due to --force flag.');
+
             return 0;
         }
     }
@@ -105,11 +110,11 @@ class DatabaseOptimizeCommand extends Command
     protected function showRecommendations(): void
     {
         $driver = $this->dbCompat->getDriver();
-        
+
         $this->newLine();
         $this->info('Recommendations:');
 
-        match($driver) {
+        match ($driver) {
             'mysql' => $this->showMySQLRecommendations(),
             'sqlite' => $this->showSQLiteRecommendations(),
             'pgsql' => $this->showPostgreSQLRecommendations(),
@@ -122,11 +127,11 @@ class DatabaseOptimizeCommand extends Command
         $this->line('  • Consider using MySQL 8.0+ for better JSON support and performance');
         $this->line('  • Enable query cache if not already enabled');
         $this->line('  • Monitor slow query log for property search queries');
-        
+
         if ($this->dbCompat->supports('generated_columns')) {
             $this->line('  • Generated columns are supported - consider using them for computed properties');
         }
-        
+
         if ($this->dbCompat->supports('fulltext_search')) {
             $this->line('  • Full-text search is enabled - use it for text property searches');
         }
@@ -135,17 +140,17 @@ class DatabaseOptimizeCommand extends Command
     protected function showSQLiteRecommendations(): void
     {
         $this->line('  • SQLite is great for development but consider MySQL/PostgreSQL for production');
-        
-        if (!$this->dbCompat->supports('json1_extension')) {
+
+        if (! $this->dbCompat->supports('json1_extension')) {
             $this->line('  • Enable JSON1 extension for better JSON support');
         }
-        
-        if (!$this->dbCompat->supports('fts_extension')) {
+
+        if (! $this->dbCompat->supports('fts_extension')) {
             $this->line('  • Enable FTS extension for full-text search capabilities');
         } else {
             $this->line('  • FTS extension is available - full-text search is optimized');
         }
-        
+
         $this->line('  • Consider PRAGMA optimizations: journal_mode=WAL, synchronous=NORMAL');
     }
 

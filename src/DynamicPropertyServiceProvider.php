@@ -3,10 +3,10 @@
 namespace DynamicProperties;
 
 use DynamicProperties\Console\Commands\CacheSyncCommand;
-use DynamicProperties\Console\Commands\PropertyCreateCommand;
-use DynamicProperties\Console\Commands\PropertyListCommand;
-use DynamicProperties\Console\Commands\PropertyDeleteCommand;
 use DynamicProperties\Console\Commands\DatabaseOptimizeCommand;
+use DynamicProperties\Console\Commands\PropertyCreateCommand;
+use DynamicProperties\Console\Commands\PropertyDeleteCommand;
+use DynamicProperties\Console\Commands\PropertyListCommand;
 use DynamicProperties\Services\PropertyService;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,7 +23,7 @@ class DynamicPropertyServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'dynamic-properties-migrations');
-        
+
         // Load migrations if running in package context
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
@@ -54,7 +54,7 @@ class DynamicPropertyServiceProvider extends ServiceProvider
 
         // Register aliases
         $this->app->alias(PropertyService::class, 'dynamic-properties');
-        
+
         // Register facade
         $this->app->bind('dynamic-properties.facade', function ($app) {
             return $app[PropertyService::class];

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('options')->nullable(); // For select type: ["option1", "option2"]
             $table->json('validation')->nullable(); // {"min": 0, "max": 100}
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index('type');
             $table->index('name');

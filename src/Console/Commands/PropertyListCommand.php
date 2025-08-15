@@ -31,6 +31,7 @@ class PropertyListCommand extends Command
 
         if ($properties->isEmpty()) {
             $this->info('No properties found.');
+
             return 0;
         }
 
@@ -38,6 +39,7 @@ class PropertyListCommand extends Command
 
         if ($format === 'json') {
             $this->line($properties->toJson(JSON_PRETTY_PRINT));
+
             return 0;
         }
 

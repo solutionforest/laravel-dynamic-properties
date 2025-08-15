@@ -1,16 +1,18 @@
 <?php
 
+use DynamicProperties\Exceptions\PropertyNotFoundException;
+use DynamicProperties\Exceptions\PropertyOperationException;
+use DynamicProperties\Exceptions\PropertyValidationException;
 use DynamicProperties\Models\Property;
 use DynamicProperties\Services\PropertyService;
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Exceptions\PropertyOperationException;
 use Illuminate\Database\Eloquent\Model;
 
 class TestUser extends Model
 {
     use \DynamicProperties\Traits\HasProperties;
+
     protected $table = 'test_users';
+
     protected $fillable = ['name', 'email'];
 }
 
@@ -23,16 +25,16 @@ beforeEach(function () {
         $table->timestamps();
     });
 
-    $this->service = new PropertyService();
+    $this->service = new PropertyService;
     $this->user = TestUser::create(['name' => 'John Doe', 'email' => 'john@example.com']);
-    
+
     // Create comprehensive test properties
     Property::create([
         'name' => 'phone',
         'label' => 'Phone Number',
         'type' => 'text',
         'required' => true,
-        'validation' => ['min' => 10, 'max' => 15]
+        'validation' => ['min' => 10, 'max' => 15],
     ]);
 
     Property::create([
@@ -40,7 +42,7 @@ beforeEach(function () {
         'label' => 'Age',
         'type' => 'number',
         'required' => false,
-        'validation' => ['min' => 0, 'max' => 120]
+        'validation' => ['min' => 0, 'max' => 120],
     ]);
 
     Property::create([
@@ -48,7 +50,7 @@ beforeEach(function () {
         'label' => 'Status',
         'type' => 'select',
         'required' => true,
-        'options' => ['active', 'inactive', 'pending']
+        'options' => ['active', 'inactive', 'pending'],
     ]);
 
     Property::create([
@@ -56,14 +58,14 @@ beforeEach(function () {
         'label' => 'Birth Date',
         'type' => 'date',
         'required' => false,
-        'validation' => ['before' => 'today']
+        'validation' => ['before' => 'today'],
     ]);
 
     Property::create([
         'name' => 'is_verified',
         'label' => 'Is Verified',
         'type' => 'boolean',
-        'required' => false
+        'required' => false,
     ]);
 });
 
@@ -78,7 +80,7 @@ describe('Comprehensive Error Handling', function () {
                 expect($e->getUserMessage())->toContain('does not exist');
                 expect($e->getUserMessage())->toContain('check the property name');
                 expect($e->getCode())->toBe(404);
-                
+
                 $context = $e->getContext();
                 expect($context)->toHaveKey('property_name');
                 expect($context)->toHaveKey('entity_type');
@@ -173,7 +175,7 @@ describe('Comprehensive Error Handling', function () {
                 'phone' => '123', // Too short
                 'age' => -5, // Too low
                 'status' => 'invalid', // Invalid option
-                'non_existent' => 'value' // Doesn't exist
+                'non_existent' => 'value', // Doesn't exist
             ];
 
             try {
@@ -183,7 +185,7 @@ describe('Comprehensive Error Handling', function () {
                 $errors = $e->getValidationErrors();
                 expect($errors)->toBeArray();
                 expect(count($errors))->toBeGreaterThan(1);
-                
+
                 $context = $e->getContext();
                 expect($context)->toHaveKey('failed_properties');
                 expect($context['failed_properties'])->toContain('phone');
@@ -203,14 +205,14 @@ describe('Comprehensive Error Handling', function () {
                 $this->service->setProperties($this->user, [
                     'phone' => '123', // Invalid
                     'age' => 30, // Valid
-                    'status' => 'active' // Valid
+                    'status' => 'active', // Valid
                 ]);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 // Original values should be unchanged
                 expect($this->user->getProperty('phone'))->toBe('1234567890');
                 expect($this->user->getProperty('age'))->toBe(25.0);
-                
+
                 // New property should not be set
                 expect($this->user->getProperty('status'))->toBeNull();
             }
@@ -220,14 +222,14 @@ describe('Comprehensive Error Handling', function () {
     describe('Operation errors', function () {
         it('prevents operations on unsaved entities', function () {
             $unsavedUser = new TestUser(['name' => 'Unsaved', 'email' => 'unsaved@example.com']);
-            
+
             try {
                 $this->service->setProperty($unsavedUser, 'phone', '1234567890');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyOperationException $e) {
                 expect($e->getUserMessage())->toContain('could not be completed');
                 expect($e->getCode())->toBe(500);
-                
+
                 $context = $e->getContext();
                 expect($context)->toHaveKey('operation');
                 expect($context)->toHaveKey('reason');
@@ -245,8 +247,8 @@ describe('Comprehensive Error Handling', function () {
                     'type' => 'invalid_type', // Invalid type
                     'validation' => [
                         'min' => -1, // Invalid validation
-                        'max' => 'invalid' // Invalid validation
-                    ]
+                        'max' => 'invalid', // Invalid validation
+                    ],
                 ]);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
@@ -261,7 +263,7 @@ describe('Comprehensive Error Handling', function () {
                 $this->service->createProperty([
                     'name' => 'phone', // Already exists
                     'label' => 'Duplicate Phone',
-                    'type' => 'text'
+                    'type' => 'text',
                 ]);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
@@ -272,15 +274,15 @@ describe('Comprehensive Error Handling', function () {
 
     describe('HasProperties trait error handling', function () {
         it('propagates exceptions through trait methods', function () {
-            expect(fn() => $this->user->setProperty('non_existent', 'value'))
+            expect(fn () => $this->user->setProperty('non_existent', 'value'))
                 ->toThrow(PropertyNotFoundException::class);
 
-            expect(fn() => $this->user->setProperty('phone', ''))
+            expect(fn () => $this->user->setProperty('phone', ''))
                 ->toThrow(PropertyValidationException::class);
         });
 
         it('converts exceptions in magic methods', function () {
-            expect(fn() => $this->user->prop_non_existent = 'value')
+            expect(fn () => $this->user->prop_non_existent = 'value')
                 ->toThrow(InvalidArgumentException::class);
         });
     });
@@ -301,12 +303,12 @@ describe('Comprehensive Error Handling', function () {
                 $this->service->setProperty($this->user, 'phone', '');
             } catch (PropertyValidationException $e) {
                 $array = $e->toArray();
-                
+
                 expect($array)->toHaveKey('error');
                 expect($array)->toHaveKey('message');
                 expect($array)->toHaveKey('context');
                 expect($array)->toHaveKey('validation_errors');
-                
+
                 expect($array['error'])->toBe('PropertyValidationException');
                 expect($array['context'])->toHaveKey('property_name');
                 expect($array['context'])->toHaveKey('property_label');
@@ -336,7 +338,7 @@ describe('Comprehensive Error Handling', function () {
                 'phone' => '1234567890',
                 'age' => 30,
                 'status' => 'active',
-                'is_verified' => true
+                'is_verified' => true,
             ];
 
             $this->service->setProperties($this->user, $properties);
@@ -344,7 +346,7 @@ describe('Comprehensive Error Handling', function () {
             foreach ($properties as $name => $expectedValue) {
                 $actualValue = $this->user->getProperty($name);
                 if ($name === 'age') {
-                    expect($actualValue)->toBe((float)$expectedValue);
+                    expect($actualValue)->toBe((float) $expectedValue);
                 } else {
                     expect($actualValue)->toBe($expectedValue);
                 }

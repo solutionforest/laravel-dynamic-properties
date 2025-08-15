@@ -2,14 +2,15 @@
 
 namespace DynamicProperties\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseCompatibilityService
 {
     protected string $driver;
+
     protected array $features;
+
     protected array $config;
 
     public function __construct(array $config = [])
@@ -24,12 +25,12 @@ class DatabaseCompatibilityService
      */
     protected function detectFeatures(): array
     {
-        $cacheKey = 'dynamic_properties.db_features.' . $this->driver;
-        
+        $cacheKey = 'dynamic_properties.db_features.'.$this->driver;
+
         // Try to use cache, but fallback if cache is not available (e.g., in tests)
         try {
             return Cache::remember($cacheKey, 3600, function () {
-                return match($this->driver) {
+                return match ($this->driver) {
                     'mysql' => $this->detectMySQLFeatures(),
                     'sqlite' => $this->detectSQLiteFeatures(),
                     'pgsql' => $this->detectPostgreSQLFeatures(),
@@ -38,7 +39,7 @@ class DatabaseCompatibilityService
             });
         } catch (\Exception $e) {
             // Fallback to direct detection if cache is not available
-            return match($this->driver) {
+            return match ($this->driver) {
                 'mysql' => $this->detectMySQLFeatures(),
                 'sqlite' => $this->detectSQLiteFeatures(),
                 'pgsql' => $this->detectPostgreSQLFeatures(),
@@ -63,7 +64,7 @@ class DatabaseCompatibilityService
 
         try {
             // Check MySQL version for generated columns support (5.7+)
-            $version = DB::select("SELECT VERSION() as version")[0]->version;
+            $version = DB::select('SELECT VERSION() as version')[0]->version;
             if (version_compare($version, '5.7.0', '>=')) {
                 $features['generated_columns'] = true;
             }
@@ -105,14 +106,14 @@ class DatabaseCompatibilityService
         try {
             // Check for FTS extension
             // Use a safer method to test FTS5 support
-            $testTable = 'test_fts_' . uniqid();
+            $testTable = 'test_fts_'.uniqid();
             DB::statement("CREATE VIRTUAL TABLE IF NOT EXISTS {$testTable} USING fts5(content)");
             // Test basic FTS functionality
             DB::statement("INSERT INTO {$testTable}(content) VALUES('test')");
             DB::select("SELECT * FROM {$testTable} WHERE {$testTable} MATCH 'test'");
             DB::statement("DROP TABLE IF EXISTS {$testTable}");
             $features['fts_extension'] = true;
-            $features['fulltext_search'] = true;
+            $features['fulltext_search'] = false; // FTS only works on virtual tables, not regular tables
         } catch (\Exception $e) {
             // FTS extension not available
             $features['fts_extension'] = false;
@@ -182,13 +183,13 @@ class DatabaseCompatibilityService
      */
     public function buildJsonExtractQuery(string $column, string $path): string
     {
-        return match($this->driver) {
+        return match ($this->driver) {
             'mysql' => "JSON_EXTRACT({$column}, '$.{$path}')",
-            'sqlite' => $this->supports('json_extract') 
+            'sqlite' => $this->supports('json_extract')
                 ? "json_extract({$column}, '$.{$path}')"
-                : "NULL", // Fallback for SQLite without JSON1
+                : 'NULL', // Fallback for SQLite without JSON1
             'pgsql' => "{$column}->'{$path}'",
-            default => "NULL"
+            default => 'NULL'
         };
     }
 
@@ -197,7 +198,7 @@ class DatabaseCompatibilityService
      */
     public function buildJsonSearchQuery(string $column, string $searchTerm): string
     {
-        return match($this->driver) {
+        return match ($this->driver) {
             'mysql' => "JSON_SEARCH({$column}, 'one', '%{$searchTerm}%') IS NOT NULL",
             'sqlite' => $this->supports('json_extract')
                 ? "{$column} LIKE '%{$searchTerm}%'"
@@ -212,15 +213,13 @@ class DatabaseCompatibilityService
      */
     public function buildFullTextSearchQuery(string $column, string $searchTerm): string
     {
-        if (!$this->supports('fulltext_search')) {
+        if (! $this->supports('fulltext_search')) {
             return $this->buildLikeSearchQuery($column, $searchTerm);
         }
 
-        return match($this->driver) {
+        return match ($this->driver) {
             'mysql' => "MATCH({$column}) AGAINST('{$searchTerm}' IN BOOLEAN MODE)",
-            'sqlite' => $this->supports('fts_extension')
-                ? "{$column} MATCH '{$searchTerm}'"
-                : $this->buildLikeSearchQuery($column, $searchTerm),
+            'sqlite' => $this->buildLikeSearchQuery($column, $searchTerm), // SQLite FTS only works on virtual tables
             'pgsql' => "to_tsvector({$column}) @@ plainto_tsquery('{$searchTerm}')",
             default => $this->buildLikeSearchQuery($column, $searchTerm)
         };
@@ -235,13 +234,13 @@ class DatabaseCompatibilityService
         $searchValue = "'%{$searchTerm}%'";
 
         if ($caseSensitive && $this->supports('case_sensitive_like')) {
-            $operator = match($this->driver) {
+            $operator = match ($this->driver) {
                 'mysql' => 'LIKE BINARY',
                 'pgsql' => 'LIKE',
                 default => 'LIKE'
             };
-        } elseif (!$caseSensitive) {
-            $operator = match($this->driver) {
+        } elseif (! $caseSensitive) {
+            $operator = match ($this->driver) {
                 'pgsql' => 'ILIKE',
                 default => 'LIKE'
             };
@@ -266,6 +265,7 @@ class DatabaseCompatibilityService
 
         // Standard comparison operators
         $escapedValue = $this->escapeValue($value, $propertyType);
+
         return "{$column} {$operator} {$escapedValue}";
     }
 
@@ -274,12 +274,12 @@ class DatabaseCompatibilityService
      */
     protected function escapeValue(mixed $value, string $propertyType): string
     {
-        return match($propertyType) {
-            'text', 'select' => "'" . addslashes($value) . "'",
+        return match ($propertyType) {
+            'text', 'select' => "'".addslashes($value)."'",
             'number' => (string) $value,
-            'date' => "'" . $value . "'",
+            'date' => "'".$value."'",
             'boolean' => $value ? '1' : '0',
-            default => "'" . addslashes($value) . "'",
+            default => "'".addslashes($value)."'",
         };
     }
 
@@ -288,7 +288,7 @@ class DatabaseCompatibilityService
      */
     public function getMigrationConfig(): array
     {
-        return match($this->driver) {
+        return match ($this->driver) {
             'mysql' => [
                 'supports_fulltext' => true,
                 'json_column_type' => 'json',
@@ -328,7 +328,7 @@ class DatabaseCompatibilityService
             if ($this->supports('fulltext_search')) {
                 $indexes[] = "ALTER TABLE {$tableName} ADD FULLTEXT INDEX ft_string_content (string_value)";
             }
-            
+
             // JSON functional indexes (MySQL 8.0+)
             if ($this->supports('generated_columns')) {
                 $indexes[] = "ALTER TABLE {$tableName} ADD INDEX idx_json_search ((CAST(JSON_EXTRACT(string_value, '$') AS CHAR(255))))";
@@ -357,13 +357,13 @@ class DatabaseCompatibilityService
      */
     public function getQueryHints(string $queryType): array
     {
-        return match($this->driver) {
-            'mysql' => match($queryType) {
+        return match ($this->driver) {
+            'mysql' => match ($queryType) {
                 'search' => ['USE INDEX (idx_string_search, idx_number_search, idx_date_search)'],
                 'fulltext' => ['USE INDEX (ft_string_content)'],
                 default => []
             },
-            'pgsql' => match($queryType) {
+            'pgsql' => match ($queryType) {
                 'search' => ['/*+ IndexScan */'],
                 'fulltext' => ['/*+ BitmapScan */'],
                 default => []
@@ -377,7 +377,7 @@ class DatabaseCompatibilityService
      */
     public function clearFeatureCache(): void
     {
-        $cacheKey = 'dynamic_properties.db_features.' . $this->driver;
+        $cacheKey = 'dynamic_properties.db_features.'.$this->driver;
         try {
             Cache::forget($cacheKey);
         } catch (\Exception $e) {

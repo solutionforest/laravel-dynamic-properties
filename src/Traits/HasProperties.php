@@ -46,7 +46,7 @@ trait HasProperties
 
     /**
      * Set a property value using the PropertyService
-     * 
+     *
      * @throws \DynamicProperties\Exceptions\PropertyNotFoundException
      * @throws \DynamicProperties\Exceptions\PropertyValidationException
      * @throws \DynamicProperties\Exceptions\PropertyOperationException
@@ -66,7 +66,7 @@ trait HasProperties
 
     /**
      * Set multiple properties at once using the PropertyService
-     * 
+     *
      * @throws \DynamicProperties\Exceptions\PropertyNotFoundException
      * @throws \DynamicProperties\Exceptions\PropertyValidationException
      * @throws \DynamicProperties\Exceptions\PropertyOperationException
@@ -93,13 +93,14 @@ trait HasProperties
         if (str_starts_with($key, 'prop_')) {
             return $this->getProperty(substr($key, 5));
         }
+
         return parent::__get($key);
     }
 
     /**
      * Magic setter for property access with 'prop_' prefix
      * Example: $user->prop_phone = '123-456-7890' sets the 'phone' property
-     * 
+     *
      * Note: Magic methods cannot throw typed exceptions, so property exceptions
      * will be thrown as generic exceptions. Use setProperty() directly for better error handling.
      */
@@ -112,6 +113,7 @@ trait HasProperties
                 // Convert to generic exception for magic method compatibility
                 throw new \InvalidArgumentException($e->getUserMessage(), $e->getCode(), $e);
             }
+
             return;
         }
         parent::__set($key, $value);
@@ -124,8 +126,10 @@ trait HasProperties
     {
         if (str_starts_with($key, 'prop_')) {
             $propertyValue = $this->getProperty(substr($key, 5));
+
             return $propertyValue !== null;
         }
+
         return parent::__isset($key);
     }
 
@@ -136,6 +140,7 @@ trait HasProperties
     {
         if (str_starts_with($key, 'prop_')) {
             app(PropertyService::class)->removeProperty($this, substr($key, 5));
+
             return;
         }
         parent::__unset($key);
@@ -164,25 +169,25 @@ trait HasProperties
      */
     public function scopeWhereProperty($query, string $name, mixed $value, string $operator = '=')
     {
-        return $query->whereHas('entityProperties', function($q) use ($name, $value, $operator) {
+        return $query->whereHas('entityProperties', function ($q) use ($name, $value, $operator) {
             $q->where('property_name', $name);
-            
+
             // Handle different value types and operators
-            if (is_string($value)) {
+            if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
+                $q->where('date_value', $operator, $value);
+            } elseif (is_string($value) && strtotime($value) !== false) {
+                // Handle date strings - check this before general string handling
+                $q->where('date_value', $operator, $value);
+            } elseif (is_numeric($value)) {
+                $q->where('number_value', $operator, $value);
+            } elseif (is_bool($value)) {
+                $q->where('boolean_value', $operator, $value);
+            } elseif (is_string($value)) {
                 if (strtolower($operator) === 'like' || strtolower($operator) === 'ilike') {
                     $q->where('string_value', 'LIKE', $value);
                 } else {
                     $q->where('string_value', $operator, $value);
                 }
-            } elseif (is_numeric($value)) {
-                $q->where('number_value', $operator, $value);
-            } elseif (is_bool($value)) {
-                $q->where('boolean_value', $operator, $value);
-            } elseif ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
-                $q->where('date_value', $operator, $value);
-            } elseif (is_string($value) && strtotime($value) !== false) {
-                // Handle date strings
-                $q->where('date_value', $operator, $value);
             } else {
                 // Fallback to string comparison
                 $q->where('string_value', $operator, $value);
@@ -207,6 +212,7 @@ trait HasProperties
                 $query = $this->scopeWhereProperty($query, $name, $criteria);
             }
         }
+
         return $query;
     }
 
@@ -215,15 +221,15 @@ trait HasProperties
      */
     public function scopeWherePropertyText($query, string $name, string $searchTerm, bool $fullText = false)
     {
-        return $query->whereHas('entityProperties', function($q) use ($name, $searchTerm, $fullText) {
+        return $query->whereHas('entityProperties', function ($q) use ($name, $searchTerm, $fullText) {
             $q->where('property_name', $name);
-            
+
             if ($fullText) {
                 // Use full-text search if available (MySQL)
                 $q->whereRaw('MATCH(string_value) AGAINST(? IN BOOLEAN MODE)', [$searchTerm]);
             } else {
                 // Use LIKE search for partial matching
-                $q->where('string_value', 'LIKE', '%' . $searchTerm . '%');
+                $q->where('string_value', 'LIKE', '%'.$searchTerm.'%');
             }
         });
     }
@@ -233,9 +239,9 @@ trait HasProperties
      */
     public function scopeWherePropertyBetween($query, string $name, mixed $min, mixed $max)
     {
-        return $query->whereHas('entityProperties', function($q) use ($name, $min, $max) {
+        return $query->whereHas('entityProperties', function ($q) use ($name, $min, $max) {
             $q->where('property_name', $name);
-            
+
             if (is_numeric($min) && is_numeric($max)) {
                 $q->whereBetween('number_value', [$min, $max]);
             } elseif (($min instanceof \DateTime || is_string($min)) && ($max instanceof \DateTime || is_string($max))) {
@@ -249,9 +255,9 @@ trait HasProperties
      */
     public function scopeWherePropertyIn($query, string $name, array $values)
     {
-        return $query->whereHas('entityProperties', function($q) use ($name, $values) {
+        return $query->whereHas('entityProperties', function ($q) use ($name, $values) {
             $q->where('property_name', $name)
-              ->whereIn('string_value', $values);
+                ->whereIn('string_value', $values);
         });
     }
 
@@ -260,7 +266,7 @@ trait HasProperties
      */
     public function scopeHasAnyProperty($query, array $propertyNames)
     {
-        return $query->whereHas('entityProperties', function($q) use ($propertyNames) {
+        return $query->whereHas('entityProperties', function ($q) use ($propertyNames) {
             $q->whereIn('property_name', $propertyNames);
         });
     }
@@ -271,10 +277,11 @@ trait HasProperties
     public function scopeHasAllProperties($query, array $propertyNames)
     {
         foreach ($propertyNames as $propertyName) {
-            $query->whereHas('entityProperties', function($q) use ($propertyName) {
+            $query->whereHas('entityProperties', function ($q) use ($propertyName) {
                 $q->where('property_name', $propertyName);
             });
         }
+
         return $query;
     }
 
@@ -283,13 +290,13 @@ trait HasProperties
      */
     public function scopeOrderByProperty($query, string $name, string $direction = 'asc')
     {
-        return $query->leftJoin('entity_properties as ep_order', function($join) use ($name) {
-            $join->on($this->getTable() . '.id', '=', 'ep_order.entity_id')
-                 ->where('ep_order.entity_type', '=', $this->getMorphClass())
-                 ->where('ep_order.property_name', '=', $name);
+        return $query->leftJoin('entity_properties as ep_order', function ($join) use ($name) {
+            $join->on($this->getTable().'.id', '=', 'ep_order.entity_id')
+                ->where('ep_order.entity_type', '=', $this->getMorphClass())
+                ->where('ep_order.property_name', '=', $name);
         })->orderBy('ep_order.string_value', $direction)
-          ->orderBy('ep_order.number_value', $direction)
-          ->orderBy('ep_order.date_value', $direction)
-          ->orderBy('ep_order.boolean_value', $direction);
+            ->orderBy('ep_order.number_value', $direction)
+            ->orderBy('ep_order.date_value', $direction)
+            ->orderBy('ep_order.boolean_value', $direction);
     }
 }

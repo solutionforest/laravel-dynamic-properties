@@ -26,8 +26,9 @@ class CacheSyncCommand extends Command
         $batchSize = (int) $this->option('batch-size');
         $dryRun = $this->option('dry-run');
 
-        if (!$modelClass && !$syncAll) {
+        if (! $modelClass && ! $syncAll) {
             $this->error('Please specify a model class or use --all to sync all models.');
+
             return 1;
         }
 
@@ -50,10 +51,11 @@ class CacheSyncCommand extends Command
 
         if (empty($entityTypes)) {
             $this->info('No entity types found with dynamic properties.');
+
             return 0;
         }
 
-        $this->info("Found " . count($entityTypes) . " entity types with dynamic properties:");
+        $this->info('Found '.count($entityTypes).' entity types with dynamic properties:');
         foreach ($entityTypes as $entityType) {
             $this->line("  - {$entityType}");
         }
@@ -67,27 +69,31 @@ class CacheSyncCommand extends Command
         }
 
         $this->info("Total records synced: {$totalSynced}");
+
         return 0;
     }
 
     private function syncModel(string $modelClass, PropertyService $propertyService, int $batchSize, bool $dryRun): int
     {
-        if (!class_exists($modelClass)) {
+        if (! class_exists($modelClass)) {
             $this->error("Model class '{$modelClass}' not found.");
+
             return -1;
         }
 
         $model = new $modelClass;
-        if (!$model instanceof Model) {
+        if (! $model instanceof Model) {
             $this->error("'{$modelClass}' is not an Eloquent model.");
+
             return -1;
         }
 
         $tableName = $model->getTable();
 
         // Check if the table has a dynamic_properties column
-        if (!Schema::hasColumn($tableName, 'dynamic_properties')) {
+        if (! Schema::hasColumn($tableName, 'dynamic_properties')) {
             $this->warn("Table '{$tableName}' does not have a 'dynamic_properties' column. Skipping.");
+
             return 0;
         }
 
@@ -100,11 +106,12 @@ class CacheSyncCommand extends Command
 
         if (empty($entityIds)) {
             $this->info("No dynamic properties found for model '{$modelClass}'.");
+
             return 0;
         }
 
         $this->info("Syncing {$modelClass} (Table: {$tableName})");
-        $this->info("Found " . count($entityIds) . " entities with dynamic properties");
+        $this->info('Found '.count($entityIds).' entities with dynamic properties');
 
         if ($dryRun) {
             $this->warn('DRY RUN - No changes will be made');
@@ -117,7 +124,7 @@ class CacheSyncCommand extends Command
         $chunks = array_chunk($entityIds, $batchSize);
 
         foreach ($chunks as $chunk) {
-            if (!$dryRun) {
+            if (! $dryRun) {
                 DB::transaction(function () use ($chunk, $modelClass, $propertyService, &$synced) {
                     foreach ($chunk as $entityId) {
                         $entity = $modelClass::find($entityId);

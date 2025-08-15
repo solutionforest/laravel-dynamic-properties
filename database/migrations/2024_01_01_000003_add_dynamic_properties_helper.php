@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * This is a helper migration that can be copied and customized
      * to add dynamic_properties JSON column to existing entity tables.
-     * 
+     *
      * Example usage:
      * - Copy this file to your Laravel app's migrations folder
      * - Rename it with a proper timestamp
@@ -21,12 +21,12 @@ return new class extends Migration
         // Schema::table('users', function (Blueprint $table) {
         //     $table->json('dynamic_properties')->nullable();
         // });
-        
+
         // Example: Add JSON cache column to companies table
         // Schema::table('companies', function (Blueprint $table) {
         //     $table->json('dynamic_properties')->nullable();
         // });
-        
+
         // Example: Add JSON cache column to contacts table
         // Schema::table('contacts', function (Blueprint $table) {
         //     $table->json('dynamic_properties')->nullable();
@@ -39,12 +39,12 @@ return new class extends Migration
         // Schema::table('users', function (Blueprint $table) {
         //     $table->dropColumn('dynamic_properties');
         // });
-        
+
         // Example: Remove JSON cache column from companies table
         // Schema::table('companies', function (Blueprint $table) {
         //     $table->dropColumn('dynamic_properties');
         // });
-        
+
         // Example: Remove JSON cache column from contacts table
         // Schema::table('contacts', function (Blueprint $table) {
         //     $table->dropColumn('dynamic_properties');

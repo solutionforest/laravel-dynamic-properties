@@ -2,8 +2,8 @@
 
 namespace DynamicProperties\Console\Commands;
 
-use DynamicProperties\Models\Property;
 use DynamicProperties\Models\EntityProperty;
+use DynamicProperties\Models\Property;
 use Illuminate\Console\Command;
 
 class PropertyDeleteCommand extends Command
@@ -21,8 +21,9 @@ class PropertyDeleteCommand extends Command
 
         $property = Property::where('name', $name)->first();
 
-        if (!$property) {
+        if (! $property) {
             $this->error("Property '{$name}' not found.");
+
             return 1;
         }
 
@@ -33,9 +34,10 @@ class PropertyDeleteCommand extends Command
             $this->warn("This property has {$entityPropertyCount} associated values that will be deleted.");
         }
 
-        if (!$force) {
-            if (!$this->confirm("Are you sure you want to delete property '{$name}'?")) {
+        if (! $force) {
+            if (! $this->confirm("Are you sure you want to delete property '{$name}'?")) {
                 $this->info('Deletion cancelled.');
+
                 return 0;
             }
         }
@@ -43,14 +45,16 @@ class PropertyDeleteCommand extends Command
         try {
             // Delete associated entity properties first
             EntityProperty::where('property_id', $property->id)->delete();
-            
+
             // Delete the property
             $property->delete();
 
             $this->info("Property '{$name}' and {$entityPropertyCount} associated values deleted successfully.");
+
             return 0;
         } catch (\Exception $e) {
             $this->error("Failed to delete property: {$e->getMessage()}");
+
             return 1;
         }
     }
