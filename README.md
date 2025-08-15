@@ -362,17 +362,11 @@ try {
 The package includes helpful Artisan commands:
 
 ```bash
-# List all properties
-php artisan dynamic-properties:list
-
-# Create a new property
-php artisan dynamic-properties:create
-
-# Delete a property
-php artisan dynamic-properties:delete property_name
-
-# Sync JSON cache for all entities
-php artisan dynamic-properties:cache-sync
+  dynamic-properties:create       Create a new dynamic property
+  dynamic-properties:delete       Delete a dynamic property and all its values
+  dynamic-properties:list         List all dynamic properties
+  dynamic-properties:optimize-db  Optimize database for dynamic properties with database-specific enhancements
+  dynamic-properties:sync-cache   Synchronize JSON cache columns with entity properties
 ```
 
 ## API Reference
