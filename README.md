@@ -5,7 +5,7 @@
 [![Latest Stable Version](https://poser.pugx.org/solution-forest/laravel-dynamic-properties/v/stable)](https://packagist.org/packages/solution-forest/laravel-dynamic-properties)
 [![License](https://poser.pugx.org/solution-forest/laravel-dynamic-properties/license)](https://packagist.org/packages/solution-forest/laravel-dynamic-properties)
 
-A HubSpot-like dynamic property system for Laravel that allows any entity (users, companies, contacts, etc.) to have custom properties with validation, search capabilities, and optimal performance.
+A dynamic property system for Laravel that allows any entity (users, companies, contacts, etc.) to have custom properties with validation, search capabilities, and optimal performance.
 
 ## Features
 
