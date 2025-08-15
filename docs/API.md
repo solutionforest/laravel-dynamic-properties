@@ -155,7 +155,7 @@ class User extends Model
 
 #### Methods
 
-**setProperty(string $name, mixed $value): void**
+**setDynamicProperty(string $name, mixed $value): void**
 
 Sets a single property value with validation.
 
@@ -289,7 +289,7 @@ $entityProperties = $user->entityProperties;
 
 #### Query Scopes
 
-**whereProperty(string $name, mixed $value, string $operator = '='): Builder**
+**whereProperty(string $name, string $operator = '=', mixed $value = null): Builder**
 
 Filter entities by a single property value.
 
@@ -300,8 +300,8 @@ $youngUsers = User::whereProperty('age', '<', 30)->get();
 
 **Parameters:**
 - `$name` (string): Property name
-- `$value` (mixed): Property value to compare
 - `$operator` (string): Comparison operator (=, !=, <, >, <=, >=, LIKE)
+- `$value` (mixed): Property value to compare
 
 ---
 
@@ -368,7 +368,7 @@ Core service for managing dynamic properties.
 
 #### Methods
 
-**setProperty(Model $entity, string $name, mixed $value): void**
+**setDynamicProperty(Model $entity, string $name, mixed $value): void**
 
 Sets a property value for an entity.
 

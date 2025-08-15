@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **BREAKING**: Fixed critical bug in `whereProperty` comparison operators where column type was incorrectly determined by search value type instead of property definition type
+- **BREAKING**: Updated `scopeWhereProperty` parameter order to `($query, $name, $operator = '=', $value = null)` for consistency with Laravel conventions
+- Fixed inconsistent behavior when searching properties with mixed value types (e.g., searching numeric properties with string values)
+
 ### Added
 - Support for Laravel 11
 - Enhanced PostgreSQL JSONB support

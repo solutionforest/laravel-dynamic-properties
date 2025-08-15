@@ -167,32 +167,67 @@ trait HasProperties
      * Scope to filter entities by a single property value
      * Supports different operators and handles all property types properly
      */
-    public function scopeWhereProperty($query, string $name, mixed $value, string $operator = '=')
+    public function scopeWhereProperty($query, string $name, string $operator = '=', mixed $value = null)
     {
+        // Handle the case where only 2 parameters are passed (property name and value for equality)
+        if ($value === null && $operator !== '=' && ! in_array($operator, ['>', '<', '>=', '<=', '!=', '<>', 'like', 'ilike'])) {
+            $value = $operator;
+            $operator = '=';
+        }
+
         return $query->whereHas('entityProperties', function ($q) use ($name, $value, $operator) {
             $q->where('property_name', $name);
 
-            // Handle different value types and operators
-            if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
-                $q->where('date_value', $operator, $value);
-            } elseif (is_string($value) && strtotime($value) !== false) {
-                // Handle date strings - check this before general string handling
-                $q->where('date_value', $operator, $value);
-            } elseif (is_numeric($value)) {
-                $q->where('number_value', $operator, $value);
-            } elseif (is_bool($value)) {
-                $q->where('boolean_value', $operator, $value);
-            } elseif (is_string($value)) {
+            // Get property definition to determine the correct column
+            $property = \SolutionForest\LaravelDynamicProperties\Models\Property::where('name', $name)->first();
+
+            if ($property) {
+                // Use property type to determine column and cast value appropriately
+                $column = $this->getSearchColumnForPropertyType($property->type);
+                $castedValue = $property->castValue($value);
+
                 if (strtolower($operator) === 'like' || strtolower($operator) === 'ilike') {
-                    $q->where('string_value', 'LIKE', $value);
+                    $q->where($column, 'LIKE', $castedValue);
                 } else {
-                    $q->where('string_value', $operator, $value);
+                    $q->where($column, $operator, $castedValue);
                 }
             } else {
-                // Fallback to string comparison
-                $q->where('string_value', $operator, $value);
+                // Fallback for undefined properties - use the old logic for backwards compatibility
+                if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
+                    $q->where('date_value', $operator, $value);
+                } elseif (is_string($value) && strtotime($value) !== false) {
+                    // Handle date strings - check this before general string handling
+                    $q->where('date_value', $operator, $value);
+                } elseif (is_numeric($value)) {
+                    $q->where('number_value', $operator, $value);
+                } elseif (is_bool($value)) {
+                    $q->where('boolean_value', $operator, $value);
+                } elseif (is_string($value)) {
+                    if (strtolower($operator) === 'like' || strtolower($operator) === 'ilike') {
+                        $q->where('string_value', 'LIKE', $value);
+                    } else {
+                        $q->where('string_value', $operator, $value);
+                    }
+                } else {
+                    // Fallback to string comparison
+                    $q->where('string_value', $operator, $value);
+                }
             }
         });
+    }
+
+    /**
+     * Get the appropriate search column based on property type
+     */
+    private function getSearchColumnForPropertyType(string $type): string
+    {
+        return match ($type) {
+            'text', 'select' => 'string_value',
+            'number'  => 'number_value',
+            'date'    => 'date_value',
+            'boolean' => 'boolean_value',
+            default   => 'string_value'
+        };
     }
 
     /**
@@ -206,10 +241,10 @@ trait HasProperties
                 // Handle array format: ['value' => $value, 'operator' => $operator]
                 $value = $criteria['value'] ?? null;
                 $operator = $criteria['operator'] ?? '=';
-                $query = $this->scopeWhereProperty($query, $name, $value, $operator);
+                $query = $this->scopeWhereProperty($query, $name, $operator, $value);
             } else {
                 // Handle simple value format
-                $query = $this->scopeWhereProperty($query, $name, $criteria);
+                $query = $this->scopeWhereProperty($query, $name, '=', $criteria);
             }
         }
 

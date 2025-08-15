@@ -17,6 +17,31 @@ A dynamic property system for Laravel that allows any entity (users, companies, 
 - **Database Agnostic**: Works with MySQL and SQLite
 - **Validation**: Built-in property validation with custom rules
 
+## Upgrading
+
+### From v1.x to v2.x
+
+**Breaking Change: `whereProperty` Parameter Order**
+
+The parameter order for `whereProperty` has changed to be consistent with Laravel conventions:
+
+```php
+// Old (v1.x) - DEPRECATED
+User::whereProperty('age', 25, '>')->get();
+
+// New (v2.x) - CORRECT
+User::whereProperty('age', '>', 25)->get();
+
+// For equality comparisons, both work:
+User::whereProperty('status', 'active')->get(); // Still works
+User::whereProperty('status', '=', 'active')->get(); // Also works
+```
+
+**Why this change was necessary:** The previous implementation had a critical bug where comparison operators gave inconsistent results because the system determined which database column to search based on the search value's type rather than the property definition's type. This caused queries like `whereProperty('level', '>', '3')` vs `whereProperty('level', '>', 3)` to search different columns and return different results.
+
+**Migration:** Update all your `whereProperty` calls that use operators to put the operator before the value:
+- `whereProperty($name, $value, $operator)` → `whereProperty($name, $operator, $value)`
+
 ## Installation
 
 Install the package via Composer:

@@ -600,7 +600,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             $activeUsers = SimpleTestUser::whereProperty('active', true)->get();
             expect($activeUsers)->toHaveCount(2); // user1 and user2 are active
 
-            $recentUsers = SimpleTestUser::whereProperty('join_date', '2020-01-01', '>')->get();
+            $recentUsers = SimpleTestUser::whereProperty('join_date', '>', '2020-01-01')->get();
             expect($recentUsers)->toHaveCount(2); // user1 and user2 joined after 2020
 
             $developers = SimpleTestUser::wherePropertyText('bio', 'Developer')->get();
@@ -608,7 +608,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Complex query: Active users who joined after 2020 and are developers
             $results = SimpleTestUser::whereProperty('active', true)
-                ->whereProperty('join_date', '2020-01-01', '>')
+                ->whereProperty('join_date', '>', '2020-01-01')
                 ->wherePropertyText('bio', 'Developer')
                 ->get();
 

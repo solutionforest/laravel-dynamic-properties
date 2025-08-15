@@ -135,11 +135,11 @@ it('can use query scopes for single property', function () {
     expect($results->first()->id)->toBe($user->id);
 
     // Test with operator
-    $results = SearchTestUser::whereProperty('age', 20, '>')->get();
+    $results = SearchTestUser::whereProperty('age', '>', 20)->get();
     expect($results)->toHaveCount(1);
 
     // Test text search with LIKE
-    $results = SearchTestUser::whereProperty('city', '%York%', 'LIKE')->get();
+    $results = SearchTestUser::whereProperty('city', 'LIKE', '%York%')->get();
     expect($results)->toHaveCount(1);
 });
 
