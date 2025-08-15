@@ -576,6 +576,4 @@ Please see [CHANGELOG.md](CHANGELOG.md) for recent changes.
 - **[Changelog](CHANGELOG.md)** - Version history and changes
 
 ## Credits
-
-- [Your Name](https://github.com/yourusername)
 - [All Contributors](../../contributors)
