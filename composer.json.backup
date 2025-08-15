@@ -1,5 +1,5 @@
 {
-    "name": "solution-forest/laravel-dynamic-properties",
+    "name": "user-property-library/dynamic-properties",
     "description": "A fast, flexible dynamic property system for Laravel entities",
     "type": "library",
     "license": "MIT",
@@ -15,8 +15,8 @@
     },
     "require": {
         "php": "^8.3",
-        "illuminate/database": "^10.0|^11.0|^12.0",
-        "illuminate/support": "^10.0|^11.0|^12.0"
+        "illuminate/database": "^10.0|^11.0",
+        "illuminate/support": "^10.0|^11.0"
     },
     "require-dev": {
         "laravel/pint": "^1.24",

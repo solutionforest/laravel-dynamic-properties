@@ -40,9 +40,9 @@ class User extends Model
 
 // Use the property
 $user = User::find(1);
-$user->setProperty('phone', '+1-555-123-4567');
+$user->setDynamicProperty('phone', '+1-555-123-4567');
 
-echo $user->getProperty('phone'); // +1-555-123-4567
+echo $user->getDynamicProperty('phone'); // +1-555-123-4567
 echo $user->prop_phone; // +1-555-123-4567 (magic method)
 ```
 
@@ -113,7 +113,7 @@ Property::create([
 ]);
 
 // Usage
-$user->setProperty('bio', 'Software engineer with 5 years of experience...');
+$user->setDynamicProperty('bio', 'Software engineer with 5 years of experience...');
 
 // Long text property
 Property::create([
@@ -154,8 +154,8 @@ Property::create([
 ]);
 
 // Usage
-$user->setProperty('years_experience', 5);
-$user->setProperty('salary', 75000.50);
+$user->setDynamicProperty('years_experience', 5);
+$user->setDynamicProperty('salary', 75000.50);
 ```
 
 ### Date Properties
@@ -184,11 +184,11 @@ Property::create([
 ]);
 
 // Usage
-$user->setProperty('hire_date', '2023-03-15');
-$user->setProperty('birthday', '1990-05-20');
+$user->setDynamicProperty('hire_date', '2023-03-15');
+$user->setDynamicProperty('birthday', '1990-05-20');
 
 // Access as Carbon instance
-$hireDate = $user->getProperty('hire_date'); // Carbon instance
+$hireDate = $user->getDynamicProperty('hire_date'); // Carbon instance
 echo $hireDate->format('F j, Y'); // March 15, 2023
 ```
 
@@ -212,11 +212,11 @@ Property::create([
 ]);
 
 // Usage
-$user->setProperty('is_active', true);
-$user->setProperty('email_notifications', false);
+$user->setDynamicProperty('is_active', true);
+$user->setDynamicProperty('email_notifications', false);
 
 // Boolean values are properly typed
-$isActive = $user->getProperty('is_active'); // true (boolean)
+$isActive = $user->getDynamicProperty('is_active'); // true (boolean)
 if ($isActive) {
     echo "User is active";
 }
@@ -255,8 +255,8 @@ Property::create([
 ]);
 
 // Usage
-$user->setProperty('department', 'engineering');
-$user->setProperty('employment_type', 'full_time');
+$user->setDynamicProperty('department', 'engineering');
+$user->setDynamicProperty('employment_type', 'full_time');
 ```
 
 ## Validation Examples
@@ -307,7 +307,7 @@ Property::create([
 use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
 
 try {
-    $user->setProperty('employee_id', 'INVALID-FORMAT');
+    $user->setDynamicProperty('employee_id', 'INVALID-FORMAT');
 } catch (PropertyValidationException $e) {
     echo "Validation failed: " . $e->getMessage();
     
@@ -321,7 +321,7 @@ try {
 // Validate before setting
 $property = Property::where('name', 'employee_id')->first();
 if ($property->validateValue('EMP-1234')) {
-    $user->setProperty('employee_id', 'EMP-1234');
+    $user->setDynamicProperty('employee_id', 'EMP-1234');
 } else {
     echo "Invalid employee ID format";
 }
@@ -512,11 +512,11 @@ Property::create([
 
 // Use with different entities
 $company = Company::find(1);
-$company->setProperty('phone', '+1-555-COMPANY');
-$company->setProperty('industry', 'technology');
+$company->setDynamicProperty('phone', '+1-555-COMPANY');
+$company->setDynamicProperty('industry', 'technology');
 
 $contact = Contact::find(1);
-$contact->setProperty('phone', '+1-555-CONTACT');
+$contact->setDynamicProperty('phone', '+1-555-CONTACT');
 
 // Search across entity types
 $techCompanies = Company::whereProperty('industry', 'technology')->get();
@@ -621,10 +621,10 @@ class PropertyService
 {
     public function setPropertyWithHistory(Model $entity, string $name, mixed $value)
     {
-        $oldValue = $entity->getProperty($name);
+        $oldValue = $entity->getDynamicProperty($name);
         
         // Set the new value
-        $this->setProperty($entity, $name, $value);
+        $this->setDynamicProperty($entity, $name, $value);
         
         // Record the change
         PropertyHistory::create([
@@ -674,7 +674,7 @@ class UserPropertyController extends Controller
     
     public function show(User $user, string $property)
     {
-        $value = $user->getProperty($property);
+        $value = $user->getDynamicProperty($property);
         
         if ($value === null) {
             return response()->json(['message' => 'Property not found'], 404);
@@ -689,12 +689,12 @@ class UserPropertyController extends Controller
     public function update(User $user, string $property, Request $request)
     {
         try {
-            $user->setProperty($property, $request->input('value'));
+            $user->setDynamicProperty($property, $request->input('value'));
             
             return response()->json([
                 'message' => 'Property updated successfully',
                 'property' => $property,
-                'value' => $user->getProperty($property)
+                'value' => $user->getDynamicProperty($property)
             ]);
         } catch (PropertyNotFoundException $e) {
             return response()->json(['message' => 'Property not found'], 404);
@@ -720,7 +720,7 @@ class UserPropertyController extends Controller
             <input type="text" 
                    name="prop_{{ $property->name }}" 
                    id="prop_{{ $property->name }}"
-                   value="{{ old('prop_' . $property->name, $user->getProperty($property->name)) }}"
+                   value="{{ old('prop_' . $property->name, $user->getDynamicProperty($property->name)) }}"
                    class="form-control"
                    @if($property->required) required @endif>
                    
@@ -728,7 +728,7 @@ class UserPropertyController extends Controller
             <input type="number" 
                    name="prop_{{ $property->name }}" 
                    id="prop_{{ $property->name }}"
-                   value="{{ old('prop_' . $property->name, $user->getProperty($property->name)) }}"
+                   value="{{ old('prop_' . $property->name, $user->getDynamicProperty($property->name)) }}"
                    class="form-control"
                    @if($property->required) required @endif>
                    
@@ -736,7 +736,7 @@ class UserPropertyController extends Controller
             <input type="date" 
                    name="prop_{{ $property->name }}" 
                    id="prop_{{ $property->name }}"
-                   value="{{ old('prop_' . $property->name, $user->getProperty($property->name)) }}"
+                   value="{{ old('prop_' . $property->name, $user->getDynamicProperty($property->name)) }}"
                    class="form-control"
                    @if($property->required) required @endif>
                    
@@ -745,7 +745,7 @@ class UserPropertyController extends Controller
                    name="prop_{{ $property->name }}" 
                    id="prop_{{ $property->name }}"
                    value="1"
-                   @if(old('prop_' . $property->name, $user->getProperty($property->name))) checked @endif
+                   @if(old('prop_' . $property->name, $user->getDynamicProperty($property->name))) checked @endif
                    class="form-check-input">
                    
         @elseif($property->type === 'select')
@@ -756,7 +756,7 @@ class UserPropertyController extends Controller
                 <option value="">Select...</option>
                 @foreach($property->options as $option)
                     <option value="{{ $option }}" 
-                            @if(old('prop_' . $property->name, $user->getProperty($property->name)) === $option) selected @endif>
+                            @if(old('prop_' . $property->name, $user->getDynamicProperty($property->name)) === $option) selected @endif>
                         {{ $option }}
                     </option>
                 @endforeach
@@ -793,9 +793,9 @@ Event::listen('property.updated', function ($entity, $propertyName, $oldValue, $
 // Trigger events in PropertyService
 class PropertyService
 {
-    public function setProperty(Model $entity, string $name, mixed $value): void
+    public function setDynamicProperty(Model $entity, string $name, mixed $value): void
     {
-        $oldValue = $entity->getProperty($name);
+        $oldValue = $entity->getDynamicProperty($name);
         
         // ... existing logic ...
         

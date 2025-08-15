@@ -5,9 +5,9 @@ namespace DynamicProperties\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static void setProperty(\Illuminate\Database\Eloquent\Model $entity, string $name, mixed $value)
+ * @method static void setDynamicProperty(\Illuminate\Database\Eloquent\Model $entity, string $name, mixed $value)
  * @method static void setProperties(\Illuminate\Database\Eloquent\Model $entity, array $properties)
- * @method static mixed getProperty(\Illuminate\Database\Eloquent\Model $entity, string $name)
+ * @method static mixed getDynamicProperty(\Illuminate\Database\Eloquent\Model $entity, string $name)
  * @method static array getProperties(\Illuminate\Database\Eloquent\Model $entity)
  * @method static void removeProperty(\Illuminate\Database\Eloquent\Model $entity, string $name)
  * @method static \Illuminate\Support\Collection search(string $entityType, array $filters)

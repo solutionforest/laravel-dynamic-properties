@@ -160,7 +160,7 @@ class User extends Model
 Sets a single property value with validation.
 
 ```php
-$user->setProperty('phone', '+1234567890');
+$user->setDynamicProperty('phone', '+1234567890');
 ```
 
 **Parameters:**
@@ -173,12 +173,12 @@ $user->setProperty('phone', '+1234567890');
 
 ---
 
-**getProperty(string $name): mixed**
+**getDynamicProperty(string $name): mixed**
 
 Retrieves a single property value.
 
 ```php
-$phone = $user->getProperty('phone');
+$phone = $user->getDynamicProperty('phone');
 ```
 
 **Parameters:**
@@ -250,7 +250,7 @@ $user->removeProperty('phone');
 Access properties using the `prop_` prefix.
 
 ```php
-$phone = $user->prop_phone; // Equivalent to $user->getProperty('phone')
+$phone = $user->prop_phone; // Equivalent to $user->getDynamicProperty('phone')
 ```
 
 **__set(string $key, mixed $value): void**
@@ -258,7 +258,7 @@ $phone = $user->prop_phone; // Equivalent to $user->getProperty('phone')
 Set properties using the `prop_` prefix.
 
 ```php
-$user->prop_phone = '+1234567890'; // Equivalent to $user->setProperty('phone', '+1234567890')
+$user->prop_phone = '+1234567890'; // Equivalent to $user->setDynamicProperty('phone', '+1234567890')
 ```
 
 **__isset(string $key): bool**
@@ -374,7 +374,7 @@ Sets a property value for an entity.
 
 ```php
 $propertyService = app(PropertyService::class);
-$propertyService->setProperty($user, 'phone', '+1234567890');
+$propertyService->setDynamicProperty($user, 'phone', '+1234567890');
 ```
 
 **Parameters:**
@@ -388,12 +388,12 @@ $propertyService->setProperty($user, 'phone', '+1234567890');
 
 ---
 
-**getProperty(Model $entity, string $name): mixed**
+**getDynamicProperty(Model $entity, string $name): mixed**
 
 Gets a property value for an entity.
 
 ```php
-$phone = $propertyService->getProperty($user, 'phone');
+$phone = $propertyService->getDynamicProperty($user, 'phone');
 ```
 
 **Parameters:**
@@ -541,7 +541,7 @@ Thrown when trying to access a property that doesn't exist.
 use YourVendor\DynamicProperties\Exceptions\PropertyNotFoundException;
 
 try {
-    $user->setProperty('nonexistent', 'value');
+    $user->setDynamicProperty('nonexistent', 'value');
 } catch (PropertyNotFoundException $e) {
     echo "Property not found: " . $e->getPropertyName();
 }
@@ -558,7 +558,7 @@ Thrown when a property value fails validation.
 use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
 
 try {
-    $user->setProperty('age', 'not_a_number');
+    $user->setDynamicProperty('age', 'not_a_number');
 } catch (PropertyValidationException $e) {
     echo "Validation failed: " . $e->getMessage();
     $errors = $e->getValidationErrors(); // Array of validation messages
@@ -612,10 +612,10 @@ Provides convenient access to PropertyService methods.
 use YourVendor\DynamicProperties\Facades\DynamicProperties;
 
 // Set property
-DynamicProperties::setProperty($user, 'phone', '+1234567890');
+DynamicProperties::setDynamicProperty($user, 'phone', '+1234567890');
 
 // Get property
-$phone = DynamicProperties::getProperty($user, 'phone');
+$phone = DynamicProperties::getDynamicProperty($user, 'phone');
 
 // Set multiple properties
 DynamicProperties::setProperties($user, [

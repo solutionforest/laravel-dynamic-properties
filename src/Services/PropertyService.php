@@ -28,7 +28,7 @@ class PropertyService
     }
 
     /**
-     * Set a single property value for an entity
+     * Set a single dynamic property value for an entity
      *
      * @param  Model  $entity  The entity to set the property on
      * @param  string  $name  The property name
@@ -38,7 +38,7 @@ class PropertyService
      * @throws PropertyValidationException If value is invalid
      * @throws PropertyOperationException If operation fails
      */
-    public function setProperty(Model $entity, string $name, mixed $value): void
+    public function setDynamicProperty(Model $entity, string $name, mixed $value): void
     {
         try {
             // Validate entity has an ID
@@ -88,7 +88,7 @@ class PropertyService
         } catch (\Exception $e) {
             // Log unexpected errors and throw operation exception
             Log::error('Property operation failed', [
-                'operation' => 'setProperty',
+                'operation' => 'setDynamicProperty',
                 'entity_type' => get_class($entity),
                 'entity_id' => $entity->id ?? null,
                 'property_name' => $name,
@@ -321,13 +321,13 @@ class PropertyService
     }
 
     /**
-     * Get a property value for an entity
+     * Get a dynamic property value for an entity
      *
      * @param  Model  $entity  The entity to get the property from
      * @param  string  $name  The property name
      * @return mixed The property value or null if not found
      */
-    public function getProperty(Model $entity, string $name): mixed
+    public function getDynamicProperty(Model $entity, string $name): mixed
     {
         // Try JSON column first if it exists
         if (Schema::hasColumn($entity->getTable(), 'dynamic_properties') && $entity->dynamic_properties) {

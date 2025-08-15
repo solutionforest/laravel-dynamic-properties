@@ -61,11 +61,11 @@ function setUserProperties()
     $user = User::find(1);
 
     // Method 1: Using trait methods
-    $user->setProperty('phone', '+1234567890');
-    $user->setProperty('age', 25);
-    $user->setProperty('status', 'active');
-    $user->setProperty('verified', true);
-    $user->setProperty('birth_date', '1999-01-15');
+    $user->setDynamicProperty('phone', '+1234567890');
+    $user->setDynamicProperty('age', 25);
+    $user->setDynamicProperty('status', 'active');
+    $user->setDynamicProperty('verified', true);
+    $user->setDynamicProperty('birth_date', '1999-01-15');
 
     // Method 2: Using magic methods (prop_ prefix)
     $user->prop_phone = '+1234567890';
@@ -99,14 +99,14 @@ function getUserProperties()
     $user = User::find(1);
 
     // Method 1: Get single property
-    $phone = $user->getProperty('phone');
+    $phone = $user->getDynamicProperty('phone');
     $age = $user->prop_age; // Magic method
 
     // Method 2: Get all properties
     $allProperties = $user->properties;
 
     // Method 3: Using the facade
-    $phone = DynamicProperties::getProperty($user, 'phone');
+    $phone = DynamicProperties::getDynamicProperty($user, 'phone');
     $allProperties = DynamicProperties::getProperties($user);
 
     return [
@@ -257,21 +257,21 @@ function propertyValidationExamples()
 
     try {
         // This will validate against property definition
-        $user->setProperty('age', 150); // Will fail if max validation is 120
+        $user->setDynamicProperty('age', 150); // Will fail if max validation is 120
     } catch (InvalidArgumentException $e) {
         echo 'Validation failed: '.$e->getMessage();
     }
 
     try {
         // This will fail if property doesn't exist
-        $user->setProperty('nonexistent_property', 'value');
+        $user->setDynamicProperty('nonexistent_property', 'value');
     } catch (InvalidArgumentException $e) {
         echo 'Property not found: '.$e->getMessage();
     }
 
     try {
         // This will fail for select properties with invalid options
-        $user->setProperty('status', 'invalid_status');
+        $user->setDynamicProperty('status', 'invalid_status');
     } catch (InvalidArgumentException $e) {
         echo 'Invalid option: '.$e->getMessage();
     }
@@ -315,7 +315,7 @@ function bulkOperationExamples()
 
     $inactiveUsers = User::whereIn('id', $inactiveUserIds)->get();
     foreach ($inactiveUsers as $user) {
-        $user->setProperty('status', 'pending');
+        $user->setDynamicProperty('status', 'pending');
     }
 }
 

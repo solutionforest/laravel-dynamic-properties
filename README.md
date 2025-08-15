@@ -92,16 +92,16 @@ Property::create([
 $user = User::find(1);
 
 // Set properties
-$user->setProperty('phone', '+1234567890');
-$user->setProperty('age', 25);
-$user->setProperty('status', 'active');
+$user->setDynamicProperty('phone', '+1234567890');
+$user->setDynamicProperty('age', 25);
+$user->setDynamicProperty('status', 'active');
 
 // Or use magic methods
 $user->prop_phone = '+1234567890';
 $user->prop_age = 25;
 
 // Get properties
-$phone = $user->getProperty('phone');
+$phone = $user->getDynamicProperty('phone');
 $age = $user->prop_age; // Magic method
 $allProperties = $user->properties; // All properties as array
 
@@ -263,14 +263,14 @@ use YourVendor\DynamicProperties\Exceptions\PropertyNotFoundException;
 use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
 
 try {
-    $user->setProperty('nonexistent_property', 'value');
+    $user->setDynamicProperty('nonexistent_property', 'value');
 } catch (PropertyNotFoundException $e) {
     // Handle property not found
     echo "Property not found: " . $e->getMessage();
 }
 
 try {
-    $user->setProperty('age', 'invalid_number');
+    $user->setDynamicProperty('age', 'invalid_number');
 } catch (PropertyValidationException $e) {
     // Handle validation error
     echo "Validation failed: " . $e->getMessage();
@@ -301,18 +301,18 @@ php artisan properties:cache-sync
 
 #### Methods
 
-**setProperty(string $name, mixed $value): void**
+**setDynamicProperty(string $name, mixed $value): void**
 - Sets a single property value
 - Validates the value against property rules
 - Updates JSON cache if available
 
-**getProperty(string $name): mixed**
+**getDynamicProperty(string $name): mixed**
 - Retrieves a single property value
 - Returns null if property doesn't exist
 
 **setProperties(array $properties): void**
 - Sets multiple properties at once
-- More efficient than multiple setProperty calls
+- More efficient than multiple setDynamicProperty calls
 
 **getPropertiesAttribute(): array**
 - Returns all properties as an associative array
@@ -340,7 +340,7 @@ php artisan properties:cache-sync
 
 ### PropertyService
 
-**setProperty(Model $entity, string $name, mixed $value): void**
+**setDynamicProperty(Model $entity, string $name, mixed $value): void**
 - Core method for setting property values
 - Handles validation and storage
 

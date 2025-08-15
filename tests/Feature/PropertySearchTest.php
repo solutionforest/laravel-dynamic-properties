@@ -79,9 +79,9 @@ it('can search by single property', function () {
     $user = SearchTestUser::create(['name' => 'John Doe', 'email' => 'john@example.com']);
 
     // Set properties
-    $this->propertyService->setProperty($user, 'age', 25);
-    $this->propertyService->setProperty($user, 'city', 'New York');
-    $this->propertyService->setProperty($user, 'active', true);
+    $this->propertyService->setDynamicProperty($user, 'age', 25);
+    $this->propertyService->setDynamicProperty($user, 'city', 'New York');
+    $this->propertyService->setDynamicProperty($user, 'active', true);
 
     // Test search by age
     $results = $this->propertyService->search(SearchTestUser::class, ['age' => 25]);
@@ -102,14 +102,14 @@ it('can search by multiple properties', function () {
     $user2 = SearchTestUser::create(['name' => 'Jane Smith', 'email' => 'jane@example.com']);
 
     // Set properties for user1
-    $this->propertyService->setProperty($user1, 'age', 25);
-    $this->propertyService->setProperty($user1, 'city', 'New York');
-    $this->propertyService->setProperty($user1, 'active', true);
+    $this->propertyService->setDynamicProperty($user1, 'age', 25);
+    $this->propertyService->setDynamicProperty($user1, 'city', 'New York');
+    $this->propertyService->setDynamicProperty($user1, 'active', true);
 
     // Set properties for user2
-    $this->propertyService->setProperty($user2, 'age', 30);
-    $this->propertyService->setProperty($user2, 'city', 'New York');
-    $this->propertyService->setProperty($user2, 'active', false);
+    $this->propertyService->setDynamicProperty($user2, 'age', 30);
+    $this->propertyService->setDynamicProperty($user2, 'city', 'New York');
+    $this->propertyService->setDynamicProperty($user2, 'active', false);
 
     // Search for users in New York who are active
     $results = $this->propertyService->search(SearchTestUser::class, [
@@ -126,8 +126,8 @@ it('can use query scopes for single property', function () {
     $user = SearchTestUser::create(['name' => 'John Doe', 'email' => 'john@example.com']);
 
     // Set properties
-    $this->propertyService->setProperty($user, 'age', 25);
-    $this->propertyService->setProperty($user, 'city', 'New York');
+    $this->propertyService->setDynamicProperty($user, 'age', 25);
+    $this->propertyService->setDynamicProperty($user, 'city', 'New York');
 
     // Test whereProperty scope
     $results = SearchTestUser::whereProperty('age', 25)->get();
@@ -178,9 +178,9 @@ it('can search with advanced criteria', function () {
     $user3 = SearchTestUser::create(['name' => 'Bob Wilson', 'email' => 'bob@example.com']);
 
     // Set properties
-    $this->propertyService->setProperty($user1, 'age', 25);
-    $this->propertyService->setProperty($user2, 'age', 35);
-    $this->propertyService->setProperty($user3, 'age', 45);
+    $this->propertyService->setDynamicProperty($user1, 'age', 25);
+    $this->propertyService->setDynamicProperty($user2, 'age', 35);
+    $this->propertyService->setDynamicProperty($user3, 'age', 45);
 
     // Test advanced search with operator
     $results = $this->propertyService->search(SearchTestUser::class, [
@@ -199,9 +199,9 @@ it('can search number ranges', function () {
     $user3 = SearchTestUser::create(['name' => 'Bob Wilson', 'email' => 'bob@example.com']);
 
     // Set ages
-    $this->propertyService->setProperty($user1, 'age', 25);
-    $this->propertyService->setProperty($user2, 'age', 35);
-    $this->propertyService->setProperty($user3, 'age', 45);
+    $this->propertyService->setDynamicProperty($user1, 'age', 25);
+    $this->propertyService->setDynamicProperty($user2, 'age', 35);
+    $this->propertyService->setDynamicProperty($user3, 'age', 45);
 
     // Search for users aged 30-40
     $results = $this->propertyService->searchNumberRange(SearchTestUser::class, 'age', 30, 40);
@@ -217,8 +217,8 @@ it('can search text with like', function () {
     $user2 = SearchTestUser::create(['name' => 'Jane Smith', 'email' => 'jane@example.com']);
 
     // Set cities
-    $this->propertyService->setProperty($user1, 'city', 'New York');
-    $this->propertyService->setProperty($user2, 'city', 'Los Angeles');
+    $this->propertyService->setDynamicProperty($user1, 'city', 'New York');
+    $this->propertyService->setDynamicProperty($user2, 'city', 'Los Angeles');
 
     // Search for cities containing "York"
     $results = $this->propertyService->searchText(SearchTestUser::class, 'city', 'York');
@@ -260,9 +260,9 @@ describe('Advanced Search Features', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
         $user3 = SearchTestUser::create(['name' => 'Bob', 'email' => 'bob@example.com']);
 
-        $this->propertyService->setProperty($user1, 'salary', 50000);
-        $this->propertyService->setProperty($user2, 'salary', 75000);
-        $this->propertyService->setProperty($user3, 'salary', 100000);
+        $this->propertyService->setDynamicProperty($user1, 'salary', 50000);
+        $this->propertyService->setDynamicProperty($user2, 'salary', 75000);
+        $this->propertyService->setDynamicProperty($user3, 'salary', 100000);
 
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'salary' => [
@@ -282,9 +282,9 @@ describe('Advanced Search Features', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
         $user3 = SearchTestUser::create(['name' => 'Bob', 'email' => 'bob@example.com']);
 
-        $this->propertyService->setProperty($user1, 'department', 'engineering');
-        $this->propertyService->setProperty($user2, 'department', 'marketing');
-        $this->propertyService->setProperty($user3, 'department', 'sales');
+        $this->propertyService->setDynamicProperty($user1, 'department', 'engineering');
+        $this->propertyService->setDynamicProperty($user2, 'department', 'marketing');
+        $this->propertyService->setDynamicProperty($user3, 'department', 'sales');
 
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'department' => [
@@ -303,9 +303,9 @@ describe('Advanced Search Features', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
         $user3 = SearchTestUser::create(['name' => 'Bob', 'email' => 'bob@example.com']);
 
-        $this->propertyService->setProperty($user1, 'city', 'New York City');
-        $this->propertyService->setProperty($user2, 'city', 'Los Angeles');
-        $this->propertyService->setProperty($user3, 'city', 'New Orleans');
+        $this->propertyService->setDynamicProperty($user1, 'city', 'New York City');
+        $this->propertyService->setDynamicProperty($user2, 'city', 'Los Angeles');
+        $this->propertyService->setDynamicProperty($user3, 'city', 'New Orleans');
 
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'city' => [
@@ -325,10 +325,10 @@ describe('Advanced Search Features', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
         $user3 = SearchTestUser::create(['name' => 'Bob', 'email' => 'bob@example.com']);
 
-        $this->propertyService->setProperty($user1, 'remote', true);
-        $this->propertyService->setProperty($user2, 'remote', false);
+        $this->propertyService->setDynamicProperty($user1, 'remote', true);
+        $this->propertyService->setDynamicProperty($user2, 'remote', false);
         // user3 has no remote property set, but has another property so it exists in the table
-        $this->propertyService->setProperty($user3, 'age', 30);
+        $this->propertyService->setDynamicProperty($user3, 'age', 30);
 
         $resultsWithRemote = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'remote' => ['operator' => 'not null'],
@@ -414,9 +414,9 @@ describe('Date Range Search', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
         $user3 = SearchTestUser::create(['name' => 'Bob', 'email' => 'bob@example.com']);
 
-        $this->propertyService->setProperty($user1, 'hire_date', '2020-01-15');
-        $this->propertyService->setProperty($user2, 'hire_date', '2021-06-01');
-        $this->propertyService->setProperty($user3, 'hire_date', '2022-12-10');
+        $this->propertyService->setDynamicProperty($user1, 'hire_date', '2020-01-15');
+        $this->propertyService->setDynamicProperty($user2, 'hire_date', '2021-06-01');
+        $this->propertyService->setDynamicProperty($user3, 'hire_date', '2022-12-10');
 
         $results = $this->propertyService->searchDateRange(
             SearchTestUser::class,
@@ -455,7 +455,7 @@ describe('Performance and Edge Cases', function () {
                 'name' => "User $i",
                 'email' => "user$i@example.com",
             ]);
-            $this->propertyService->setProperty($user, 'age', 20 + ($i % 30));
+            $this->propertyService->setDynamicProperty($user, 'age', 20 + ($i % 30));
             $users[] = $user;
         }
 
@@ -473,8 +473,8 @@ describe('Performance and Edge Cases', function () {
         $user2 = SearchTestUser::create(['name' => 'Jane', 'email' => 'jane@example.com']);
 
         // Test with decimal numbers
-        $this->propertyService->setProperty($user1, 'age', 25.5);
-        $this->propertyService->setProperty($user2, 'age', 25.7);
+        $this->propertyService->setDynamicProperty($user1, 'age', 25.5);
+        $this->propertyService->setDynamicProperty($user2, 'age', 25.7);
 
         $results = $this->propertyService->search(SearchTestUser::class, [
             'age' => ['value' => 25.6, 'operator' => '>'],

@@ -534,7 +534,7 @@ function createLargeDataset(int $userCount): void
                 'type' => 'number',
                 'required' => false,
             ]);
-            app(PropertyService::class)->setProperty($user, 'bonus', rand(5000, 25000));
+            app(PropertyService::class)->setDynamicProperty($user, 'bonus', rand(5000, 25000));
         }
     }
 }

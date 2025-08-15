@@ -39,28 +39,28 @@ beforeEach(function () {
 
 describe('PropertyService Error Handling', function () {
     it('throws PropertyNotFoundException for non-existent property', function () {
-        expect(fn () => $this->service->setProperty($this->model, 'non_existent', 'value'))
+        expect(fn () => $this->service->setDynamicProperty($this->model, 'non_existent', 'value'))
             ->toThrow(PropertyNotFoundException::class);
     });
 
     it('throws PropertyValidationException for invalid values', function () {
-        expect(fn () => $this->service->setProperty($this->model, 'test_prop', ''))
+        expect(fn () => $this->service->setDynamicProperty($this->model, 'test_prop', ''))
             ->toThrow(PropertyValidationException::class);
 
-        expect(fn () => $this->service->setProperty($this->model, 'test_prop', 'ab'))
+        expect(fn () => $this->service->setDynamicProperty($this->model, 'test_prop', 'ab'))
             ->toThrow(PropertyValidationException::class);
     });
 
     it('throws PropertyOperationException for unsaved entity', function () {
         $unsavedModel = new TestModel(['name' => 'Unsaved']);
 
-        expect(fn () => $this->service->setProperty($unsavedModel, 'test_prop', 'value'))
+        expect(fn () => $this->service->setDynamicProperty($unsavedModel, 'test_prop', 'value'))
             ->toThrow(PropertyOperationException::class);
     });
 
     it('provides detailed error context', function () {
         try {
-            $this->service->setProperty($this->model, 'non_existent', 'value');
+            $this->service->setDynamicProperty($this->model, 'non_existent', 'value');
             expect(false)->toBeTrue('Should have thrown exception');
         } catch (PropertyNotFoundException $e) {
             expect($e->getContext())->toHaveKey('property_name');

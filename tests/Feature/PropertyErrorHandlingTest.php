@@ -58,32 +58,32 @@ describe('Property Error Handling', function () {
     describe('PropertyService error handling', function () {
 
         it('throws PropertyNotFoundException for non-existent property', function () {
-            expect(fn () => $this->service->setProperty($this->entity, 'non_existent', 'value'))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'non_existent', 'value'))
                 ->toThrow(PropertyNotFoundException::class);
         });
 
         it('throws PropertyValidationException for invalid values', function () {
             // Test required field validation
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_text', ''))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_text', ''))
                 ->toThrow(PropertyValidationException::class);
 
             // Test length validation
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_text', 'ab'))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_text', 'ab'))
                 ->toThrow(PropertyValidationException::class);
 
             // Test range validation
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_number', -1))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_number', -1))
                 ->toThrow(PropertyValidationException::class);
 
             // Test select options validation
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_select', 'invalid'))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_select', 'invalid'))
                 ->toThrow(PropertyValidationException::class);
         });
 
         it('throws PropertyOperationException for unsaved entity', function () {
             $unsavedEntity = new TestEntity(['name' => 'Unsaved']);
 
-            expect(fn () => $this->service->setProperty($unsavedEntity, 'error_test_text', 'value'))
+            expect(fn () => $this->service->setDynamicProperty($unsavedEntity, 'error_test_text', 'value'))
                 ->toThrow(PropertyOperationException::class);
         });
 
@@ -92,7 +92,7 @@ describe('Property Error Handling', function () {
             $entity = TestEntity::create(['name' => 'Test Entity']);
 
             try {
-                $service->setProperty($entity, 'non_existent', 'value');
+                $service->setDynamicProperty($entity, 'non_existent', 'value');
                 expect(false)->toBeTrue('Exception should have been thrown');
             } catch (PropertyNotFoundException $e) {
                 expect($e->getContext())->toHaveKey('property_name');
@@ -128,10 +128,10 @@ describe('Property Error Handling', function () {
     describe('HasProperties trait error handling', function () {
 
         it('throws exceptions through trait methods', function () {
-            expect(fn () => $this->entity->setProperty('non_existent', 'value'))
+            expect(fn () => $this->entity->setDynamicProperty('non_existent', 'value'))
                 ->toThrow(PropertyNotFoundException::class);
 
-            expect(fn () => $this->entity->setProperty('error_test_text', ''))
+            expect(fn () => $this->entity->setDynamicProperty('error_test_text', ''))
                 ->toThrow(PropertyValidationException::class);
         });
 
@@ -187,7 +187,7 @@ describe('Property Error Handling', function () {
 
         it('provides user-friendly error messages', function () {
             try {
-                $this->service->setProperty($this->entity, 'error_test_text', 'ab');
+                $this->service->setDynamicProperty($this->entity, 'error_test_text', 'ab');
             } catch (PropertyValidationException $e) {
                 $userMessage = $e->getUserMessage();
                 expect($userMessage)->toContain('Test Text'); // Uses label, not name
@@ -195,7 +195,7 @@ describe('Property Error Handling', function () {
             }
 
             try {
-                $this->service->setProperty($this->entity, 'non_existent', 'value');
+                $this->service->setDynamicProperty($this->entity, 'non_existent', 'value');
             } catch (PropertyNotFoundException $e) {
                 $userMessage = $e->getUserMessage();
                 expect($userMessage)->toContain('does not exist');
@@ -205,7 +205,7 @@ describe('Property Error Handling', function () {
 
         it('includes validation context in error arrays', function () {
             try {
-                $this->service->setProperty($this->entity, 'error_test_text', '');
+                $this->service->setDynamicProperty($this->entity, 'error_test_text', '');
             } catch (PropertyValidationException $e) {
                 $array = $e->toArray();
                 expect($array)->toHaveKey('error');
@@ -222,27 +222,27 @@ describe('Property Error Handling', function () {
 
         it('handles null and empty values correctly', function () {
             // Non-required field should accept null
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_number', null))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_number', null))
                 ->not->toThrow(\Exception::class);
 
             // Required field should reject null
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_text', null))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_text', null))
                 ->toThrow(PropertyValidationException::class);
 
             // Required field should reject empty string
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_text', ''))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_text', ''))
                 ->toThrow(PropertyValidationException::class);
         });
 
         it('handles type conversion errors gracefully', function () {
-            expect(fn () => $this->service->setProperty($this->entity, 'error_test_number', 'not a number'))
+            expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_number', 'not a number'))
                 ->toThrow(PropertyValidationException::class);
         });
 
         it('maintains data consistency on batch operation failures', function () {
             // Set some initial valid properties
-            $this->service->setProperty($this->entity, 'error_test_text', 'valid');
-            $this->service->setProperty($this->entity, 'error_test_number', 50);
+            $this->service->setDynamicProperty($this->entity, 'error_test_text', 'valid');
+            $this->service->setDynamicProperty($this->entity, 'error_test_number', 50);
 
             // Try to batch update with some invalid values
             try {
@@ -253,11 +253,11 @@ describe('Property Error Handling', function () {
                 ]);
             } catch (PropertyValidationException $e) {
                 // Original values should be unchanged
-                expect($this->entity->getProperty('error_test_text'))->toBe('valid');
-                expect($this->entity->getProperty('error_test_number'))->toBe(50.0);
+                expect($this->entity->getDynamicProperty('error_test_text'))->toBe('valid');
+                expect($this->entity->getDynamicProperty('error_test_number'))->toBe(50.0);
 
                 // New property should not be set
-                expect($this->entity->getProperty('error_test_select'))->toBeNull();
+                expect($this->entity->getDynamicProperty('error_test_select'))->toBeNull();
             }
         });
     });

@@ -406,8 +406,8 @@ $property = Property::create([
 // Add trait to User model (if not already added)
 // Then test property operations
 $user = User::first();
-$user->setProperty('test_property', 'Hello World');
-echo $user->getProperty('test_property'); // Should output: Hello World
+$user->setDynamicProperty('test_property', 'Hello World');
+echo $user->getDynamicProperty('test_property'); // Should output: Hello World
 
 // Clean up
 $user->removeProperty('test_property');

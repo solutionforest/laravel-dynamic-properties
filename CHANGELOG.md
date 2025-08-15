@@ -375,8 +375,8 @@ Property::create([
 
 // Use properties
 $user = User::find(1);
-$user->setProperty('phone', '+1234567890');
-$phone = $user->getProperty('phone');
+$user->setDynamicProperty('phone', '+1234567890');
+$phone = $user->getDynamicProperty('phone');
 
 // Search by properties
 $users = User::whereProperty('phone', 'LIKE', '+1%')->get();

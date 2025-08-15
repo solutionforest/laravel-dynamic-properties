@@ -57,13 +57,13 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     });
 
     it('can set and get properties using trait methods', function () {
-        $this->user->setProperty('simple_bio', 'My biography');
-        $this->user->setProperty('simple_age', 25);
-        $this->user->setProperty('simple_active', true);
+        $this->user->setDynamicProperty('simple_bio', 'My biography');
+        $this->user->setDynamicProperty('simple_age', 25);
+        $this->user->setDynamicProperty('simple_active', true);
 
-        expect($this->user->getProperty('simple_bio'))->toBe('My biography');
-        expect($this->user->getProperty('simple_age'))->toBe(25.0);
-        expect($this->user->getProperty('simple_active'))->toBeTrue();
+        expect($this->user->getDynamicProperty('simple_bio'))->toBe('My biography');
+        expect($this->user->getDynamicProperty('simple_age'))->toBe(25.0);
+        expect($this->user->getDynamicProperty('simple_active'))->toBeTrue();
     });
 
     it('can use magic methods with prop_ prefix', function () {
@@ -102,8 +102,8 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         ]);
 
         // Set properties
-        $this->user->setProperty('simple_active', true);
-        $user2->setProperty('simple_active', false);
+        $this->user->setDynamicProperty('simple_active', true);
+        $user2->setDynamicProperty('simple_active', false);
 
         // Test scope
         $activeUsers = SimpleTestUser::whereProperty('simple_active', true)->get();
@@ -141,11 +141,11 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     });
 
     it('can remove properties', function () {
-        $this->user->setProperty('simple_bio', 'My biography');
-        expect($this->user->getProperty('simple_bio'))->toBe('My biography');
+        $this->user->setDynamicProperty('simple_bio', 'My biography');
+        expect($this->user->getDynamicProperty('simple_bio'))->toBe('My biography');
 
         $this->user->removeProperty('simple_bio');
-        expect($this->user->getProperty('simple_bio'))->toBeNull();
+        expect($this->user->getDynamicProperty('simple_bio'))->toBeNull();
     });
 
     it('works with JSON column when available', function () {
@@ -158,8 +158,8 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
         expect($this->user->hasJsonPropertiesColumn())->toBeTrue();
 
-        $this->user->setProperty('simple_bio', 'My biography');
-        $this->user->setProperty('simple_age', 25);
+        $this->user->setDynamicProperty('simple_bio', 'My biography');
+        $this->user->setDynamicProperty('simple_age', 25);
 
         $this->user->refresh();
 
@@ -169,7 +169,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     });
 
     it('has polymorphic relationship to entity properties', function () {
-        $this->user->setProperty('simple_bio', 'Test biography');
+        $this->user->setDynamicProperty('simple_bio', 'Test biography');
 
         $entityProperties = $this->user->entityProperties;
 
@@ -232,9 +232,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use wherePropertyText scope for partial text matching', function () {
-            $this->user->setProperty('bio', 'Software developer from New York');
-            $this->user2->setProperty('bio', 'Designer from Los Angeles');
-            $this->user3->setProperty('bio', 'Manager from New York City');
+            $this->user->setDynamicProperty('bio', 'Software developer from New York');
+            $this->user2->setDynamicProperty('bio', 'Designer from Los Angeles');
+            $this->user3->setDynamicProperty('bio', 'Manager from New York City');
 
             $results = SimpleTestUser::wherePropertyText('bio', 'New York')->get();
 
@@ -244,9 +244,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use wherePropertyBetween scope for number ranges', function () {
-            $this->user->setProperty('age', 25);
-            $this->user2->setProperty('age', 35);
-            $this->user3->setProperty('age', 45);
+            $this->user->setDynamicProperty('age', 25);
+            $this->user2->setDynamicProperty('age', 35);
+            $this->user3->setDynamicProperty('age', 45);
 
             $results = SimpleTestUser::wherePropertyBetween('age', 30, 40)->get();
 
@@ -255,9 +255,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use wherePropertyBetween scope for date ranges', function () {
-            $this->user->setProperty('birth_date', '1990-01-01');
-            $this->user2->setProperty('birth_date', '1995-06-15');
-            $this->user3->setProperty('birth_date', '2000-12-31');
+            $this->user->setDynamicProperty('birth_date', '1990-01-01');
+            $this->user2->setDynamicProperty('birth_date', '1995-06-15');
+            $this->user3->setDynamicProperty('birth_date', '2000-12-31');
 
             $results = SimpleTestUser::wherePropertyBetween('birth_date', '1994-01-01', '1999-12-31')->get();
 
@@ -266,9 +266,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use wherePropertyIn scope for multiple values', function () {
-            $this->user->setProperty('bio', 'Developer');
-            $this->user2->setProperty('bio', 'Designer');
-            $this->user3->setProperty('bio', 'Manager');
+            $this->user->setDynamicProperty('bio', 'Developer');
+            $this->user2->setDynamicProperty('bio', 'Designer');
+            $this->user3->setDynamicProperty('bio', 'Manager');
 
             $results = SimpleTestUser::wherePropertyIn('bio', ['Developer', 'Manager'])->get();
 
@@ -278,12 +278,12 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use hasAnyProperty scope', function () {
-            $this->user->setProperty('bio', 'Test bio');
-            $this->user->setProperty('age', 25);
+            $this->user->setDynamicProperty('bio', 'Test bio');
+            $this->user->setDynamicProperty('age', 25);
 
-            $this->user2->setProperty('active', true);
+            $this->user2->setDynamicProperty('active', true);
 
-            $this->user3->setProperty('bio', 'Another bio');
+            $this->user3->setDynamicProperty('bio', 'Another bio');
 
             $results = SimpleTestUser::hasAnyProperty(['bio', 'age'])->get();
 
@@ -293,16 +293,16 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use hasAllProperties scope', function () {
-            $this->user->setProperty('bio', 'Test bio');
-            $this->user->setProperty('age', 25);
-            $this->user->setProperty('active', true);
+            $this->user->setDynamicProperty('bio', 'Test bio');
+            $this->user->setDynamicProperty('age', 25);
+            $this->user->setDynamicProperty('active', true);
 
-            $this->user2->setProperty('bio', 'Another bio');
-            $this->user2->setProperty('age', 30);
+            $this->user2->setDynamicProperty('bio', 'Another bio');
+            $this->user2->setDynamicProperty('age', 30);
             // Missing 'active' property
 
-            $this->user3->setProperty('bio', 'Third bio');
-            $this->user3->setProperty('active', false);
+            $this->user3->setDynamicProperty('bio', 'Third bio');
+            $this->user3->setDynamicProperty('active', false);
             // Missing 'age' property
 
             $results = SimpleTestUser::hasAllProperties(['bio', 'age', 'active'])->get();
@@ -312,9 +312,9 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('can use orderByProperty scope', function () {
-            $this->user->setProperty('age', 35);
-            $this->user2->setProperty('age', 25);
-            $this->user3->setProperty('age', 45);
+            $this->user->setDynamicProperty('age', 35);
+            $this->user2->setDynamicProperty('age', 25);
+            $this->user3->setDynamicProperty('age', 45);
 
             $results = SimpleTestUser::orderByProperty('age', 'asc')->get();
 
@@ -363,18 +363,18 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         });
 
         it('handles magic isset correctly', function () {
-            $this->user->setProperty('bio', 'Test bio');
+            $this->user->setDynamicProperty('bio', 'Test bio');
 
             expect(isset($this->user->prop_bio))->toBeTrue();
             expect(isset($this->user->prop_non_existent))->toBeFalse();
         });
 
         it('handles magic unset correctly', function () {
-            $this->user->setProperty('bio', 'Test bio');
-            expect($this->user->getProperty('bio'))->toBe('Test bio');
+            $this->user->setDynamicProperty('bio', 'Test bio');
+            expect($this->user->getDynamicProperty('bio'))->toBe('Test bio');
 
             unset($this->user->prop_bio);
-            expect($this->user->getProperty('bio'))->toBeNull();
+            expect($this->user->getDynamicProperty('bio'))->toBeNull();
         });
 
         it('throws appropriate exceptions for magic setter with invalid properties', function () {
@@ -471,8 +471,8 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
                 });
             }
 
-            $this->user->setProperty('bio', 'Test bio');
-            $this->user->setProperty('age', 25);
+            $this->user->setDynamicProperty('bio', 'Test bio');
+            $this->user->setDynamicProperty('age', 25);
 
             // Clear JSON column
             $this->user->update(['dynamic_properties' => null]);
@@ -588,13 +588,13 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             ]);
 
             // Debug: Check if properties were set correctly
-            expect($this->user->getProperty('active'))->toBeTrue();
-            expect($this->user->getProperty('join_date')->format('Y-m-d'))->toBe('2020-01-15');
-            expect($this->user->getProperty('bio'))->toContain('Developer');
+            expect($this->user->getDynamicProperty('active'))->toBeTrue();
+            expect($this->user->getDynamicProperty('join_date')->format('Y-m-d'))->toBe('2020-01-15');
+            expect($this->user->getDynamicProperty('bio'))->toContain('Developer');
 
-            expect($this->user2->getProperty('active'))->toBeTrue();
-            expect($this->user2->getProperty('join_date')->format('Y-m-d'))->toBe('2022-06-01');
-            expect($this->user2->getProperty('bio'))->toContain('Developer');
+            expect($this->user2->getDynamicProperty('active'))->toBeTrue();
+            expect($this->user2->getDynamicProperty('join_date')->format('Y-m-d'))->toBe('2022-06-01');
+            expect($this->user2->getDynamicProperty('bio'))->toContain('Developer');
 
             // Test individual scopes first
             $activeUsers = SimpleTestUser::whereProperty('active', true)->get();
@@ -626,7 +626,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             ]);
 
             // Update some properties
-            $this->user->setProperty('bio', 'Updated bio');
+            $this->user->setDynamicProperty('bio', 'Updated bio');
             $this->user->prop_age = 26;
 
             // Remove a property

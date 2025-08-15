@@ -73,7 +73,7 @@ describe('Comprehensive Error Handling', function () {
     describe('Property not found errors', function () {
         it('provides clear error messages for non-existent properties', function () {
             try {
-                $this->service->setProperty($this->user, 'non_existent_property', 'value');
+                $this->service->setDynamicProperty($this->user, 'non_existent_property', 'value');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyNotFoundException $e) {
                 expect($e->getMessage())->toContain('non_existent_property');
@@ -93,7 +93,7 @@ describe('Comprehensive Error Handling', function () {
     describe('Validation errors', function () {
         it('validates required fields', function () {
             try {
-                $this->service->setProperty($this->user, 'phone', '');
+                $this->service->setDynamicProperty($this->user, 'phone', '');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Phone Number');
@@ -104,7 +104,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('validates text length constraints', function () {
             try {
-                $this->service->setProperty($this->user, 'phone', '123'); // Too short
+                $this->service->setDynamicProperty($this->user, 'phone', '123'); // Too short
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Phone Number');
@@ -112,7 +112,7 @@ describe('Comprehensive Error Handling', function () {
             }
 
             try {
-                $this->service->setProperty($this->user, 'phone', '1234567890123456'); // Too long
+                $this->service->setDynamicProperty($this->user, 'phone', '1234567890123456'); // Too long
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Phone Number');
@@ -122,7 +122,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('validates number range constraints', function () {
             try {
-                $this->service->setProperty($this->user, 'age', -5);
+                $this->service->setDynamicProperty($this->user, 'age', -5);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Age');
@@ -130,7 +130,7 @@ describe('Comprehensive Error Handling', function () {
             }
 
             try {
-                $this->service->setProperty($this->user, 'age', 150);
+                $this->service->setDynamicProperty($this->user, 'age', 150);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Age');
@@ -140,7 +140,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('validates select options', function () {
             try {
-                $this->service->setProperty($this->user, 'status', 'invalid_status');
+                $this->service->setDynamicProperty($this->user, 'status', 'invalid_status');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Status');
@@ -150,7 +150,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('validates date constraints', function () {
             try {
-                $this->service->setProperty($this->user, 'birth_date', '2030-01-01'); // Future date
+                $this->service->setDynamicProperty($this->user, 'birth_date', '2030-01-01'); // Future date
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Birth Date');
@@ -160,7 +160,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('validates type constraints', function () {
             try {
-                $this->service->setProperty($this->user, 'age', 'not a number');
+                $this->service->setDynamicProperty($this->user, 'age', 'not a number');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 expect($e->getUserMessage())->toContain('Age');
@@ -197,8 +197,8 @@ describe('Comprehensive Error Handling', function () {
 
         it('maintains data consistency on failures', function () {
             // Set initial valid values
-            $this->service->setProperty($this->user, 'phone', '1234567890');
-            $this->service->setProperty($this->user, 'age', 25);
+            $this->service->setDynamicProperty($this->user, 'phone', '1234567890');
+            $this->service->setDynamicProperty($this->user, 'age', 25);
 
             // Try batch update with some invalid values
             try {
@@ -210,11 +210,11 @@ describe('Comprehensive Error Handling', function () {
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
                 // Original values should be unchanged
-                expect($this->user->getProperty('phone'))->toBe('1234567890');
-                expect($this->user->getProperty('age'))->toBe(25.0);
+                expect($this->user->getDynamicProperty('phone'))->toBe('1234567890');
+                expect($this->user->getDynamicProperty('age'))->toBe(25.0);
 
                 // New property should not be set
-                expect($this->user->getProperty('status'))->toBeNull();
+                expect($this->user->getDynamicProperty('status'))->toBeNull();
             }
         });
     });
@@ -224,7 +224,7 @@ describe('Comprehensive Error Handling', function () {
             $unsavedUser = new TestUser(['name' => 'Unsaved', 'email' => 'unsaved@example.com']);
 
             try {
-                $this->service->setProperty($unsavedUser, 'phone', '1234567890');
+                $this->service->setDynamicProperty($unsavedUser, 'phone', '1234567890');
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyOperationException $e) {
                 expect($e->getUserMessage())->toContain('could not be completed');
@@ -274,10 +274,10 @@ describe('Comprehensive Error Handling', function () {
 
     describe('HasProperties trait error handling', function () {
         it('propagates exceptions through trait methods', function () {
-            expect(fn () => $this->user->setProperty('non_existent', 'value'))
+            expect(fn () => $this->user->setDynamicProperty('non_existent', 'value'))
                 ->toThrow(PropertyNotFoundException::class);
 
-            expect(fn () => $this->user->setProperty('phone', ''))
+            expect(fn () => $this->user->setDynamicProperty('phone', ''))
                 ->toThrow(PropertyValidationException::class);
         });
 
@@ -290,7 +290,7 @@ describe('Comprehensive Error Handling', function () {
     describe('Error message quality', function () {
         it('provides user-friendly messages with property labels', function () {
             try {
-                $this->service->setProperty($this->user, 'phone', '123');
+                $this->service->setDynamicProperty($this->user, 'phone', '123');
             } catch (PropertyValidationException $e) {
                 $message = $e->getUserMessage();
                 expect($message)->toContain('Phone Number'); // Uses label, not 'phone'
@@ -300,7 +300,7 @@ describe('Comprehensive Error Handling', function () {
 
         it('provides structured error data for APIs', function () {
             try {
-                $this->service->setProperty($this->user, 'phone', '');
+                $this->service->setDynamicProperty($this->user, 'phone', '');
             } catch (PropertyValidationException $e) {
                 $array = $e->toArray();
 
@@ -320,17 +320,17 @@ describe('Comprehensive Error Handling', function () {
     describe('Successful operations', function () {
         it('allows valid property operations', function () {
             // These should all succeed without throwing exceptions
-            $this->service->setProperty($this->user, 'phone', '1234567890');
-            $this->service->setProperty($this->user, 'age', 25);
-            $this->service->setProperty($this->user, 'status', 'active');
-            $this->service->setProperty($this->user, 'birth_date', '1990-01-01');
-            $this->service->setProperty($this->user, 'is_verified', true);
+            $this->service->setDynamicProperty($this->user, 'phone', '1234567890');
+            $this->service->setDynamicProperty($this->user, 'age', 25);
+            $this->service->setDynamicProperty($this->user, 'status', 'active');
+            $this->service->setDynamicProperty($this->user, 'birth_date', '1990-01-01');
+            $this->service->setDynamicProperty($this->user, 'is_verified', true);
 
             // Verify values were set correctly
-            expect($this->user->getProperty('phone'))->toBe('1234567890');
-            expect($this->user->getProperty('age'))->toBe(25.0);
-            expect($this->user->getProperty('status'))->toBe('active');
-            expect($this->user->getProperty('is_verified'))->toBe(true);
+            expect($this->user->getDynamicProperty('phone'))->toBe('1234567890');
+            expect($this->user->getDynamicProperty('age'))->toBe(25.0);
+            expect($this->user->getDynamicProperty('status'))->toBe('active');
+            expect($this->user->getDynamicProperty('is_verified'))->toBe(true);
         });
 
         it('allows batch property operations', function () {
@@ -344,7 +344,7 @@ describe('Comprehensive Error Handling', function () {
             $this->service->setProperties($this->user, $properties);
 
             foreach ($properties as $name => $expectedValue) {
-                $actualValue = $this->user->getProperty($name);
+                $actualValue = $this->user->getDynamicProperty($name);
                 if ($name === 'age') {
                     expect($actualValue)->toBe((float) $expectedValue);
                 } else {

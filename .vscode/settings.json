@@ -1,0 +1,6 @@
+{
+    "kiroAgent.trustedCommands": [
+        "*",
+        "./vendor/bin/pest --no-coverage --exclude-group=performance 2>&1 | grep -E \"(FAILED|Tests:)\" | tail -5"
+    ]
+}

@@ -93,9 +93,9 @@ it('can sync properties to json column', function () {
     $propertyService = app(PropertyService::class);
 
     // Set some properties
-    $propertyService->setProperty($user, 'phone', '+1234567890');
-    $propertyService->setProperty($user, 'age', 25);
-    $propertyService->setProperty($user, 'active', true);
+    $propertyService->setDynamicProperty($user, 'phone', '+1234567890');
+    $propertyService->setDynamicProperty($user, 'age', 25);
+    $propertyService->setDynamicProperty($user, 'active', true);
 
     // Refresh the user to get updated data
     $user->refresh();
@@ -119,8 +119,8 @@ it('prefers json column over entity properties table', function () {
     $propertyService = app(PropertyService::class);
 
     // Set properties normally (this will create entity_properties records and sync to JSON)
-    $propertyService->setProperty($user, 'phone', '+1234567890');
-    $propertyService->setProperty($user, 'age', 25);
+    $propertyService->setDynamicProperty($user, 'phone', '+1234567890');
+    $propertyService->setDynamicProperty($user, 'age', 25);
 
     // Manually update the JSON column with different values
     $user->update(['dynamic_properties' => [
@@ -146,8 +146,8 @@ it('falls back to entity properties when json column missing', function () {
     $propertyService = app(PropertyService::class);
 
     // Set some properties
-    $propertyService->setProperty($user, 'phone', '+1234567890');
-    $propertyService->setProperty($user, 'age', 25);
+    $propertyService->setDynamicProperty($user, 'phone', '+1234567890');
+    $propertyService->setDynamicProperty($user, 'age', 25);
 
     // Properties should be retrieved from entity_properties table
     $properties = $user->properties;
@@ -170,11 +170,11 @@ it('can sync all entities of a type', function () {
     $propertyService = app(PropertyService::class);
 
     // Set properties for both users (without JSON column initially)
-    $propertyService->setProperty($user1, 'phone', '+1111111111');
-    $propertyService->setProperty($user1, 'age', 25);
+    $propertyService->setDynamicProperty($user1, 'phone', '+1111111111');
+    $propertyService->setDynamicProperty($user1, 'age', 25);
 
-    $propertyService->setProperty($user2, 'phone', '+2222222222');
-    $propertyService->setProperty($user2, 'age', 30);
+    $propertyService->setDynamicProperty($user2, 'phone', '+2222222222');
+    $propertyService->setDynamicProperty($user2, 'age', 30);
 
     // Now add the JSON column
     Schema::table('users', function ($table) {
@@ -209,9 +209,9 @@ it('handles json column gracefully when not present', function () {
     $propertyService->syncJsonColumn($user);
 
     // Setting properties should still work
-    $propertyService->setProperty($user, 'phone', '+1234567890');
+    $propertyService->setDynamicProperty($user, 'phone', '+1234567890');
 
-    expect($user->getProperty('phone'))->toBe('+1234567890');
+    expect($user->getDynamicProperty('phone'))->toBe('+1234567890');
 });
 
 it('trait methods work with json caching', function () {
@@ -227,7 +227,7 @@ it('trait methods work with json caching', function () {
     expect($user->hasJsonPropertiesColumn())->toBeTrue();
 
     // Set properties using trait methods
-    $user->setProperty('phone', '+1234567890');
+    $user->setDynamicProperty('phone', '+1234567890');
     $user->prop_age = 25;
 
     // Test syncPropertiesToJson method

@@ -45,23 +45,23 @@ trait HasProperties
     }
 
     /**
-     * Set a property value using the PropertyService
+     * Set a dynamic property value using the PropertyService
      *
      * @throws \DynamicProperties\Exceptions\PropertyNotFoundException
      * @throws \DynamicProperties\Exceptions\PropertyValidationException
      * @throws \DynamicProperties\Exceptions\PropertyOperationException
      */
-    public function setProperty(string $name, mixed $value): void
+    public function setDynamicProperty(string $name, mixed $value): void
     {
-        app(PropertyService::class)->setProperty($this, $name, $value);
+        app(PropertyService::class)->setDynamicProperty($this, $name, $value);
     }
 
     /**
-     * Get a property value using the PropertyService
+     * Get a dynamic property value using the PropertyService
      */
-    public function getProperty(string $name): mixed
+    public function getDynamicProperty(string $name): mixed
     {
-        return app(PropertyService::class)->getProperty($this, $name);
+        return app(PropertyService::class)->getDynamicProperty($this, $name);
     }
 
     /**
@@ -91,7 +91,7 @@ trait HasProperties
     public function __get($key)
     {
         if (str_starts_with($key, 'prop_')) {
-            return $this->getProperty(substr($key, 5));
+            return $this->getDynamicProperty(substr($key, 5));
         }
 
         return parent::__get($key);
@@ -102,13 +102,13 @@ trait HasProperties
      * Example: $user->prop_phone = '123-456-7890' sets the 'phone' property
      *
      * Note: Magic methods cannot throw typed exceptions, so property exceptions
-     * will be thrown as generic exceptions. Use setProperty() directly for better error handling.
+     * will be thrown as generic exceptions. Use setDynamicProperty() directly for better error handling.
      */
     public function __set($key, $value)
     {
         if (str_starts_with($key, 'prop_')) {
             try {
-                $this->setProperty(substr($key, 5), $value);
+                $this->setDynamicProperty(substr($key, 5), $value);
             } catch (\DynamicProperties\Exceptions\PropertyException $e) {
                 // Convert to generic exception for magic method compatibility
                 throw new \InvalidArgumentException($e->getUserMessage(), $e->getCode(), $e);
@@ -125,7 +125,7 @@ trait HasProperties
     public function __isset($key)
     {
         if (str_starts_with($key, 'prop_')) {
-            $propertyValue = $this->getProperty(substr($key, 5));
+            $propertyValue = $this->getDynamicProperty(substr($key, 5));
 
             return $propertyValue !== null;
         }

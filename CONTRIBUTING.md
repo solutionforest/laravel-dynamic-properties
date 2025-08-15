@@ -165,7 +165,7 @@ class PropertyService
      * @throws PropertyNotFoundException
      * @throws PropertyValidationException
      */
-    public function setProperty(Model $entity, string $name, mixed $value): void
+    public function setDynamicProperty(Model $entity, string $name, mixed $value): void
     {
         // Implementation...
     }
@@ -175,7 +175,7 @@ class PropertyService
 #### Naming Conventions
 
 - **Classes**: PascalCase (`PropertyService`)
-- **Methods**: camelCase (`setProperty`)
+- **Methods**: camelCase (`setDynamicProperty`)
 - **Variables**: camelCase (`$propertyName`)
 - **Constants**: SCREAMING_SNAKE_CASE (`MAX_PROPERTY_LENGTH`)
 - **Database tables**: snake_case (`entity_properties`)
@@ -310,15 +310,15 @@ describe('PropertyService', function () {
     it('can set a property value', function () {
         $user = User::factory()->create();
         
-        $this->service->setProperty($user, 'test_property', 'test value');
+        $this->service->setDynamicProperty($user, 'test_property', 'test value');
         
-        expect($user->getProperty('test_property'))->toBe('test value');
+        expect($user->getDynamicProperty('test_property'))->toBe('test value');
     });
 
     it('throws exception for invalid property', function () {
         $user = User::factory()->create();
         
-        expect(fn() => $this->service->setProperty($user, 'invalid', 'value'))
+        expect(fn() => $this->service->setDynamicProperty($user, 'invalid', 'value'))
             ->toThrow(PropertyNotFoundException::class);
     });
 });
@@ -344,8 +344,8 @@ describe('Property Search', function () {
         $engineeringUser = User::factory()->create();
         $marketingUser = User::factory()->create();
         
-        $engineeringUser->setProperty('department', 'engineering');
-        $marketingUser->setProperty('department', 'marketing');
+        $engineeringUser->setDynamicProperty('department', 'engineering');
+        $marketingUser->setDynamicProperty('department', 'marketing');
         
         $results = User::whereProperty('department', 'engineering')->get();
         

@@ -62,27 +62,27 @@ describe('PropertyService - Comprehensive Tests', function () {
     it('can set and get a text property', function () {
         $propertyService = app(PropertyService::class);
 
-        $propertyService->setProperty($this->user, 'bio', 'This is my biography');
+        $propertyService->setDynamicProperty($this->user, 'bio', 'This is my biography');
 
-        $value = $propertyService->getProperty($this->user, 'bio');
+        $value = $propertyService->getDynamicProperty($this->user, 'bio');
         expect($value)->toBe('This is my biography');
     });
 
     it('can set and get a number property', function () {
         $propertyService = app(PropertyService::class);
 
-        $propertyService->setProperty($this->user, 'age', 25);
+        $propertyService->setDynamicProperty($this->user, 'age', 25);
 
-        $value = $propertyService->getProperty($this->user, 'age');
+        $value = $propertyService->getDynamicProperty($this->user, 'age');
         expect($value)->toBe(25.0);
     });
 
     it('can set and get a boolean property', function () {
         $propertyService = app(PropertyService::class);
 
-        $propertyService->setProperty($this->user, 'active', true);
+        $propertyService->setDynamicProperty($this->user, 'active', true);
 
-        $value = $propertyService->getProperty($this->user, 'active');
+        $value = $propertyService->getDynamicProperty($this->user, 'active');
         expect($value)->toBeTrue();
     });
 
@@ -106,7 +106,7 @@ describe('PropertyService - Comprehensive Tests', function () {
     it('throws exception for non-existent property', function () {
         $propertyService = app(PropertyService::class);
 
-        expect(fn () => $propertyService->setProperty($this->user, 'non_existent', 'value'))
+        expect(fn () => $propertyService->setDynamicProperty($this->user, 'non_existent', 'value'))
             ->toThrow(\DynamicProperties\Exceptions\PropertyNotFoundException::class);
     });
 
@@ -127,8 +127,8 @@ describe('PropertyService - Comprehensive Tests', function () {
         $user2->fill(['name' => 'User 2', 'email' => 'user2@example.com'])->save();
 
         // Set properties
-        $propertyService->setProperty($this->user, 'active', true);
-        $propertyService->setProperty($user2, 'active', false);
+        $propertyService->setDynamicProperty($this->user, 'active', true);
+        $propertyService->setDynamicProperty($user2, 'active', false);
 
         // Search for active users
         $results = $propertyService->search(get_class($this->user), ['active' => true]);
@@ -147,7 +147,7 @@ describe('PropertyService - Comprehensive Tests', function () {
             });
         }
 
-        $propertyService->setProperty($this->user, 'bio', 'My biography');
+        $propertyService->setDynamicProperty($this->user, 'bio', 'My biography');
 
         $this->user->refresh();
 
@@ -213,11 +213,11 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can remove properties', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'bio', 'Test bio');
-            expect($propertyService->getProperty($this->user, 'bio'))->toBe('Test bio');
+            $propertyService->setDynamicProperty($this->user, 'bio', 'Test bio');
+            expect($propertyService->getDynamicProperty($this->user, 'bio'))->toBe('Test bio');
 
             $propertyService->removeProperty($this->user, 'bio');
-            expect($propertyService->getProperty($this->user, 'bio'))->toBeNull();
+            expect($propertyService->getDynamicProperty($this->user, 'bio'))->toBeNull();
         });
 
         it('can get all properties for an entity', function () {
@@ -245,7 +245,7 @@ describe('PropertyService - Comprehensive Tests', function () {
             expect($properties)->toBeArray();
             expect($properties)->toBeEmpty();
 
-            $value = $propertyService->getProperty($this->user, 'non_existent');
+            $value = $propertyService->getDynamicProperty($this->user, 'non_existent');
             expect($value)->toBeNull();
         });
     });
@@ -358,9 +358,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can search with advanced criteria using operators', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'age', 25);
-            $propertyService->setProperty($this->user2, 'age', 35);
-            $propertyService->setProperty($this->user3, 'age', 45);
+            $propertyService->setDynamicProperty($this->user, 'age', 25);
+            $propertyService->setDynamicProperty($this->user2, 'age', 35);
+            $propertyService->setDynamicProperty($this->user3, 'age', 45);
 
             $results = $propertyService->advancedSearch(get_class($this->user), [
                 'age' => ['value' => 30, 'operator' => '>'],
@@ -374,9 +374,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can search with OR logic', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'age', 25);
-            $propertyService->setProperty($this->user2, 'age', 35);
-            $propertyService->setProperty($this->user3, 'age', 45);
+            $propertyService->setDynamicProperty($this->user, 'age', 25);
+            $propertyService->setDynamicProperty($this->user2, 'age', 35);
+            $propertyService->setDynamicProperty($this->user3, 'age', 45);
 
             $results = $propertyService->advancedSearch(get_class($this->user), [
                 'age' => ['operator' => 'in', 'value' => [25, 45]],
@@ -389,9 +389,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can search number ranges', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'age', 25);
-            $propertyService->setProperty($this->user2, 'age', 35);
-            $propertyService->setProperty($this->user3, 'age', 45);
+            $propertyService->setDynamicProperty($this->user, 'age', 25);
+            $propertyService->setDynamicProperty($this->user2, 'age', 35);
+            $propertyService->setDynamicProperty($this->user3, 'age', 45);
 
             $results = $propertyService->searchNumberRange(get_class($this->user), 'age', 30, 40);
 
@@ -403,9 +403,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can search text with partial matching', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'bio', 'Software developer from New York');
-            $propertyService->setProperty($this->user2, 'bio', 'Designer from Los Angeles');
-            $propertyService->setProperty($this->user3, 'bio', 'Manager from New York');
+            $propertyService->setDynamicProperty($this->user, 'bio', 'Software developer from New York');
+            $propertyService->setDynamicProperty($this->user2, 'bio', 'Designer from Los Angeles');
+            $propertyService->setDynamicProperty($this->user3, 'bio', 'Manager from New York');
 
             $results = $propertyService->searchText(get_class($this->user), 'bio', 'New York');
 
@@ -417,9 +417,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('can search boolean values', function () {
             $propertyService = app(PropertyService::class);
 
-            $propertyService->setProperty($this->user, 'active', true);
-            $propertyService->setProperty($this->user2, 'active', false);
-            $propertyService->setProperty($this->user3, 'active', true);
+            $propertyService->setDynamicProperty($this->user, 'active', true);
+            $propertyService->setDynamicProperty($this->user2, 'active', false);
+            $propertyService->setDynamicProperty($this->user3, 'active', true);
 
             $results = $propertyService->searchBoolean(get_class($this->user), 'active', true);
 
@@ -472,11 +472,11 @@ describe('PropertyService - Comprehensive Tests', function () {
             $propertyService = app(PropertyService::class);
 
             // Set properties for multiple users (without JSON column initially)
-            $propertyService->setProperty($this->user, 'bio', 'User 1 bio');
+            $propertyService->setDynamicProperty($this->user, 'bio', 'User 1 bio');
 
             $userClass = get_class($this->user);
             $user2 = $userClass::create(['name' => 'User 2', 'email' => 'user2@example.com']);
-            $propertyService->setProperty($user2, 'bio', 'User 2 bio');
+            $propertyService->setDynamicProperty($user2, 'bio', 'User 2 bio');
 
             // Add JSON column
             if (! Schema::hasColumn('users', 'dynamic_properties')) {
@@ -513,7 +513,7 @@ describe('PropertyService - Comprehensive Tests', function () {
             $unsavedUser->fill(['name' => 'Unsaved', 'email' => 'unsaved@example.com']);
             // Don't save the user
 
-            expect(fn () => $propertyService->setProperty($unsavedUser, 'bio', 'Test'))
+            expect(fn () => $propertyService->setDynamicProperty($unsavedUser, 'bio', 'Test'))
                 ->toThrow(\DynamicProperties\Exceptions\PropertyOperationException::class);
         });
 

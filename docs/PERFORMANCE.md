@@ -147,8 +147,8 @@ Schema::table('users', function (Blueprint $table) {
 });
 
 // Properties are automatically cached
-$user->setProperty('phone', '+1234567890'); // Updates both EAV and JSON
-$phone = $user->getProperty('phone'); // Reads from JSON (< 1ms)
+$user->setDynamicProperty('phone', '+1234567890'); // Updates both EAV and JSON
+$phone = $user->getDynamicProperty('phone'); // Reads from JSON (< 1ms)
 ```
 
 **Performance Gain:**
@@ -192,19 +192,19 @@ CREATE INDEX idx_common_search ON entity_properties
 // Bad: N+1 queries
 $users = User::all();
 foreach ($users as $user) {
-    echo $user->getProperty('department'); // Query per user
+    echo $user->getDynamicProperty('department'); // Query per user
 }
 
 // Good: Eager loading
 $users = User::with('entityProperties')->get();
 foreach ($users as $user) {
-    echo $user->getProperty('department'); // No additional queries
+    echo $user->getDynamicProperty('department'); // No additional queries
 }
 
 // Best: JSON cache
 $users = User::select(['id', 'name', 'dynamic_properties'])->get();
 foreach ($users as $user) {
-    echo $user->getProperty('department'); // < 1ms per access
+    echo $user->getDynamicProperty('department'); // < 1ms per access
 }
 ```
 
@@ -239,7 +239,7 @@ $users = User::whereHas('entityProperties', function($query) {
 // Bad: Individual updates
 foreach ($userIds as $userId) {
     $user = User::find($userId);
-    $user->setProperty('is_active', true);
+    $user->setDynamicProperty('is_active', true);
 }
 
 // Good: Bulk update with transaction
@@ -280,16 +280,16 @@ Property::upsert($properties, ['name'], ['label', 'type', 'validation']);
 // Cache frequently accessed properties
 class CachedPropertyService extends PropertyService
 {
-    public function getProperty(Model $entity, string $name): mixed
+    public function getDynamicProperty(Model $entity, string $name): mixed
     {
         $cacheKey = "property:{$entity->getMorphClass()}:{$entity->id}:{$name}";
         
         return Cache::remember($cacheKey, 3600, function() use ($entity, $name) {
-            return parent::getProperty($entity, $name);
+            return parent::getDynamicProperty($entity, $name);
         });
     }
     
-    public function setProperty(Model $entity, string $name, mixed $value): void
+    public function setDynamicProperty(Model $entity, string $name, mixed $value): void
     {
         parent::setProperty($entity, $name, $value);
         
