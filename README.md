@@ -135,7 +135,7 @@ $user->setProperties([
 
 > **💡 Pro Tip**: Use the Artisan command to create properties interactively:
 > ```bash
-> php artisan properties:create
+> php artisan dynamic-properties:create
 > ```
 
 ### 4. Search by Properties
@@ -363,16 +363,16 @@ The package includes helpful Artisan commands:
 
 ```bash
 # List all properties
-php artisan properties:list
+php artisan dynamic-properties:list
 
 # Create a new property
-php artisan properties:create
+php artisan dynamic-properties:create
 
 # Delete a property
-php artisan properties:delete property_name
+php artisan dynamic-properties:delete property_name
 
 # Sync JSON cache for all entities
-php artisan properties:cache-sync
+php artisan dynamic-properties:cache-sync
 ```
 
 ## API Reference
