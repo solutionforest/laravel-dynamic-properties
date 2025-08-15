@@ -7,6 +7,12 @@
 
 A dynamic property system for Laravel that allows any entity (users, companies, contacts, etc.) to have custom properties with validation, search capabilities, and optimal performance.
 
+## Requirements
+
+- **PHP**: 8.3 or higher
+- **Laravel**: 11.0 or higher
+- **Database**: MySQL 8.0+ or SQLite 3.35+ (with JSON support)
+
 ## Features
 
 - **Simple Architecture**: Clean 2-table design with optional JSON caching

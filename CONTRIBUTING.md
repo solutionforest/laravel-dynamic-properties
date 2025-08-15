@@ -40,10 +40,11 @@ We welcome several types of contributions:
 
 ### Prerequisites
 
-- PHP 8.1 or higher
+- PHP 8.3 or higher
+- Laravel 11.0 or higher
 - Composer
 - Git
-- A supported database (MySQL, PostgreSQL, or SQLite)
+- A supported database (MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+)
 
 ### Local Development Environment
 

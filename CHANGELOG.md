@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING**: Updated minimum PHP requirement to 8.3+
+- **BREAKING**: Updated minimum Laravel requirement to 11.0+
+- **BREAKING**: Updated minimum MySQL requirement to 8.0+
+- Removed support for Laravel 12.0 (not yet stable)
+
 ### Fixed
 - **BREAKING**: Fixed critical bug in `whereProperty` comparison operators where column type was incorrectly determined by search value type instead of property definition type
 - **BREAKING**: Updated `scopeWhereProperty` parameter order to `($query, $name, $operator = '=', $value = null)` for consistency with Laravel conventions
@@ -18,11 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced search operators (BETWEEN, NOT IN)
 - Property inheritance system
 - Bulk property validation command
+- Comprehensive documentation warnings about property definition requirements
 
 ### Changed
 - Improved query performance for large datasets
 - Enhanced error messages for validation failures
-- Updated minimum PHP version to 8.2
+- Updated minimum PHP version to 8.3
 
 ### Fixed
 - Memory leak in bulk operations

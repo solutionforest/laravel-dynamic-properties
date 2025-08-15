@@ -2,6 +2,12 @@
 
 This document provides detailed information about the performance characteristics of the Laravel Dynamic Properties package and strategies for optimization.
 
+## Requirements
+
+- **PHP**: 8.3 or higher
+- **Laravel**: 11.0 or higher
+- **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
+
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)

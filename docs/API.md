@@ -1,5 +1,11 @@
 # API Documentation
 
+## Requirements
+
+- **PHP**: 8.3 or higher
+- **Laravel**: 11.0 or higher
+- **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
+
 > **⚠️ IMPORTANT**: Property definitions must be created before setting property values. All `setDynamicProperty` methods will throw `PropertyNotFoundException` if the property doesn't exist. Search methods (`whereProperty`) will work but fall back to less optimal type detection without property definitions.
 
 ## Table of Contents

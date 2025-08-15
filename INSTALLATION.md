@@ -17,8 +17,8 @@ This guide provides detailed instructions for installing and configuring the Lar
 ### System Requirements
 
 - **PHP**: 8.3 or higher
-- **Laravel**: 11.0 or higher
-- **Database**: MySQL 8.1+, PostgreSQL 12+, or SQLite 3.35+
+- **Laravel**: 11.0 or higher  
+- **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
 
 ### PHP Extensions
 
@@ -29,7 +29,7 @@ This guide provides detailed instructions for installing and configuring the Lar
 ### Database-Specific Requirements
 
 #### MySQL
-- Version 5.7 or higher (for JSON support)
+- Version 8.0 or higher (for improved JSON support)
 - `innodb_large_prefix` enabled (for longer indexes)
 
 #### PostgreSQL
