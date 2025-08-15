@@ -1,15 +1,15 @@
 <?php
 
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyOperationException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Database\Eloquent\Model;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class TestUser extends Model
 {
-    use \DynamicProperties\Traits\HasProperties;
+    use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
     protected $table = 'test_users';
 
@@ -30,41 +30,41 @@ beforeEach(function () {
 
     // Create comprehensive test properties
     Property::create([
-        'name' => 'phone',
-        'label' => 'Phone Number',
-        'type' => 'text',
-        'required' => true,
+        'name'       => 'phone',
+        'label'      => 'Phone Number',
+        'type'       => 'text',
+        'required'   => true,
         'validation' => ['min' => 10, 'max' => 15],
     ]);
 
     Property::create([
-        'name' => 'age',
-        'label' => 'Age',
-        'type' => 'number',
-        'required' => false,
+        'name'       => 'age',
+        'label'      => 'Age',
+        'type'       => 'number',
+        'required'   => false,
         'validation' => ['min' => 0, 'max' => 120],
     ]);
 
     Property::create([
-        'name' => 'status',
-        'label' => 'Status',
-        'type' => 'select',
+        'name'     => 'status',
+        'label'    => 'Status',
+        'type'     => 'select',
         'required' => true,
-        'options' => ['active', 'inactive', 'pending'],
+        'options'  => ['active', 'inactive', 'pending'],
     ]);
 
     Property::create([
-        'name' => 'birth_date',
-        'label' => 'Birth Date',
-        'type' => 'date',
-        'required' => false,
+        'name'       => 'birth_date',
+        'label'      => 'Birth Date',
+        'type'       => 'date',
+        'required'   => false,
         'validation' => ['before' => 'today'],
     ]);
 
     Property::create([
-        'name' => 'is_verified',
-        'label' => 'Is Verified',
-        'type' => 'boolean',
+        'name'     => 'is_verified',
+        'label'    => 'Is Verified',
+        'type'     => 'boolean',
         'required' => false,
     ]);
 });
@@ -172,9 +172,9 @@ describe('Comprehensive Error Handling', function () {
     describe('Batch operation errors', function () {
         it('validates all properties before making changes', function () {
             $properties = [
-                'phone' => '123', // Too short
-                'age' => -5, // Too low
-                'status' => 'invalid', // Invalid option
+                'phone'        => '123', // Too short
+                'age'          => -5, // Too low
+                'status'       => 'invalid', // Invalid option
                 'non_existent' => 'value', // Doesn't exist
             ];
 
@@ -203,8 +203,8 @@ describe('Comprehensive Error Handling', function () {
             // Try batch update with some invalid values
             try {
                 $this->service->setProperties($this->user, [
-                    'phone' => '123', // Invalid
-                    'age' => 30, // Valid
+                    'phone'  => '123', // Invalid
+                    'age'    => 30, // Valid
                     'status' => 'active', // Valid
                 ]);
                 expect(false)->toBeTrue('Should have thrown exception');
@@ -242,9 +242,9 @@ describe('Comprehensive Error Handling', function () {
         it('validates property definitions comprehensively', function () {
             try {
                 $this->service->createProperty([
-                    'name' => '123invalid', // Invalid name
-                    'label' => '', // Missing label
-                    'type' => 'invalid_type', // Invalid type
+                    'name'       => '123invalid', // Invalid name
+                    'label'      => '', // Missing label
+                    'type'       => 'invalid_type', // Invalid type
                     'validation' => [
                         'min' => -1, // Invalid validation
                         'max' => 'invalid', // Invalid validation
@@ -261,9 +261,9 @@ describe('Comprehensive Error Handling', function () {
         it('prevents duplicate property names', function () {
             try {
                 $this->service->createProperty([
-                    'name' => 'phone', // Already exists
+                    'name'  => 'phone', // Already exists
                     'label' => 'Duplicate Phone',
-                    'type' => 'text',
+                    'type'  => 'text',
                 ]);
                 expect(false)->toBeTrue('Should have thrown exception');
             } catch (PropertyValidationException $e) {
@@ -335,9 +335,9 @@ describe('Comprehensive Error Handling', function () {
 
         it('allows batch property operations', function () {
             $properties = [
-                'phone' => '1234567890',
-                'age' => 30,
-                'status' => 'active',
+                'phone'       => '1234567890',
+                'age'         => 30,
+                'status'      => 'active',
                 'is_verified' => true,
             ];
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Models;
+namespace SolutionForest\LaravelDynamicProperties\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,8 +17,8 @@ class Property extends Model
     ];
 
     protected $casts = [
-        'required' => 'boolean',
-        'options' => 'array',
+        'required'   => 'boolean',
+        'options'    => 'array',
         'validation' => 'array',
     ];
 
@@ -57,12 +57,12 @@ class Property extends Model
 
         // Type validation
         $typeValid = match ($this->type) {
-            'text' => is_string($value) || is_numeric($value),
-            'number' => is_numeric($value),
-            'date' => $this->isValidDate($value),
+            'text'    => is_string($value) || is_numeric($value),
+            'number'  => is_numeric($value),
+            'date'    => $this->isValidDate($value),
             'boolean' => $this->isValidBoolean($value),
-            'select' => $value !== '' && $value !== null && in_array($value, $this->options ?? []),
-            default => false
+            'select'  => $value !== '' && $value !== null && in_array($value, $this->options ?? []),
+            default   => false
         };
 
         if (! $typeValid) {
@@ -84,10 +84,10 @@ class Property extends Model
     {
         return match ($this->type) {
             'text', 'select' => (string) $value,
-            'number' => is_numeric($value) ? (float) $value : $value,
-            'date' => $this->castToDate($value),
+            'number'  => is_numeric($value) ? (float) $value : $value,
+            'date'    => $this->castToDate($value),
             'boolean' => $this->castToBoolean($value),
-            default => $value
+            default   => $value
         };
     }
 
@@ -190,13 +190,13 @@ class Property extends Model
     {
         foreach ($rules as $rule => $constraint) {
             $valid = match ($rule) {
-                'min' => $this->type === 'text' ? strlen($value) >= $constraint : $value >= $constraint,
-                'max' => $this->type === 'text' ? strlen($value) <= $constraint : $value <= $constraint,
+                'min'        => $this->type === 'text' ? strlen($value) >= $constraint : $value >= $constraint,
+                'max'        => $this->type === 'text' ? strlen($value) <= $constraint : $value <= $constraint,
                 'min_length' => is_string($value) && strlen($value) >= $constraint,
                 'max_length' => is_string($value) && strlen($value) <= $constraint,
-                'after' => $this->type === 'date' && $this->isDateAfter($value, $constraint),
-                'before' => $this->type === 'date' && $this->isDateBefore($value, $constraint),
-                default => true
+                'after'      => $this->type === 'date' && $this->isDateAfter($value, $constraint),
+                'before'     => $this->type === 'date' && $this->isDateBefore($value, $constraint),
+                default      => true
             };
 
             if (! $valid) {

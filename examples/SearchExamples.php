@@ -5,8 +5,8 @@
  */
 
 use App\Models\User;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService; // Assuming User model uses HasProperties trait
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService; // Assuming User model uses HasProperties trait
 
 // Initialize the service
 $propertyService = new PropertyService;
@@ -19,14 +19,14 @@ $usersInNY = User::whereProperty('city', 'New York', 'LIKE')->get();
 // Example 2: Multiple property search using query scopes
 $targetUsers = User::whereProperties([
     'active' => true,
-    'age' => 21,
-    'city' => 'New York',
+    'age'    => 21,
+    'city'   => 'New York',
 ])->get();
 
 // Example 3: Advanced search using PropertyService
 $entityIds = $propertyService->search(User::class, [
-    'age' => ['value' => 30, 'operator' => '>'],
-    'city' => 'New York',
+    'age'    => ['value' => 30, 'operator' => '>'],
+    'city'   => 'New York',
     'active' => true,
 ]);
 
@@ -35,7 +35,7 @@ $users = User::whereIn('id', $entityIds)->get();
 
 // Example 4: Text search with options
 $userIds = $propertyService->searchText(User::class, 'bio', 'developer', [
-    'full_text' => true,
+    'full_text'      => true,
     'case_sensitive' => false,
 ]);
 
@@ -61,9 +61,9 @@ $userIds = $propertyService->advancedSearch(User::class, [
 
 // Example 9: Complex search with multiple criteria
 $userIds = $propertyService->search(User::class, [
-    'age' => ['value' => 25, 'operator' => 'between', 'min' => 25, 'max' => 35],
+    'age'    => ['value' => 25, 'operator' => 'between', 'min' => 25, 'max' => 35],
     'skills' => ['value' => ['PHP', 'JavaScript'], 'operator' => 'in'],
-    'bio' => ['value' => 'developer', 'operator' => 'like', 'options' => ['full_text' => true]],
+    'bio'    => ['value' => 'developer', 'operator' => 'like', 'options' => ['full_text' => true]],
 ]);
 
 // Example 10: Using PropertyService for advanced searches

@@ -1,9 +1,9 @@
 <?php
 
-namespace DynamicProperties\Console\Commands;
+namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
-use DynamicProperties\Models\Property;
 use Illuminate\Console\Command;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyListCommand extends Command
 {

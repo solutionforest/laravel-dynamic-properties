@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Facades;
+namespace SolutionForest\LaravelDynamicProperties\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static void syncJsonColumn(\Illuminate\Database\Eloquent\Model $entity)
  * @method static int syncAllJsonColumns(string $entityType, int $batchSize = 100)
  *
- * @see \DynamicProperties\Services\PropertyService
+ * @see \SolutionForest\LaravelDynamicProperties\Services\PropertyService
  */
 class DynamicProperties extends Facade
 {

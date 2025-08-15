@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Models;
+namespace SolutionForest\LaravelDynamicProperties\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,9 +20,9 @@ class EntityProperty extends Model
     ];
 
     protected $casts = [
-        'date_value' => 'date',
+        'date_value'    => 'date',
         'boolean_value' => 'boolean',
-        'number_value' => 'float',
+        'number_value'  => 'float',
     ];
 
     /**
@@ -100,8 +100,8 @@ class EntityProperty extends Model
         // Set the appropriate column based on property type
         match ($propertyType) {
             'text', 'select' => $this->string_value = $value,
-            'number' => $this->number_value = $value,
-            'date' => $this->date_value = $value,
+            'number'  => $this->number_value = $value,
+            'date'    => $this->date_value = $value,
             'boolean' => $this->boolean_value = $value,
         };
     }
@@ -113,10 +113,10 @@ class EntityProperty extends Model
     {
         return match ($type) {
             'text', 'select' => 'string_value',
-            'number' => 'number_value',
-            'date' => 'date_value',
+            'number'  => 'number_value',
+            'date'    => 'date_value',
             'boolean' => 'boolean_value',
-            default => 'string_value'
+            default   => 'string_value'
         };
     }
 
@@ -127,33 +127,33 @@ class EntityProperty extends Model
     {
         return match ($type) {
             'text', 'select' => [
-                'string_value' => $value,
-                'number_value' => null,
-                'date_value' => null,
+                'string_value'  => $value,
+                'number_value'  => null,
+                'date_value'    => null,
                 'boolean_value' => null,
             ],
             'number' => [
-                'string_value' => null,
-                'number_value' => $value,
-                'date_value' => null,
+                'string_value'  => null,
+                'number_value'  => $value,
+                'date_value'    => null,
                 'boolean_value' => null,
             ],
             'date' => [
-                'string_value' => null,
-                'number_value' => null,
-                'date_value' => $value,
+                'string_value'  => null,
+                'number_value'  => null,
+                'date_value'    => $value,
                 'boolean_value' => null,
             ],
             'boolean' => [
-                'string_value' => null,
-                'number_value' => null,
-                'date_value' => null,
+                'string_value'  => null,
+                'number_value'  => null,
+                'date_value'    => null,
                 'boolean_value' => $value,
             ],
             default => [
-                'string_value' => $value,
-                'number_value' => null,
-                'date_value' => null,
+                'string_value'  => $value,
+                'number_value'  => null,
+                'date_value'    => null,
                 'boolean_value' => null,
             ]
         };

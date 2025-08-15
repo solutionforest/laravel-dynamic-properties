@@ -1,8 +1,8 @@
 <?php
 
-use DynamicProperties\Services\DatabaseCompatibilityService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService;
 
 return new class extends Migration
 {
@@ -19,10 +19,10 @@ return new class extends Migration
 
         // Apply database-specific optimizations
         match ($driver) {
-            'mysql' => $this->optimizeMySQL(),
+            'mysql'  => $this->optimizeMySQL(),
             'sqlite' => $this->optimizeSQLite(),
-            'pgsql' => $this->optimizePostgreSQL(),
-            default => null
+            'pgsql'  => $this->optimizePostgreSQL(),
+            default  => null
         };
     }
 
@@ -32,10 +32,10 @@ return new class extends Migration
 
         // Remove database-specific optimizations
         match ($driver) {
-            'mysql' => $this->rollbackMySQL(),
+            'mysql'  => $this->rollbackMySQL(),
             'sqlite' => $this->rollbackSQLite(),
-            'pgsql' => $this->rollbackPostgreSQL(),
-            default => null
+            'pgsql'  => $this->rollbackPostgreSQL(),
+            default  => null
         };
     }
 
@@ -192,10 +192,10 @@ return new class extends Migration
 
         try {
             return match ($driver) {
-                'mysql' => ! empty(DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])),
+                'mysql'  => ! empty(DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])),
                 'sqlite' => ! empty(DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name=?", [$index])),
-                'pgsql' => ! empty(DB::select('SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?', [$table, $index])),
-                default => false
+                'pgsql'  => ! empty(DB::select('SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?', [$table, $index])),
+                default  => false
             };
         } catch (\Exception $e) {
             return false;

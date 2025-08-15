@@ -1,10 +1,10 @@
 <?php
 
-namespace DynamicProperties\Console\Commands;
+namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
-use DynamicProperties\Models\Property;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyCreateCommand extends Command
 {
@@ -29,12 +29,12 @@ class PropertyCreateCommand extends Command
 
         // Validate input
         $validator = Validator::make([
-            'name' => $name,
-            'type' => $type,
+            'name'  => $name,
+            'type'  => $type,
             'label' => $label,
         ], [
-            'name' => 'required|string|max:255|unique:properties,name',
-            'type' => 'required|in:text,number,date,boolean,select',
+            'name'  => 'required|string|max:255|unique:properties,name',
+            'type'  => 'required|in:text,number,date,boolean,select',
             'label' => 'required|string|max:255',
         ]);
 
@@ -56,11 +56,11 @@ class PropertyCreateCommand extends Command
 
         try {
             $property = Property::create([
-                'name' => $name,
-                'type' => $type,
-                'label' => $label,
-                'required' => $required,
-                'options' => $type === 'select' ? $options : null,
+                'name'       => $name,
+                'type'       => $type,
+                'label'      => $label,
+                'required'   => $required,
+                'options'    => $type === 'select' ? $options : null,
                 'validation' => $validationRules,
             ]);
 

@@ -1,10 +1,10 @@
 <?php
 
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Traits\HasProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 // Create a test model that uses the HasProperties trait
 class SimpleTestUser extends Model
@@ -32,26 +32,26 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
         // Create test properties with unique names for this test suite
         Property::firstOrCreate(['name' => 'simple_bio'], [
-            'label' => 'Biography',
-            'type' => 'text',
+            'label'    => 'Biography',
+            'type'     => 'text',
             'required' => false,
         ]);
 
         Property::firstOrCreate(['name' => 'simple_age'], [
-            'label' => 'Age',
-            'type' => 'number',
+            'label'    => 'Age',
+            'type'     => 'number',
             'required' => false,
         ]);
 
         Property::firstOrCreate(['name' => 'simple_active'], [
-            'label' => 'Active',
-            'type' => 'boolean',
+            'label'    => 'Active',
+            'type'     => 'boolean',
             'required' => false,
         ]);
 
         // Create test user
         $this->user = SimpleTestUser::create([
-            'name' => 'Test User',
+            'name'  => 'Test User',
             'email' => 'test@example.com',
         ]);
     });
@@ -78,8 +78,8 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
     it('returns all properties as array', function () {
         $this->user->setProperties([
-            'simple_bio' => 'My biography',
-            'simple_age' => 25,
+            'simple_bio'    => 'My biography',
+            'simple_age'    => 25,
             'simple_active' => true,
         ]);
 
@@ -97,7 +97,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     it('can filter using whereProperty scope', function () {
         // Create another user
         $user2 = SimpleTestUser::create([
-            'name' => 'User 2',
+            'name'  => 'User 2',
             'email' => 'user2@example.com',
         ]);
 
@@ -115,24 +115,24 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
     it('can filter using whereProperties scope', function () {
         // Create another user
         $user2 = SimpleTestUser::create([
-            'name' => 'User 2',
+            'name'  => 'User 2',
             'email' => 'user2@example.com',
         ]);
 
         // Set properties
         $this->user->setProperties([
-            'simple_age' => 25,
+            'simple_age'    => 25,
             'simple_active' => true,
         ]);
 
         $user2->setProperties([
-            'simple_age' => 30,
+            'simple_age'    => 30,
             'simple_active' => true,
         ]);
 
         // Test scope with multiple properties
         $youngActiveUsers = SimpleTestUser::whereProperties([
-            'simple_age' => 25,
+            'simple_age'    => 25,
             'simple_active' => true,
         ])->get();
 
@@ -190,43 +190,43 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Create test properties
             Property::firstOrCreate(['name' => 'bio'], [
-                'label' => 'Biography',
-                'type' => 'text',
+                'label'    => 'Biography',
+                'type'     => 'text',
                 'required' => false,
             ]);
 
             Property::firstOrCreate(['name' => 'age'], [
-                'label' => 'Age',
-                'type' => 'number',
+                'label'    => 'Age',
+                'type'     => 'number',
                 'required' => false,
             ]);
 
             Property::firstOrCreate(['name' => 'active'], [
-                'label' => 'Active',
-                'type' => 'boolean',
+                'label'    => 'Active',
+                'type'     => 'boolean',
                 'required' => false,
             ]);
 
             // Create date property for testing
             Property::firstOrCreate(['name' => 'birth_date'], [
-                'label' => 'Birth Date',
-                'type' => 'date',
+                'label'    => 'Birth Date',
+                'type'     => 'date',
                 'required' => false,
             ]);
 
             // Create test users
             $this->user = SimpleTestUser::create([
-                'name' => 'Test User',
+                'name'  => 'Test User',
                 'email' => 'test@example.com',
             ]);
 
             $this->user2 = SimpleTestUser::create([
-                'name' => 'User 2',
+                'name'  => 'User 2',
                 'email' => 'user2@example.com',
             ]);
 
             $this->user3 = SimpleTestUser::create([
-                'name' => 'User 3',
+                'name'  => 'User 3',
                 'email' => 'user3@example.com',
             ]);
         });
@@ -336,28 +336,28 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Create test properties
             Property::create([
-                'name' => 'bio',
-                'label' => 'Biography',
-                'type' => 'text',
+                'name'     => 'bio',
+                'label'    => 'Biography',
+                'type'     => 'text',
                 'required' => false,
             ]);
 
             Property::create([
-                'name' => 'age',
-                'label' => 'Age',
-                'type' => 'number',
+                'name'     => 'age',
+                'label'    => 'Age',
+                'type'     => 'number',
                 'required' => false,
             ]);
 
             Property::create([
-                'name' => 'active',
-                'label' => 'Active',
-                'type' => 'boolean',
+                'name'     => 'active',
+                'label'    => 'Active',
+                'type'     => 'boolean',
                 'required' => false,
             ]);
 
             $this->user = SimpleTestUser::create([
-                'name' => 'Test User',
+                'name'  => 'Test User',
                 'email' => 'test@example.com',
             ]);
         });
@@ -405,28 +405,28 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Create test properties
             Property::create([
-                'name' => 'bio',
-                'label' => 'Biography',
-                'type' => 'text',
+                'name'     => 'bio',
+                'label'    => 'Biography',
+                'type'     => 'text',
                 'required' => false,
             ]);
 
             Property::create([
-                'name' => 'age',
-                'label' => 'Age',
-                'type' => 'number',
+                'name'     => 'age',
+                'label'    => 'Age',
+                'type'     => 'number',
                 'required' => false,
             ]);
 
             Property::create([
-                'name' => 'active',
-                'label' => 'Active',
-                'type' => 'boolean',
+                'name'     => 'active',
+                'label'    => 'Active',
+                'type'     => 'boolean',
                 'required' => false,
             ]);
 
             $this->user = SimpleTestUser::create([
-                'name' => 'Test User',
+                'name'  => 'Test User',
                 'email' => 'test@example.com',
             ]);
         });
@@ -441,17 +441,17 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Set properties (this will create entity_properties records and sync to JSON)
             $this->user->setProperties([
-                'bio' => 'Original bio',
-                'age' => 25,
+                'bio'    => 'Original bio',
+                'age'    => 25,
                 'active' => true,
             ]);
 
             // Manually update JSON column with different values
             $this->user->update(['dynamic_properties' => [
-                'bio' => 'JSON bio',
-                'age' => 30,
+                'bio'    => 'JSON bio',
+                'age'    => 30,
                 'active' => false,
-                'extra' => 'JSON only',
+                'extra'  => 'JSON only',
             ]]);
 
             $this->user->refresh();
@@ -517,42 +517,42 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Create test properties
             Property::firstOrCreate(['name' => 'bio'], [
-                'label' => 'Biography',
-                'type' => 'text',
+                'label'    => 'Biography',
+                'type'     => 'text',
                 'required' => false,
             ]);
 
             Property::firstOrCreate(['name' => 'age'], [
-                'label' => 'Age',
-                'type' => 'number',
+                'label'    => 'Age',
+                'type'     => 'number',
                 'required' => false,
             ]);
 
             Property::firstOrCreate(['name' => 'active'], [
-                'label' => 'Active',
-                'type' => 'boolean',
+                'label'    => 'Active',
+                'type'     => 'boolean',
                 'required' => false,
             ]);
 
             // Create date property for testing
             Property::firstOrCreate(['name' => 'join_date'], [
-                'label' => 'Join Date',
-                'type' => 'date',
+                'label'    => 'Join Date',
+                'type'     => 'date',
                 'required' => false,
             ]);
 
             $this->user = SimpleTestUser::create([
-                'name' => 'Test User',
+                'name'  => 'Test User',
                 'email' => 'test@example.com',
             ]);
 
             $this->user2 = SimpleTestUser::create([
-                'name' => 'User 2',
+                'name'  => 'User 2',
                 'email' => 'user2@example.com',
             ]);
 
             $this->user3 = SimpleTestUser::create([
-                'name' => 'User 3',
+                'name'  => 'User 3',
                 'email' => 'user3@example.com',
             ]);
         });
@@ -560,30 +560,30 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         it('handles mixed property types in complex queries', function () {
             // Create date property
             Property::firstOrCreate(['name' => 'join_date'], [
-                'label' => 'Join Date',
-                'type' => 'date',
+                'label'    => 'Join Date',
+                'type'     => 'date',
                 'required' => false,
             ]);
 
             // Set mixed properties
             $this->user->setProperties([
-                'bio' => 'Senior Developer',
-                'age' => 30,
-                'active' => true,
+                'bio'       => 'Senior Developer',
+                'age'       => 30,
+                'active'    => true,
                 'join_date' => '2020-01-15',
             ]);
 
             $this->user2->setProperties([
-                'bio' => 'Junior Developer',
-                'age' => 25,
-                'active' => true,
+                'bio'       => 'Junior Developer',
+                'age'       => 25,
+                'active'    => true,
                 'join_date' => '2022-06-01',
             ]);
 
             $this->user3->setProperties([
-                'bio' => 'Senior Manager',
-                'age' => 40,
-                'active' => false,
+                'bio'       => 'Senior Manager',
+                'age'       => 40,
+                'active'    => false,
                 'join_date' => '2018-03-10',
             ]);
 
@@ -620,8 +620,8 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
         it('maintains data consistency across property operations', function () {
             // Set initial properties
             $this->user->setProperties([
-                'bio' => 'Initial bio',
-                'age' => 25,
+                'bio'    => 'Initial bio',
+                'age'    => 25,
                 'active' => true,
             ]);
 

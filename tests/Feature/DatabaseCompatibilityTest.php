@@ -1,10 +1,10 @@
 <?php
 
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 beforeEach(function () {
     // Create users table for testing
@@ -20,98 +20,98 @@ beforeEach(function () {
 
     // Create test properties
     $this->textProperty = Property::create([
-        'name' => 'description',
-        'label' => 'Description',
-        'type' => 'text',
+        'name'     => 'description',
+        'label'    => 'Description',
+        'type'     => 'text',
         'required' => false,
     ]);
 
     $this->numberProperty = Property::create([
-        'name' => 'score',
-        'label' => 'Score',
-        'type' => 'number',
+        'name'     => 'score',
+        'label'    => 'Score',
+        'type'     => 'number',
         'required' => false,
     ]);
 
     $this->dateProperty = Property::create([
-        'name' => 'created_date',
-        'label' => 'Created Date',
-        'type' => 'date',
+        'name'     => 'created_date',
+        'label'    => 'Created Date',
+        'type'     => 'date',
         'required' => false,
     ]);
 
     $this->booleanProperty = Property::create([
-        'name' => 'active',
-        'label' => 'Active',
-        'type' => 'boolean',
+        'name'     => 'active',
+        'label'    => 'Active',
+        'type'     => 'boolean',
         'required' => false,
     ]);
 
     // Create test entity properties
     EntityProperty::create([
-        'entity_id' => 1,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->textProperty->id,
+        'entity_id'     => 1,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->textProperty->id,
         'property_name' => 'description',
-        'string_value' => 'This is a test description with searchable content',
-        'number_value' => null,
-        'date_value' => null,
+        'string_value'  => 'This is a test description with searchable content',
+        'number_value'  => null,
+        'date_value'    => null,
         'boolean_value' => null,
     ]);
 
     EntityProperty::create([
-        'entity_id' => 1,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->numberProperty->id,
+        'entity_id'     => 1,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->numberProperty->id,
         'property_name' => 'score',
-        'string_value' => null,
-        'number_value' => 85.5,
-        'date_value' => null,
+        'string_value'  => null,
+        'number_value'  => 85.5,
+        'date_value'    => null,
         'boolean_value' => null,
     ]);
 
     EntityProperty::create([
-        'entity_id' => 1,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->dateProperty->id,
+        'entity_id'     => 1,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->dateProperty->id,
         'property_name' => 'created_date',
-        'string_value' => null,
-        'number_value' => null,
-        'date_value' => '2024-01-15',
+        'string_value'  => null,
+        'number_value'  => null,
+        'date_value'    => '2024-01-15',
         'boolean_value' => null,
     ]);
 
     EntityProperty::create([
-        'entity_id' => 1,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->booleanProperty->id,
+        'entity_id'     => 1,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->booleanProperty->id,
         'property_name' => 'active',
-        'string_value' => null,
-        'number_value' => null,
-        'date_value' => null,
+        'string_value'  => null,
+        'number_value'  => null,
+        'date_value'    => null,
         'boolean_value' => true,
     ]);
 
     // Create additional test entities
     EntityProperty::create([
-        'entity_id' => 2,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->textProperty->id,
+        'entity_id'     => 2,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->textProperty->id,
         'property_name' => 'description',
-        'string_value' => 'Another description for testing search functionality',
-        'number_value' => null,
-        'date_value' => null,
+        'string_value'  => 'Another description for testing search functionality',
+        'number_value'  => null,
+        'date_value'    => null,
         'boolean_value' => null,
     ]);
 
     EntityProperty::create([
-        'entity_id' => 2,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->numberProperty->id,
+        'entity_id'     => 2,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->numberProperty->id,
         'property_name' => 'score',
-        'string_value' => null,
-        'number_value' => 92.0,
-        'date_value' => null,
+        'string_value'  => null,
+        'number_value'  => 92.0,
+        'date_value'    => null,
         'boolean_value' => null,
     ]);
 });
@@ -193,8 +193,8 @@ it('performs boolean searches', function () {
 it('performs advanced searches with multiple criteria', function () {
     $results = $this->propertyService->advancedSearch('App\\Models\\User', [
         'description' => ['value' => 'test', 'operator' => 'like'],
-        'score' => ['value' => 80, 'operator' => '>='],
-        'active' => true,
+        'score'       => ['value' => 80, 'operator' => '>='],
+        'active'      => true,
     ]);
 
     expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
@@ -234,13 +234,13 @@ it('handles IN operator correctly', function () {
 it('handles NULL searches correctly', function () {
     // Create an entity without a score
     EntityProperty::create([
-        'entity_id' => 3,
-        'entity_type' => 'App\\Models\\User',
-        'property_id' => $this->textProperty->id,
+        'entity_id'     => 3,
+        'entity_type'   => 'App\\Models\\User',
+        'property_id'   => $this->textProperty->id,
         'property_name' => 'description',
-        'string_value' => 'Entity without score',
-        'number_value' => null,
-        'date_value' => null,
+        'string_value'  => 'Entity without score',
+        'number_value'  => null,
+        'date_value'    => null,
         'boolean_value' => null,
     ]);
 

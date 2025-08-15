@@ -1,11 +1,11 @@
 <?php
 
-namespace DynamicProperties\Traits;
+namespace SolutionForest\LaravelDynamicProperties\Traits;
 
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 trait HasProperties
 {
@@ -47,9 +47,9 @@ trait HasProperties
     /**
      * Set a dynamic property value using the PropertyService
      *
-     * @throws \DynamicProperties\Exceptions\PropertyNotFoundException
-     * @throws \DynamicProperties\Exceptions\PropertyValidationException
-     * @throws \DynamicProperties\Exceptions\PropertyOperationException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException
      */
     public function setDynamicProperty(string $name, mixed $value): void
     {
@@ -67,9 +67,9 @@ trait HasProperties
     /**
      * Set multiple properties at once using the PropertyService
      *
-     * @throws \DynamicProperties\Exceptions\PropertyNotFoundException
-     * @throws \DynamicProperties\Exceptions\PropertyValidationException
-     * @throws \DynamicProperties\Exceptions\PropertyOperationException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException
+     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException
      */
     public function setProperties(array $properties): void
     {
@@ -109,7 +109,7 @@ trait HasProperties
         if (str_starts_with($key, 'prop_')) {
             try {
                 $this->setDynamicProperty(substr($key, 5), $value);
-            } catch (\DynamicProperties\Exceptions\PropertyException $e) {
+            } catch (\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException $e) {
                 // Convert to generic exception for magic method compatibility
                 throw new \InvalidArgumentException($e->getUserMessage(), $e->getCode(), $e);
             }

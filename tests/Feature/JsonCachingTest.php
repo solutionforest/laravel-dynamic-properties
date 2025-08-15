@@ -1,11 +1,11 @@
 <?php
 
-use DynamicProperties\DynamicPropertyServiceProvider;
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 uses(RefreshDatabase::class);
 
@@ -16,9 +16,9 @@ beforeEach(function () {
     // Setup database
     config(['database.default' => 'testbench']);
     config(['database.connections.testbench' => [
-        'driver' => 'sqlite',
+        'driver'   => 'sqlite',
         'database' => ':memory:',
-        'prefix' => '',
+        'prefix'   => '',
     ]]);
 
     // Run the package migrations
@@ -34,23 +34,23 @@ beforeEach(function () {
 
     // Create test properties
     Property::create([
-        'name' => 'phone',
-        'label' => 'Phone Number',
-        'type' => 'text',
+        'name'     => 'phone',
+        'label'    => 'Phone Number',
+        'type'     => 'text',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'age',
-        'label' => 'Age',
-        'type' => 'number',
+        'name'     => 'age',
+        'label'    => 'Age',
+        'type'     => 'number',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'active',
-        'label' => 'Active Status',
-        'type' => 'boolean',
+        'name'     => 'active',
+        'label'    => 'Active Status',
+        'type'     => 'boolean',
         'required' => false,
     ]);
 });
@@ -60,7 +60,7 @@ function createTestUser(array $attributes = [])
     // Create a simple test user model
     return new class($attributes) extends \Illuminate\Database\Eloquent\Model
     {
-        use \DynamicProperties\Traits\HasProperties;
+        use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
         protected $table = 'users';
 
@@ -71,7 +71,7 @@ function createTestUser(array $attributes = [])
         public function __construct(array $attributes = [])
         {
             parent::__construct($attributes + [
-                'name' => 'Test User',
+                'name'  => 'Test User',
                 'email' => 'test@example.com',
             ]);
 
@@ -125,7 +125,7 @@ it('prefers json column over entity properties table', function () {
     // Manually update the JSON column with different values
     $user->update(['dynamic_properties' => [
         'phone' => '+9876543210',
-        'age' => 30,
+        'age'   => 30,
         'extra' => 'json_only_value',
     ]]);
 

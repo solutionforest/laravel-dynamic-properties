@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Exceptions;
+namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
 /**
  * Exception thrown when a property operation fails due to system issues
@@ -13,7 +13,7 @@ class PropertyOperationException extends PropertyException
 
         parent::__construct($message, 500, null, array_merge([
             'operation' => $operation,
-            'reason' => $reason,
+            'reason'    => $reason,
         ], $context));
     }
 

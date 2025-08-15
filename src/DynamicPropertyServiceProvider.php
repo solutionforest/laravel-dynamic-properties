@@ -1,14 +1,14 @@
 <?php
 
-namespace DynamicProperties;
+namespace SolutionForest\LaravelDynamicProperties;
 
-use DynamicProperties\Console\Commands\CacheSyncCommand;
-use DynamicProperties\Console\Commands\DatabaseOptimizeCommand;
-use DynamicProperties\Console\Commands\PropertyCreateCommand;
-use DynamicProperties\Console\Commands\PropertyDeleteCommand;
-use DynamicProperties\Console\Commands\PropertyListCommand;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Support\ServiceProvider;
+use SolutionForest\LaravelDynamicProperties\Console\Commands\CacheSyncCommand;
+use SolutionForest\LaravelDynamicProperties\Console\Commands\DatabaseOptimizeCommand;
+use SolutionForest\LaravelDynamicProperties\Console\Commands\PropertyCreateCommand;
+use SolutionForest\LaravelDynamicProperties\Console\Commands\PropertyDeleteCommand;
+use SolutionForest\LaravelDynamicProperties\Console\Commands\PropertyListCommand;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class DynamicPropertyServiceProvider extends ServiceProvider
 {

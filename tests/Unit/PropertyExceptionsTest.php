@@ -1,11 +1,11 @@
 <?php
 
-use DynamicProperties\Exceptions\InvalidPropertyTypeException;
-use DynamicProperties\Exceptions\PropertyException;
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyOperationException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 describe('Property Exceptions', function () {
     describe('PropertyException', function () {

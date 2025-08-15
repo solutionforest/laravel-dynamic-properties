@@ -1,10 +1,10 @@
 <?php
 
-namespace DynamicProperties\Console\Commands;
+namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Models\Property;
 use Illuminate\Console\Command;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyDeleteCommand extends Command
 {

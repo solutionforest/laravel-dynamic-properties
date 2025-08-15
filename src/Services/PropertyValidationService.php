@@ -1,10 +1,10 @@
 <?php
 
-namespace DynamicProperties\Services;
+namespace SolutionForest\LaravelDynamicProperties\Services;
 
-use DynamicProperties\Exceptions\InvalidPropertyTypeException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyValidationService
 {
@@ -73,10 +73,12 @@ class PropertyValidationService
                     foreach ($data['options'] as $index => $option) {
                         if (! is_string($option) || trim($option) === '') {
                             $errors['options'] = "Option at index {$index} must be a non-empty string.";
+
                             break;
                         }
                     }
                 }
+
                 break;
         }
 
@@ -105,6 +107,7 @@ class PropertyValidationService
                     } else {
                         $errors[$rule] = "{$rule} validation is only supported for text and number properties.";
                     }
+
                     break;
 
                 case 'min_length':
@@ -114,6 +117,7 @@ class PropertyValidationService
                     } elseif (! is_int($value) || $value < 0) {
                         $errors[$rule] = "{$rule} must be a non-negative integer.";
                     }
+
                     break;
 
                 case 'after':
@@ -123,10 +127,12 @@ class PropertyValidationService
                     } elseif (! is_string($value) || ($value !== 'today' && strtotime($value) === false)) {
                         $errors[$rule] = "{$rule} must be 'today' or a valid date string.";
                     }
+
                     break;
 
                 default:
                     $errors[$rule] = "Unknown validation rule: {$rule}";
+
                     break;
             }
         }
@@ -206,24 +212,28 @@ class PropertyValidationService
                 if (! is_string($value) && ! is_numeric($value)) {
                     return "The {$label} must be text.";
                 }
+
                 break;
 
             case 'number':
                 if (! is_numeric($value)) {
                     return "The {$label} must be a number.";
                 }
+
                 break;
 
             case 'date':
                 if (! $this->isValidDate($value)) {
                     return "The {$label} must be a valid date.";
                 }
+
                 break;
 
             case 'boolean':
                 if (! $this->isValidBoolean($value)) {
                     return "The {$label} must be true or false.";
                 }
+
                 break;
 
             case 'select':
@@ -235,6 +245,7 @@ class PropertyValidationService
 
                     return "The {$label} must be one of: {$options}.";
                 }
+
                 break;
 
             default:
@@ -266,6 +277,7 @@ class PropertyValidationService
                             $errors[] = "The {$label} must be at least {$constraint}.";
                         }
                     }
+
                     break;
 
                 case 'max':
@@ -278,18 +290,21 @@ class PropertyValidationService
                             $errors[] = "The {$label} may not be greater than {$constraint}.";
                         }
                     }
+
                     break;
 
                 case 'min_length':
                     if (strlen((string) $value) < $constraint) {
                         $errors[] = "The {$label} must be at least {$constraint} characters.";
                     }
+
                     break;
 
                 case 'max_length':
                     if (strlen((string) $value) > $constraint) {
                         $errors[] = "The {$label} may not be greater than {$constraint} characters.";
                     }
+
                     break;
 
                 case 'after':
@@ -297,6 +312,7 @@ class PropertyValidationService
                         $constraintText = $constraint === 'today' ? 'today' : $constraint;
                         $errors[] = "The {$label} must be after {$constraintText}.";
                     }
+
                     break;
 
                 case 'before':
@@ -304,6 +320,7 @@ class PropertyValidationService
                         $constraintText = $constraint === 'today' ? 'today' : $constraint;
                         $errors[] = "The {$label} must be before {$constraintText}.";
                     }
+
                     break;
             }
         }

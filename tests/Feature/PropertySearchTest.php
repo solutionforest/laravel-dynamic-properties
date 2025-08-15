@@ -1,12 +1,12 @@
 <?php
 
-use DynamicProperties\DynamicPropertyServiceProvider;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
-use DynamicProperties\Traits\HasProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 class SearchTestUser extends Model
 {
@@ -26,9 +26,9 @@ beforeEach(function () {
     // Setup database
     config(['database.default' => 'testbench']);
     config(['database.connections.testbench' => [
-        'driver' => 'sqlite',
+        'driver'   => 'sqlite',
         'database' => ':memory:',
-        'prefix' => '',
+        'prefix'   => '',
     ]]);
 
     // Run the package migrations
@@ -46,30 +46,30 @@ beforeEach(function () {
 
     // Create test properties
     Property::create([
-        'name' => 'age',
-        'label' => 'Age',
-        'type' => 'number',
+        'name'     => 'age',
+        'label'    => 'Age',
+        'type'     => 'number',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'city',
-        'label' => 'City',
-        'type' => 'text',
+        'name'     => 'city',
+        'label'    => 'City',
+        'type'     => 'text',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'active',
-        'label' => 'Active',
-        'type' => 'boolean',
+        'name'     => 'active',
+        'label'    => 'Active',
+        'type'     => 'boolean',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'birth_date',
-        'label' => 'Birth Date',
-        'type' => 'date',
+        'name'     => 'birth_date',
+        'label'    => 'Birth Date',
+        'type'     => 'date',
         'required' => false,
     ]);
 });
@@ -113,7 +113,7 @@ it('can search by multiple properties', function () {
 
     // Search for users in New York who are active
     $results = $this->propertyService->search(SearchTestUser::class, [
-        'city' => 'New York',
+        'city'   => 'New York',
         'active' => true,
     ]);
 
@@ -150,20 +150,20 @@ it('can use query scopes for multiple properties', function () {
 
     // Set properties
     $this->propertyService->setProperties($user1, [
-        'age' => 25,
-        'city' => 'New York',
+        'age'    => 25,
+        'city'   => 'New York',
         'active' => true,
     ]);
 
     $this->propertyService->setProperties($user2, [
-        'age' => 30,
-        'city' => 'Los Angeles',
+        'age'    => 30,
+        'city'   => 'Los Angeles',
         'active' => true,
     ]);
 
     // Test whereProperties scope
     $results = SearchTestUser::whereProperties([
-        'city' => 'New York',
+        'city'   => 'New York',
         'active' => true,
     ])->get();
 
@@ -233,24 +233,24 @@ describe('Advanced Search Features', function () {
 
         // Create additional properties for comprehensive testing
         Property::create([
-            'name' => 'salary',
-            'label' => 'Salary',
-            'type' => 'number',
+            'name'     => 'salary',
+            'label'    => 'Salary',
+            'type'     => 'number',
             'required' => false,
         ]);
 
         Property::create([
-            'name' => 'department',
-            'label' => 'Department',
-            'type' => 'select',
+            'name'     => 'department',
+            'label'    => 'Department',
+            'type'     => 'select',
             'required' => false,
-            'options' => ['engineering', 'marketing', 'sales', 'hr'],
+            'options'  => ['engineering', 'marketing', 'sales', 'hr'],
         ]);
 
         Property::create([
-            'name' => 'remote',
-            'label' => 'Remote Worker',
-            'type' => 'boolean',
+            'name'     => 'remote',
+            'label'    => 'Remote Worker',
+            'type'     => 'boolean',
             'required' => false,
         ]);
     });
@@ -267,8 +267,8 @@ describe('Advanced Search Features', function () {
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'salary' => [
                 'operator' => 'between',
-                'min' => 60000,
-                'max' => 90000,
+                'min'      => 60000,
+                'max'      => 90000,
             ],
         ]);
 
@@ -289,7 +289,7 @@ describe('Advanced Search Features', function () {
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'department' => [
                 'operator' => 'in',
-                'value' => ['engineering', 'sales'],
+                'value'    => ['engineering', 'sales'],
             ],
         ]);
 
@@ -310,8 +310,8 @@ describe('Advanced Search Features', function () {
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'city' => [
                 'operator' => 'like',
-                'value' => 'New',
-                'options' => ['case_sensitive' => false],
+                'value'    => 'New',
+                'options'  => ['case_sensitive' => false],
             ],
         ]);
 
@@ -356,38 +356,38 @@ describe('Advanced Search Features', function () {
         // Set up complex data
         $this->propertyService->setProperties($user1, [
             'department' => 'engineering',
-            'salary' => 80000,
-            'remote' => true,
-            'city' => 'San Francisco',
+            'salary'     => 80000,
+            'remote'     => true,
+            'city'       => 'San Francisco',
         ]);
 
         $this->propertyService->setProperties($user2, [
             'department' => 'engineering',
-            'salary' => 70000,
-            'remote' => false,
-            'city' => 'New York',
+            'salary'     => 70000,
+            'remote'     => false,
+            'city'       => 'New York',
         ]);
 
         $this->propertyService->setProperties($user3, [
             'department' => 'marketing',
-            'salary' => 85000,
-            'remote' => true,
-            'city' => 'San Francisco',
+            'salary'     => 85000,
+            'remote'     => true,
+            'city'       => 'San Francisco',
         ]);
 
         $this->propertyService->setProperties($user4, [
             'department' => 'engineering',
-            'salary' => 90000,
-            'remote' => true,
-            'city' => 'Austin',
+            'salary'     => 90000,
+            'remote'     => true,
+            'city'       => 'Austin',
         ]);
 
         // Search for: Engineering department, salary > 75000, remote workers, in San Francisco or Austin
         $results = $this->propertyService->advancedSearch(SearchTestUser::class, [
             'department' => 'engineering',
-            'salary' => ['value' => 75000, 'operator' => '>'],
-            'remote' => true,
-            'city' => ['operator' => 'in', 'value' => ['San Francisco', 'Austin']],
+            'salary'     => ['value' => 75000, 'operator' => '>'],
+            'remote'     => true,
+            'city'       => ['operator' => 'in', 'value' => ['San Francisco', 'Austin']],
         ]);
 
         expect($results)->toContain($user1->id); // Engineering, 80k, remote, SF
@@ -402,9 +402,9 @@ describe('Date Range Search', function () {
         $this->propertyService = new PropertyService;
 
         Property::create([
-            'name' => 'hire_date',
-            'label' => 'Hire Date',
-            'type' => 'date',
+            'name'     => 'hire_date',
+            'label'    => 'Hire Date',
+            'type'     => 'date',
             'required' => false,
         ]);
     });
@@ -452,7 +452,7 @@ describe('Performance and Edge Cases', function () {
         $users = [];
         for ($i = 1; $i <= 50; $i++) {
             $user = SearchTestUser::create([
-                'name' => "User $i",
+                'name'  => "User $i",
                 'email' => "user$i@example.com",
             ]);
             $this->propertyService->setDynamicProperty($user, 'age', 20 + ($i % 30));

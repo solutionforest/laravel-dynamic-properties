@@ -29,4 +29,20 @@ Homestead.json
 .phpactor.json
 auth.json
 
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# Package development
+composer.phar
 .kiro/

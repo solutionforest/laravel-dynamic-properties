@@ -1,13 +1,13 @@
 <?php
 
-namespace DynamicProperties\Console\Commands;
+namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class CacheSyncCommand extends Command
 {

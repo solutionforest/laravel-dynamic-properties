@@ -1,16 +1,16 @@
 <?php
 
-namespace DynamicProperties\Services;
+namespace SolutionForest\LaravelDynamicProperties\Services;
 
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyOperationException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\EntityProperty;
-use DynamicProperties\Models\Property;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyService
 {
@@ -44,7 +44,7 @@ class PropertyService
             // Validate entity has an ID
             if (! $entity->id) {
                 throw new PropertyOperationException('set property', 'Entity must be saved before setting properties', [
-                    'entity_type' => get_class($entity),
+                    'entity_type'   => get_class($entity),
                     'property_name' => $name,
                 ]);
             }
@@ -54,7 +54,7 @@ class PropertyService
             if (! $property) {
                 throw new PropertyNotFoundException($name, [
                     'entity_type' => get_class($entity),
-                    'entity_id' => $entity->id,
+                    'entity_id'   => $entity->id,
                 ]);
             }
 
@@ -68,7 +68,7 @@ class PropertyService
             DB::transaction(function () use ($entity, $property, $castedValue) {
                 // Create or update the entity property record
                 EntityProperty::updateOrCreate([
-                    'entity_id' => $entity->id,
+                    'entity_id'   => $entity->id,
                     'entity_type' => $entity->getMorphClass(),
                     'property_id' => $property->id,
                 ], [
@@ -88,18 +88,18 @@ class PropertyService
         } catch (\Exception $e) {
             // Log unexpected errors and throw operation exception
             Log::error('Property operation failed', [
-                'operation' => 'setDynamicProperty',
-                'entity_type' => get_class($entity),
-                'entity_id' => $entity->id ?? null,
+                'operation'     => 'setDynamicProperty',
+                'entity_type'   => get_class($entity),
+                'entity_id'     => $entity->id ?? null,
                 'property_name' => $name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'         => $e->getMessage(),
+                'trace'         => $e->getTraceAsString(),
             ]);
 
             throw new PropertyOperationException('set property', 'An unexpected error occurred', [
-                'entity_type' => get_class($entity),
-                'entity_id' => $entity->id ?? null,
-                'property_name' => $name,
+                'entity_type'    => get_class($entity),
+                'entity_id'      => $entity->id ?? null,
+                'property_name'  => $name,
                 'original_error' => $e->getMessage(),
             ]);
         }
@@ -138,8 +138,8 @@ class PropertyService
 
                 // Store for batch processing
                 $validatedProperties[$name] = [
-                    'property' => $property,
-                    'value' => $value,
+                    'property'     => $property,
+                    'value'        => $value,
                     'casted_value' => $property->castValue($value),
                 ];
 
@@ -151,8 +151,8 @@ class PropertyService
         // If there are validation errors, throw a comprehensive exception
         if (! empty($errors)) {
             throw new PropertyValidationException('multiple properties', $properties, $errors, null, [
-                'entity_type' => get_class($entity),
-                'entity_id' => $entity->id ?? null,
+                'entity_type'       => get_class($entity),
+                'entity_id'         => $entity->id ?? null,
                 'failed_properties' => array_keys($errors),
             ]);
         }
@@ -166,7 +166,7 @@ class PropertyService
 
                     // Create or update the entity property record
                     EntityProperty::updateOrCreate([
-                        'entity_id' => $entity->id,
+                        'entity_id'   => $entity->id,
                         'entity_type' => $entity->getMorphClass(),
                         'property_id' => $property->id,
                     ], [
@@ -183,17 +183,17 @@ class PropertyService
 
         } catch (\Exception $e) {
             Log::error('Batch property operation failed', [
-                'operation' => 'setProperties',
+                'operation'   => 'setProperties',
                 'entity_type' => get_class($entity),
-                'entity_id' => $entity->id ?? null,
-                'properties' => array_keys($properties),
-                'error' => $e->getMessage(),
+                'entity_id'   => $entity->id ?? null,
+                'properties'  => array_keys($properties),
+                'error'       => $e->getMessage(),
             ]);
 
             throw new PropertyOperationException('set properties', 'Failed to save properties', [
-                'entity_type' => get_class($entity),
-                'entity_id' => $entity->id ?? null,
-                'properties' => array_keys($properties),
+                'entity_type'    => get_class($entity),
+                'entity_id'      => $entity->id ?? null,
+                'properties'     => array_keys($properties),
                 'original_error' => $e->getMessage(),
             ]);
         }
@@ -222,7 +222,7 @@ class PropertyService
             throw new PropertyValidationException('property definition', $data, [
                 "A property with the name '{$data['name']}' already exists.",
             ], null, [
-                'operation' => 'create_property',
+                'operation'      => 'create_property',
                 'duplicate_name' => $data['name'],
             ]);
         }
@@ -231,12 +231,12 @@ class PropertyService
             return Property::create($data);
         } catch (\Exception $e) {
             Log::error('Property creation failed', [
-                'data' => $data,
+                'data'  => $data,
                 'error' => $e->getMessage(),
             ]);
 
             throw new PropertyOperationException('create property', 'Failed to create property', [
-                'property_data' => $data,
+                'property_data'  => $data,
                 'original_error' => $e->getMessage(),
             ]);
         }
@@ -582,31 +582,37 @@ class PropertyService
                 if (isset($criteria['min']) && isset($criteria['max'])) {
                     $this->applyBetweenFilter($query, $property, $criteria['min'], $criteria['max']);
                 }
+
                 break;
 
             case 'in':
                 if (is_array($value)) {
                     $this->applyInFilter($query, $property, $value);
                 }
+
                 break;
 
             case 'like':
             case 'ilike':
                 $this->applyLikeFilter($query, $property, $value, $options);
+
                 break;
 
             case 'null':
             case 'is null':
                 $this->applyNullFilter($query, $property, true);
+
                 break;
 
             case 'not null':
             case 'is not null':
                 $this->applyNullFilter($query, $property, false);
+
                 break;
 
             default:
                 $this->applyOperatorFilter($query, $property, $value, $operator);
+
                 break;
         }
     }
@@ -709,10 +715,10 @@ class PropertyService
     {
         return match ($type) {
             'text', 'select' => 'string_value',
-            'number' => 'number_value',
-            'date' => 'date_value',
+            'number'  => 'number_value',
+            'date'    => 'date_value',
             'boolean' => 'boolean_value',
-            default => 'string_value'
+            default   => 'string_value'
         };
     }
 
@@ -821,8 +827,8 @@ class PropertyService
     public function getDatabaseInfo(): array
     {
         return [
-            'driver' => $this->dbCompat->getDriver(),
-            'features' => $this->dbCompat->getFeatures(),
+            'driver'           => $this->dbCompat->getDriver(),
+            'features'         => $this->dbCompat->getFeatures(),
             'migration_config' => $this->dbCompat->getMigrationConfig(),
         ];
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace DynamicProperties\Console\Commands;
+namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
-use DynamicProperties\Services\DatabaseCompatibilityService;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Console\Command;
+use SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class DatabaseOptimizeCommand extends Command
 {
@@ -115,10 +115,10 @@ class DatabaseOptimizeCommand extends Command
         $this->info('Recommendations:');
 
         match ($driver) {
-            'mysql' => $this->showMySQLRecommendations(),
+            'mysql'  => $this->showMySQLRecommendations(),
             'sqlite' => $this->showSQLiteRecommendations(),
-            'pgsql' => $this->showPostgreSQLRecommendations(),
-            default => $this->line('  No specific recommendations for this database driver.')
+            'pgsql'  => $this->showPostgreSQLRecommendations(),
+            default  => $this->line('  No specific recommendations for this database driver.')
         };
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Exceptions;
+namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
 /**
  * Exception thrown when trying to access a property that doesn't exist

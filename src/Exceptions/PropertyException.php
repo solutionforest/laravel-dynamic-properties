@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Exceptions;
+namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
 use Exception;
 
@@ -49,7 +49,7 @@ class PropertyException extends Exception
     public function toArray(): array
     {
         return [
-            'error' => class_basename(static::class),
+            'error'   => class_basename(static::class),
             'message' => $this->getUserMessage(),
             'context' => $this->getContext(),
         ];

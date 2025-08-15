@@ -1,15 +1,15 @@
 <?php
 
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyOperationException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class TestEntity extends \Illuminate\Database\Eloquent\Model
 {
-    use \DynamicProperties\Traits\HasProperties;
+    use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
     protected $table = 'test_entities';
 
@@ -34,24 +34,24 @@ describe('Property Error Handling', function () {
 
         // Create test properties with unique names for this test suite
         $this->textProperty = Property::firstOrCreate(['name' => 'error_test_text'], [
-            'label' => 'Test Text',
-            'type' => 'text',
-            'required' => true,
+            'label'      => 'Test Text',
+            'type'       => 'text',
+            'required'   => true,
             'validation' => ['min' => 3, 'max' => 10],
         ]);
 
         $this->numberProperty = Property::firstOrCreate(['name' => 'error_test_number'], [
-            'label' => 'Test Number',
-            'type' => 'number',
-            'required' => false,
+            'label'      => 'Test Number',
+            'type'       => 'number',
+            'required'   => false,
             'validation' => ['min' => 0, 'max' => 100],
         ]);
 
         $this->selectProperty = Property::firstOrCreate(['name' => 'error_test_select'], [
-            'label' => 'Test Select',
-            'type' => 'select',
+            'label'    => 'Test Select',
+            'type'     => 'select',
             'required' => true,
-            'options' => ['option1', 'option2', 'option3'],
+            'options'  => ['option1', 'option2', 'option3'],
         ]);
     });
 
@@ -107,10 +107,10 @@ describe('Property Error Handling', function () {
             $entity = TestEntity::create(['name' => 'Test Entity']);
 
             $properties = [
-                'error_test_text' => 'ab', // Too short
+                'error_test_text'   => 'ab', // Too short
                 'error_test_number' => 101, // Too high
                 'error_test_select' => 'invalid', // Invalid option
-                'non_existent' => 'value', // Doesn't exist
+                'non_existent'      => 'value', // Doesn't exist
             ];
 
             try {
@@ -144,7 +144,7 @@ describe('Property Error Handling', function () {
         it('handles batch property errors through trait', function () {
             $properties = [
                 'error_test_text' => 'ab',
-                'non_existent' => 'value',
+                'non_existent'    => 'value',
             ];
 
             expect(fn () => $this->entity->setProperties($properties))
@@ -159,25 +159,25 @@ describe('Property Error Handling', function () {
                 ->toThrow(PropertyValidationException::class);
 
             expect(fn () => $this->service->createProperty([
-                'name' => '123invalid',
+                'name'  => '123invalid',
                 'label' => 'Test',
-                'type' => 'text',
+                'type'  => 'text',
             ]))->toThrow(PropertyValidationException::class);
         });
 
         it('prevents duplicate property names', function () {
             expect(fn () => $this->service->createProperty([
-                'name' => 'error_test_text', // Already exists
+                'name'  => 'error_test_text', // Already exists
                 'label' => 'Duplicate',
-                'type' => 'text',
+                'type'  => 'text',
             ]))->toThrow(PropertyValidationException::class);
         });
 
         it('validates select property options', function () {
             expect(fn () => $this->service->createProperty([
-                'name' => 'invalid_select',
+                'name'  => 'invalid_select',
                 'label' => 'Invalid Select',
-                'type' => 'select',
+                'type'  => 'select',
                 // Missing options
             ]))->toThrow(PropertyValidationException::class);
         });
@@ -247,7 +247,7 @@ describe('Property Error Handling', function () {
             // Try to batch update with some invalid values
             try {
                 $this->service->setProperties($this->entity, [
-                    'error_test_text' => 'ab', // Invalid
+                    'error_test_text'   => 'ab', // Invalid
                     'error_test_number' => 75,  // Valid
                     'error_test_select' => 'option1', // Valid
                 ]);

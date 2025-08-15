@@ -1,15 +1,15 @@
 <?php
 
-use DynamicProperties\Exceptions\PropertyNotFoundException;
-use DynamicProperties\Exceptions\PropertyOperationException;
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
 use Illuminate\Database\Eloquent\Model;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class TestModel extends Model
 {
-    use \DynamicProperties\Traits\HasProperties;
+    use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
     protected $table = 'test_models';
 
@@ -29,10 +29,10 @@ beforeEach(function () {
 
     // Create a test property
     $this->property = Property::create([
-        'name' => 'test_prop',
-        'label' => 'Test Property',
-        'type' => 'text',
-        'required' => true,
+        'name'       => 'test_prop',
+        'label'      => 'Test Property',
+        'type'       => 'text',
+        'required'   => true,
         'validation' => ['min' => 3],
     ]);
 });

@@ -1,52 +1,52 @@
 <?php
 
 use Carbon\Carbon;
-use DynamicProperties\Models\Property;
 use Illuminate\Database\QueryException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 describe('Property Model - Comprehensive Tests', function () {
     beforeEach(function () {
         // Create test properties for each test with unique names
         $this->textProperty = Property::firstOrCreate(['name' => 'model_description'], [
-            'label' => 'Description',
-            'type' => 'text',
-            'required' => false,
+            'label'      => 'Description',
+            'type'       => 'text',
+            'required'   => false,
             'validation' => ['min' => 5, 'max' => 100],
         ]);
 
         $this->numberProperty = Property::firstOrCreate(['name' => 'model_age'], [
-            'label' => 'Age',
-            'type' => 'number',
-            'required' => true,
+            'label'      => 'Age',
+            'type'       => 'number',
+            'required'   => true,
             'validation' => ['min' => 0, 'max' => 120],
         ]);
 
         $this->selectProperty = Property::firstOrCreate(['name' => 'model_status'], [
-            'label' => 'Status',
-            'type' => 'select',
+            'label'    => 'Status',
+            'type'     => 'select',
             'required' => false,
-            'options' => ['active', 'inactive', 'pending'],
+            'options'  => ['active', 'inactive', 'pending'],
         ]);
 
         $this->booleanProperty = Property::firstOrCreate(['name' => 'model_verified'], [
-            'label' => 'Verified',
-            'type' => 'boolean',
+            'label'    => 'Verified',
+            'type'     => 'boolean',
             'required' => false,
         ]);
 
         $this->dateProperty = Property::firstOrCreate(['name' => 'model_birth_date'], [
-            'label' => 'Birth Date',
-            'type' => 'date',
-            'required' => false,
+            'label'      => 'Birth Date',
+            'type'       => 'date',
+            'required'   => false,
             'validation' => ['after' => '1900-01-01', 'before' => 'today'],
         ]);
     });
 
     it('can create a property with all required fields', function () {
         $property = Property::create([
-            'name' => 'test_property',
-            'label' => 'Test Property',
-            'type' => 'text',
+            'name'     => 'test_property',
+            'label'    => 'Test Property',
+            'type'     => 'text',
             'required' => false,
         ]);
 
@@ -59,15 +59,15 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('enforces unique property names', function () {
         Property::create([
-            'name' => 'unique_test',
+            'name'  => 'unique_test',
             'label' => 'First Property',
-            'type' => 'text',
+            'type'  => 'text',
         ]);
 
-        expect(fn() => Property::create([
-            'name' => 'unique_test',
+        expect(fn () => Property::create([
+            'name'  => 'unique_test',
             'label' => 'Second Property',
-            'type' => 'number',
+            'type'  => 'number',
         ]))->toThrow(QueryException::class);
     });
 
@@ -213,12 +213,12 @@ describe('Property Model - Comprehensive Tests', function () {
 
     it('has proper relationships', function () {
         // Create an entity property to test the relationship
-        $entityProperty = \DynamicProperties\Models\EntityProperty::create([
-            'entity_id' => 1,
-            'entity_type' => 'App\\Models\\User',
-            'property_id' => $this->textProperty->id,
+        $entityProperty = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::create([
+            'entity_id'     => 1,
+            'entity_type'   => 'App\\Models\\User',
+            'property_id'   => $this->textProperty->id,
             'property_name' => $this->textProperty->name,
-            'string_value' => 'Test value',
+            'string_value'  => 'Test value',
         ]);
 
         $property = Property::with('entityProperties')->find($this->textProperty->id);
@@ -230,9 +230,9 @@ describe('Property Model - Comprehensive Tests', function () {
     describe('Advanced Type Casting', function () {
         it('casts date strings to Carbon instances', function () {
             $property = Property::create([
-                'name' => 'test_date',
+                'name'  => 'test_date',
                 'label' => 'Test Date',
-                'type' => 'date',
+                'type'  => 'date',
             ]);
 
             $result = $property->castValue('2023-12-25');
@@ -242,9 +242,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('handles invalid date strings gracefully', function () {
             $property = Property::create([
-                'name' => 'test_date',
+                'name'  => 'test_date',
                 'label' => 'Test Date',
-                'type' => 'date',
+                'type'  => 'date',
             ]);
 
             $result = $property->castValue('invalid-date');
@@ -253,9 +253,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('casts numeric strings to floats for number type', function () {
             $property = Property::create([
-                'name' => 'test_number',
+                'name'  => 'test_number',
                 'label' => 'Test Number',
-                'type' => 'number',
+                'type'  => 'number',
             ]);
 
             expect($property->castValue('123.45'))->toBe(123.45);
@@ -265,9 +265,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('handles boolean casting edge cases', function () {
             $property = Property::create([
-                'name' => 'test_bool',
+                'name'  => 'test_bool',
                 'label' => 'Test Boolean',
-                'type' => 'boolean',
+                'type'  => 'boolean',
             ]);
 
             expect($property->castValue(true))->toBeTrue();
@@ -282,9 +282,9 @@ describe('Property Model - Comprehensive Tests', function () {
     describe('Complex Validation Rules', function () {
         it('validates date after constraint with today keyword', function () {
             $property = Property::create([
-                'name' => 'future_date',
-                'label' => 'Future Date',
-                'type' => 'date',
+                'name'       => 'future_date',
+                'label'      => 'Future Date',
+                'type'       => 'date',
                 'validation' => ['after' => 'today'],
             ]);
 
@@ -297,9 +297,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('validates date before constraint with today keyword', function () {
             $property = Property::create([
-                'name' => 'past_date',
-                'label' => 'Past Date',
-                'type' => 'date',
+                'name'       => 'past_date',
+                'label'      => 'Past Date',
+                'type'       => 'date',
                 'validation' => ['before' => 'today'],
             ]);
 
@@ -312,9 +312,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('validates text with min_length and max_length rules', function () {
             $property = Property::create([
-                'name' => 'description',
-                'label' => 'Description',
-                'type' => 'text',
+                'name'       => 'description',
+                'label'      => 'Description',
+                'type'       => 'text',
                 'validation' => ['min_length' => 10, 'max_length' => 50],
             ]);
 
@@ -325,10 +325,10 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('validates multiple validation rules together', function () {
             $property = Property::create([
-                'name' => 'score',
-                'label' => 'Score',
-                'type' => 'number',
-                'required' => true,
+                'name'       => 'score',
+                'label'      => 'Score',
+                'type'       => 'number',
+                'required'   => true,
                 'validation' => ['min' => 0, 'max' => 100],
             ]);
 
@@ -342,10 +342,10 @@ describe('Property Model - Comprehensive Tests', function () {
     describe('Error Messages', function () {
         it('provides specific error messages for different validation failures', function () {
             $numberProperty = Property::create([
-                'name' => 'age',
-                'label' => 'Age',
-                'type' => 'number',
-                'required' => true,
+                'name'       => 'age',
+                'label'      => 'Age',
+                'type'       => 'number',
+                'required'   => true,
                 'validation' => ['min' => 0, 'max' => 120],
             ]);
 
@@ -363,9 +363,9 @@ describe('Property Model - Comprehensive Tests', function () {
     describe('Property Types Edge Cases', function () {
         it('handles select property with empty options array', function () {
             $property = Property::create([
-                'name' => 'empty_select',
-                'label' => 'Empty Select',
-                'type' => 'select',
+                'name'    => 'empty_select',
+                'label'   => 'Empty Select',
+                'type'    => 'select',
                 'options' => [],
             ]);
 
@@ -375,9 +375,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('handles select property with null options', function () {
             $property = Property::create([
-                'name' => 'null_select',
-                'label' => 'Null Select',
-                'type' => 'select',
+                'name'    => 'null_select',
+                'label'   => 'Null Select',
+                'type'    => 'select',
                 'options' => null,
             ]);
 
@@ -386,9 +386,9 @@ describe('Property Model - Comprehensive Tests', function () {
 
         it('validates text property with numeric values', function () {
             $property = Property::create([
-                'name' => 'text_field',
+                'name'  => 'text_field',
                 'label' => 'Text Field',
-                'type' => 'text',
+                'type'  => 'text',
             ]);
 
             expect($property->validateValue(123))->toBeTrue();

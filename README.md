@@ -1,5 +1,10 @@
 # Laravel Dynamic Properties
 
+[![Tests](https://github.com/solutionforest/laravel-dynamic-properties/workflows/Tests/badge.svg)](https://github.com/solutionforest/laravel-dynamic-properties/actions)
+[![Code Style](https://github.com/solutionforest/laravel-dynamic-properties/workflows/Code%20Style%20(Pint)/badge.svg)](https://github.com/solutionforest/laravel-dynamic-properties/actions)
+[![Latest Stable Version](https://poser.pugx.org/solution-forest/laravel-dynamic-properties/v/stable)](https://packagist.org/packages/solution-forest/laravel-dynamic-properties)
+[![License](https://poser.pugx.org/solution-forest/laravel-dynamic-properties/license)](https://packagist.org/packages/solution-forest/laravel-dynamic-properties)
+
 A HubSpot-like dynamic property system for Laravel that allows any entity (users, companies, contacts, etc.) to have custom properties with validation, search capabilities, and optimal performance.
 
 ## Features
@@ -17,20 +22,20 @@ A HubSpot-like dynamic property system for Laravel that allows any entity (users
 Install the package via Composer:
 
 ```bash
-composer require your-vendor/laravel-dynamic-properties
+composer require solution-forest/laravel-dynamic-properties
 ```
 
 Publish and run the migrations:
 
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
 php artisan migrate
 ```
 
 Optionally, publish the configuration file:
 
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="config"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="config"
 ```
 
 ## Quick Start
@@ -43,7 +48,7 @@ php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPrope
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use YourVendor\DynamicProperties\Traits\HasProperties;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 class User extends Model
 {

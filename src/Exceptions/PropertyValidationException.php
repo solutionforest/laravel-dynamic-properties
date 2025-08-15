@@ -1,8 +1,8 @@
 <?php
 
-namespace DynamicProperties\Exceptions;
+namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
-use DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 /**
  * Exception thrown when property value validation fails
@@ -29,11 +29,11 @@ class PropertyValidationException extends PropertyException
         }
 
         parent::__construct($message, 422, null, array_merge([
-            'property_name' => $propertyName,
-            'value' => $value,
+            'property_name'     => $propertyName,
+            'value'             => $value,
             'validation_errors' => $validationErrors,
-            'property_type' => $property?->type,
-            'property_label' => $property?->label,
+            'property_type'     => $property?->type,
+            'property_label'    => $property?->label,
         ], $context));
     }
 

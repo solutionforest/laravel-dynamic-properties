@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Exceptions;
+namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
 /**
  * Exception thrown when an invalid property type is used
@@ -16,7 +16,7 @@ class InvalidPropertyTypeException extends PropertyException
 
         parent::__construct($message, 400, null, array_merge([
             'invalid_type' => $type,
-            'valid_types' => $validTypes,
+            'valid_types'  => $validTypes,
         ], $context));
     }
 

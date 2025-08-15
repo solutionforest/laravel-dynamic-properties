@@ -1,8 +1,8 @@
 <?php
 
-use DynamicProperties\Services\DatabaseCompatibilityService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService;
 
 beforeEach(function () {
     $this->service = new DatabaseCompatibilityService;

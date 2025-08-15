@@ -1,6 +1,6 @@
 <?php
 
-namespace DynamicProperties\Services;
+namespace SolutionForest\LaravelDynamicProperties\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -31,19 +31,19 @@ class DatabaseCompatibilityService
         try {
             return Cache::remember($cacheKey, 3600, function () {
                 return match ($this->driver) {
-                    'mysql' => $this->detectMySQLFeatures(),
+                    'mysql'  => $this->detectMySQLFeatures(),
                     'sqlite' => $this->detectSQLiteFeatures(),
-                    'pgsql' => $this->detectPostgreSQLFeatures(),
-                    default => $this->getDefaultFeatures()
+                    'pgsql'  => $this->detectPostgreSQLFeatures(),
+                    default  => $this->getDefaultFeatures()
                 };
             });
         } catch (\Exception $e) {
             // Fallback to direct detection if cache is not available
             return match ($this->driver) {
-                'mysql' => $this->detectMySQLFeatures(),
+                'mysql'  => $this->detectMySQLFeatures(),
                 'sqlite' => $this->detectSQLiteFeatures(),
-                'pgsql' => $this->detectPostgreSQLFeatures(),
-                default => $this->getDefaultFeatures()
+                'pgsql'  => $this->detectPostgreSQLFeatures(),
+                default  => $this->getDefaultFeatures()
             };
         }
     }
@@ -54,11 +54,11 @@ class DatabaseCompatibilityService
     protected function detectMySQLFeatures(): array
     {
         $features = [
-            'json_functions' => true,
-            'fulltext_search' => true,
-            'generated_columns' => false,
-            'json_extract' => true,
-            'json_search' => true,
+            'json_functions'      => true,
+            'fulltext_search'     => true,
+            'generated_columns'   => false,
+            'json_extract'        => true,
+            'json_search'         => true,
             'case_sensitive_like' => true,
         ];
 
@@ -81,14 +81,14 @@ class DatabaseCompatibilityService
     protected function detectSQLiteFeatures(): array
     {
         $features = [
-            'json_functions' => false,
-            'fulltext_search' => false,
-            'generated_columns' => false,
-            'json_extract' => false,
-            'json_search' => false,
+            'json_functions'      => false,
+            'fulltext_search'     => false,
+            'generated_columns'   => false,
+            'json_extract'        => false,
+            'json_search'         => false,
             'case_sensitive_like' => false,
-            'json1_extension' => false,
-            'fts_extension' => false,
+            'json1_extension'     => false,
+            'fts_extension'       => false,
         ];
 
         try {
@@ -129,13 +129,13 @@ class DatabaseCompatibilityService
     protected function detectPostgreSQLFeatures(): array
     {
         return [
-            'json_functions' => true,
-            'fulltext_search' => true,
-            'generated_columns' => true,
-            'json_extract' => true,
-            'json_search' => true,
+            'json_functions'      => true,
+            'fulltext_search'     => true,
+            'generated_columns'   => true,
+            'json_extract'        => true,
+            'json_search'         => true,
             'case_sensitive_like' => true,
-            'jsonb_support' => true,
+            'jsonb_support'       => true,
         ];
     }
 
@@ -145,11 +145,11 @@ class DatabaseCompatibilityService
     protected function getDefaultFeatures(): array
     {
         return [
-            'json_functions' => false,
-            'fulltext_search' => false,
-            'generated_columns' => false,
-            'json_extract' => false,
-            'json_search' => false,
+            'json_functions'      => false,
+            'fulltext_search'     => false,
+            'generated_columns'   => false,
+            'json_extract'        => false,
+            'json_search'         => false,
             'case_sensitive_like' => false,
         ];
     }
@@ -184,7 +184,7 @@ class DatabaseCompatibilityService
     public function buildJsonExtractQuery(string $column, string $path): string
     {
         return match ($this->driver) {
-            'mysql' => "JSON_EXTRACT({$column}, '$.{$path}')",
+            'mysql'  => "JSON_EXTRACT({$column}, '$.{$path}')",
             'sqlite' => $this->supports('json_extract')
                 ? "json_extract({$column}, '$.{$path}')"
                 : 'NULL', // Fallback for SQLite without JSON1
@@ -199,7 +199,7 @@ class DatabaseCompatibilityService
     public function buildJsonSearchQuery(string $column, string $searchTerm): string
     {
         return match ($this->driver) {
-            'mysql' => "JSON_SEARCH({$column}, 'one', '%{$searchTerm}%') IS NOT NULL",
+            'mysql'  => "JSON_SEARCH({$column}, 'one', '%{$searchTerm}%') IS NOT NULL",
             'sqlite' => $this->supports('json_extract')
                 ? "{$column} LIKE '%{$searchTerm}%'"
                 : "{$column} LIKE '%{$searchTerm}%'",
@@ -218,10 +218,10 @@ class DatabaseCompatibilityService
         }
 
         return match ($this->driver) {
-            'mysql' => "MATCH({$column}) AGAINST('{$searchTerm}' IN BOOLEAN MODE)",
+            'mysql'  => "MATCH({$column}) AGAINST('{$searchTerm}' IN BOOLEAN MODE)",
             'sqlite' => $this->buildLikeSearchQuery($column, $searchTerm), // SQLite FTS only works on virtual tables
-            'pgsql' => "to_tsvector({$column}) @@ plainto_tsquery('{$searchTerm}')",
-            default => $this->buildLikeSearchQuery($column, $searchTerm)
+            'pgsql'  => "to_tsvector({$column}) @@ plainto_tsquery('{$searchTerm}')",
+            default  => $this->buildLikeSearchQuery($column, $searchTerm)
         };
     }
 
@@ -276,10 +276,10 @@ class DatabaseCompatibilityService
     {
         return match ($propertyType) {
             'text', 'select' => "'".addslashes($value)."'",
-            'number' => (string) $value,
-            'date' => "'".$value."'",
+            'number'  => (string) $value,
+            'date'    => "'".$value."'",
             'boolean' => $value ? '1' : '0',
-            default => "'".addslashes($value)."'",
+            default   => "'".addslashes($value)."'",
         };
     }
 
@@ -290,27 +290,27 @@ class DatabaseCompatibilityService
     {
         return match ($this->driver) {
             'mysql' => [
-                'supports_fulltext' => true,
-                'json_column_type' => 'json',
-                'text_column_type' => 'text',
+                'supports_fulltext'          => true,
+                'json_column_type'           => 'json',
+                'text_column_type'           => 'text',
                 'supports_generated_columns' => $this->supports('generated_columns'),
             ],
             'sqlite' => [
-                'supports_fulltext' => $this->supports('fts_extension'),
-                'json_column_type' => 'text', // SQLite stores JSON as TEXT
-                'text_column_type' => 'text',
+                'supports_fulltext'          => $this->supports('fts_extension'),
+                'json_column_type'           => 'text', // SQLite stores JSON as TEXT
+                'text_column_type'           => 'text',
                 'supports_generated_columns' => false,
             ],
             'pgsql' => [
-                'supports_fulltext' => true,
-                'json_column_type' => 'jsonb',
-                'text_column_type' => 'text',
+                'supports_fulltext'          => true,
+                'json_column_type'           => 'jsonb',
+                'text_column_type'           => 'text',
                 'supports_generated_columns' => true,
             ],
             default => [
-                'supports_fulltext' => false,
-                'json_column_type' => 'text',
-                'text_column_type' => 'text',
+                'supports_fulltext'          => false,
+                'json_column_type'           => 'text',
+                'text_column_type'           => 'text',
                 'supports_generated_columns' => false,
             ],
         };
@@ -359,14 +359,14 @@ class DatabaseCompatibilityService
     {
         return match ($this->driver) {
             'mysql' => match ($queryType) {
-                'search' => ['USE INDEX (idx_string_search, idx_number_search, idx_date_search)'],
+                'search'   => ['USE INDEX (idx_string_search, idx_number_search, idx_date_search)'],
                 'fulltext' => ['USE INDEX (ft_string_content)'],
-                default => []
+                default    => []
             },
             'pgsql' => match ($queryType) {
-                'search' => ['/*+ IndexScan */'],
+                'search'   => ['/*+ IndexScan */'],
                 'fulltext' => ['/*+ BitmapScan */'],
-                default => []
+                default    => []
             },
             default => []
         };
@@ -378,6 +378,7 @@ class DatabaseCompatibilityService
     public function clearFeatureCache(): void
     {
         $cacheKey = 'dynamic_properties.db_features.'.$this->driver;
+
         try {
             Cache::forget($cacheKey);
         } catch (\Exception $e) {

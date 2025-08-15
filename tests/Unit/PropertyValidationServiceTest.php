@@ -1,8 +1,8 @@
 <?php
 
-use DynamicProperties\Exceptions\PropertyValidationException;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyValidationService;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyValidationService;
 
 beforeEach(function () {
     $this->validator = new PropertyValidationService;
@@ -21,9 +21,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates property name format', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => '123invalid',
+                'name'  => '123invalid',
                 'label' => 'Test',
-                'type' => 'text',
+                'type'  => 'text',
             ]);
 
             expect($errors)->toHaveKey('name');
@@ -32,9 +32,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates property type', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'test',
+                'name'  => 'test',
                 'label' => 'Test',
-                'type' => 'invalid_type',
+                'type'  => 'invalid_type',
             ]);
 
             expect($errors)->toHaveKey('type');
@@ -43,9 +43,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates select property options', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'test',
+                'name'  => 'test',
                 'label' => 'Test',
-                'type' => 'select',
+                'type'  => 'select',
             ]);
 
             expect($errors)->toHaveKey('options');
@@ -54,9 +54,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates validation rules', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'test',
-                'label' => 'Test',
-                'type' => 'text',
+                'name'       => 'test',
+                'label'      => 'Test',
+                'type'       => 'text',
                 'validation' => [
                     'min' => -1,
                     'max' => 'invalid',
@@ -69,10 +69,10 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('passes valid property definition', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'test_property',
-                'label' => 'Test Property',
-                'type' => 'text',
-                'required' => true,
+                'name'       => 'test_property',
+                'label'      => 'Test Property',
+                'type'       => 'text',
+                'required'   => true,
                 'validation' => [
                     'min' => 1,
                     'max' => 100,
@@ -86,27 +86,27 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
     describe('validatePropertyValue', function () {
         beforeEach(function () {
             $this->textProperty = new Property([
-                'name' => 'test_text',
-                'label' => 'Test Text',
-                'type' => 'text',
-                'required' => true,
+                'name'       => 'test_text',
+                'label'      => 'Test Text',
+                'type'       => 'text',
+                'required'   => true,
                 'validation' => ['min' => 3, 'max' => 10],
             ]);
 
             $this->numberProperty = new Property([
-                'name' => 'test_number',
-                'label' => 'Test Number',
-                'type' => 'number',
-                'required' => false,
+                'name'       => 'test_number',
+                'label'      => 'Test Number',
+                'type'       => 'number',
+                'required'   => false,
                 'validation' => ['min' => 0, 'max' => 100],
             ]);
 
             $this->selectProperty = new Property([
-                'name' => 'test_select',
-                'label' => 'Test Select',
-                'type' => 'select',
+                'name'     => 'test_select',
+                'label'    => 'Test Select',
+                'type'     => 'select',
                 'required' => true,
-                'options' => ['option1', 'option2', 'option3'],
+                'options'  => ['option1', 'option2', 'option3'],
             ]);
         });
 
@@ -203,9 +203,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates select type with array options', function () {
             $property = new Property([
-                'name' => 'test',
-                'label' => 'Test',
-                'type' => 'select',
+                'name'    => 'test',
+                'label'   => 'Test',
+                'type'    => 'select',
                 'options' => ['option1', 'option2', 'option3'],
             ]);
 
@@ -221,9 +221,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
     describe('date validation rules', function () {
         it('validates after constraint', function () {
             $property = new Property([
-                'name' => 'test',
-                'label' => 'Test',
-                'type' => 'date',
+                'name'       => 'test',
+                'label'      => 'Test',
+                'type'       => 'date',
                 'validation' => ['after' => '2023-01-01'],
             ]);
 
@@ -236,9 +236,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates before constraint', function () {
             $property = new Property([
-                'name' => 'test',
-                'label' => 'Test',
-                'type' => 'date',
+                'name'       => 'test',
+                'label'      => 'Test',
+                'type'       => 'date',
                 'validation' => ['before' => '2023-12-31'],
             ]);
 
@@ -253,10 +253,10 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
     describe('Complex Validation Scenarios', function () {
         it('validates property definition with all fields', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'complex_property',
-                'label' => 'Complex Property',
-                'type' => 'text',
-                'required' => true,
+                'name'       => 'complex_property',
+                'label'      => 'Complex Property',
+                'type'       => 'text',
+                'required'   => true,
                 'validation' => [
                     'min' => 5,
                     'max' => 100,
@@ -269,11 +269,11 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates select property definition with options', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'status',
-                'label' => 'Status',
-                'type' => 'select',
+                'name'     => 'status',
+                'label'    => 'Status',
+                'type'     => 'select',
                 'required' => false,
-                'options' => ['active', 'inactive', 'pending'],
+                'options'  => ['active', 'inactive', 'pending'],
             ]);
 
             expect($errors)->toBeEmpty();
@@ -281,10 +281,10 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates number property with range constraints', function () {
             $property = new Property([
-                'name' => 'score',
-                'label' => 'Score',
-                'type' => 'number',
-                'required' => true,
+                'name'       => 'score',
+                'label'      => 'Score',
+                'type'       => 'number',
+                'required'   => true,
                 'validation' => ['min' => 0, 'max' => 100],
             ]);
 
@@ -303,10 +303,10 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates text property with length constraints', function () {
             $property = new Property([
-                'name' => 'description',
-                'label' => 'Description',
-                'type' => 'text',
-                'required' => false,
+                'name'       => 'description',
+                'label'      => 'Description',
+                'type'       => 'text',
+                'required'   => false,
                 'validation' => ['min' => 10, 'max' => 50],
             ]);
 
@@ -324,9 +324,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('handles edge cases for boolean validation', function () {
             $property = new Property([
-                'name' => 'active',
-                'label' => 'Active',
-                'type' => 'boolean',
+                'name'     => 'active',
+                'label'    => 'Active',
+                'type'     => 'boolean',
                 'required' => false,
             ]);
 
@@ -349,10 +349,10 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
     describe('Error Message Quality', function () {
         it('provides meaningful error messages for validation failures', function () {
             $property = new Property([
-                'name' => 'age',
-                'label' => 'Age',
-                'type' => 'number',
-                'required' => true,
+                'name'       => 'age',
+                'label'      => 'Age',
+                'type'       => 'number',
+                'required'   => true,
                 'validation' => ['min' => 0, 'max' => 120],
             ]);
 
@@ -382,40 +382,40 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
     describe('Property Definition Edge Cases', function () {
         it('validates property name format restrictions', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'valid_property_name',
+                'name'  => 'valid_property_name',
                 'label' => 'Valid Property',
-                'type' => 'text',
+                'type'  => 'text',
             ]);
             expect($errors)->toBeEmpty();
 
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => '123invalid',
+                'name'  => '123invalid',
                 'label' => 'Invalid Property',
-                'type' => 'text',
+                'type'  => 'text',
             ]);
             expect($errors)->toHaveKey('name');
 
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'invalid-name-with-dashes',
+                'name'  => 'invalid-name-with-dashes',
                 'label' => 'Invalid Property',
-                'type' => 'text',
+                'type'  => 'text',
             ]);
             expect($errors)->toHaveKey('name');
         });
 
         it('validates select property requires options', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'status',
+                'name'  => 'status',
                 'label' => 'Status',
-                'type' => 'select',
+                'type'  => 'select',
                 // Missing options
             ]);
             expect($errors)->toHaveKey('options');
 
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'status',
-                'label' => 'Status',
-                'type' => 'select',
+                'name'    => 'status',
+                'label'   => 'Status',
+                'type'    => 'select',
                 'options' => [],
             ]);
             expect($errors)->toHaveKey('options');
@@ -423,9 +423,9 @@ describe('PropertyValidationService - Comprehensive Tests', function () {
 
         it('validates validation rules format', function () {
             $errors = $this->validator->validatePropertyDefinition([
-                'name' => 'test',
-                'label' => 'Test',
-                'type' => 'number',
+                'name'       => 'test',
+                'label'      => 'Test',
+                'type'       => 'number',
                 'validation' => [
                     'min' => 'invalid', // Should be numeric
                     'max' => 100,

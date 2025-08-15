@@ -2,14 +2,14 @@
 
 uses()->group('performance');
 
-use DynamicProperties\DynamicPropertyServiceProvider;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService;
-use DynamicProperties\Traits\HasProperties;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 class PerformanceTestUser extends Model
 {
@@ -31,9 +31,9 @@ beforeEach(function () {
     // Setup database
     config(['database.default' => 'testbench']);
     config(['database.connections.testbench' => [
-        'driver' => 'sqlite',
+        'driver'   => 'sqlite',
         'database' => ':memory:',
-        'prefix' => '',
+        'prefix'   => '',
     ]]);
 
     // Run the package migrations
@@ -74,15 +74,15 @@ describe('Single Entity Property Retrieval Performance', function () {
 
         // Set 20 properties to simulate real-world usage
         $properties = [
-            'age' => 30,
-            'salary' => 75000,
-            'city' => 'San Francisco',
+            'age'        => 30,
+            'salary'     => 75000,
+            'city'       => 'San Francisco',
             'department' => 'Engineering',
-            'active' => true,
-            'remote' => true,
-            'hire_date' => '2020-01-15',
+            'active'     => true,
+            'remote'     => true,
+            'hire_date'  => '2020-01-15',
             'birth_date' => '1993-05-20',
-            'skills' => 'PHP, JavaScript, Python',
+            'skills'     => 'PHP, JavaScript, Python',
             'experience' => 8,
         ];
 
@@ -112,15 +112,15 @@ describe('Single Entity Property Retrieval Performance', function () {
 
         // Set 20 properties
         $properties = [
-            'age' => 30,
-            'salary' => 75000,
-            'city' => 'San Francisco',
+            'age'        => 30,
+            'salary'     => 75000,
+            'city'       => 'San Francisco',
             'department' => 'Engineering',
-            'active' => true,
-            'remote' => true,
-            'hire_date' => '2020-01-15',
+            'active'     => true,
+            'remote'     => true,
+            'hire_date'  => '2020-01-15',
             'birth_date' => '1993-05-20',
-            'skills' => 'PHP, JavaScript, Python',
+            'skills'     => 'PHP, JavaScript, Python',
             'experience' => 8,
         ];
 
@@ -154,8 +154,8 @@ describe('Single Entity Property Retrieval Performance', function () {
             for ($i = 1; $i <= $count; $i++) {
                 $properties["prop_$i"] = "value_$i";
                 Property::firstOrCreate(['name' => "prop_$i"], [
-                    'label' => "Property $i",
-                    'type' => 'text',
+                    'label'    => "Property $i",
+                    'type'     => 'text',
                     'required' => false,
                 ]);
             }
@@ -185,8 +185,8 @@ describe('Single Entity Property Retrieval Performance', function () {
 
             $results[$count] = [
                 'without_cache' => $timeWithoutCache,
-                'with_cache' => $timeWithCache,
-                'improvement' => $timeWithoutCache > 0 ? ($timeWithoutCache - $timeWithCache) / $timeWithoutCache * 100 : 0,
+                'with_cache'    => $timeWithCache,
+                'improvement'   => $timeWithoutCache > 0 ? ($timeWithoutCache - $timeWithCache) / $timeWithoutCache * 100 : 0,
             ];
 
             expect($props1)->toHaveCount($count);
@@ -274,9 +274,9 @@ describe('Search Performance with Large Datasets', function () {
         $startTime = microtime(true);
         $results = $this->propertyService->advancedSearch(PerformanceTestUser::class, [
             'department' => 'Engineering',
-            'active' => true,
-            'age' => ['value' => 30, 'operator' => '>'],
-            'salary' => ['operator' => 'between', 'min' => 60000, 'max' => 100000],
+            'active'     => true,
+            'age'        => ['value' => 30, 'operator' => '>'],
+            'salary'     => ['operator' => 'between', 'min' => 60000, 'max' => 100000],
         ]);
         $endTime = microtime(true);
 
@@ -310,7 +310,7 @@ describe('Query Scope Performance', function () {
         $startTime = microtime(true);
         $results = PerformanceTestUser::whereProperties([
             'department' => 'Engineering',
-            'active' => true,
+            'active'     => true,
         ])->get();
         $endTime = microtime(true);
 
@@ -370,10 +370,10 @@ describe('Index Usage and Query Optimization', function () {
         createLargeDataset(200);
 
         $propertyTypes = [
-            'text' => ['department', 'Engineering'],
-            'number' => ['age', 30],
+            'text'    => ['department', 'Engineering'],
+            'number'  => ['age', 30],
             'boolean' => ['active', true],
-            'date' => ['hire_date', '2021-01-01'],
+            'date'    => ['hire_date', '2021-01-01'],
         ];
 
         foreach ($propertyTypes as $type => $criteria) {
@@ -442,8 +442,8 @@ describe('Memory Usage and Scalability', function () {
         for ($i = 1; $i <= 100; $i++) {
             $properties["large_prop_$i"] = str_repeat("value_$i ", 10); // Larger values
             Property::firstOrCreate(['name' => "large_prop_$i"], [
-                'label' => "Large Property $i",
-                'type' => 'text',
+                'label'    => "Large Property $i",
+                'type'     => 'text',
                 'required' => false,
             ]);
         }
@@ -473,7 +473,7 @@ describe('Memory Usage and Scalability', function () {
         $users = [];
         for ($i = 1; $i <= 50; $i++) {
             $users[] = PerformanceTestUser::create([
-                'name' => "Batch User $i",
+                'name'  => "Batch User $i",
                 'email' => "batch$i@example.com",
             ]);
         }
@@ -482,10 +482,10 @@ describe('Memory Usage and Scalability', function () {
 
         foreach ($users as $user) {
             $this->propertyService->setProperties($user, [
-                'age' => rand(25, 65),
+                'age'        => rand(25, 65),
                 'department' => ['Engineering', 'Marketing', 'Sales'][rand(0, 2)],
-                'active' => (bool) rand(0, 1),
-                'salary' => rand(50000, 150000),
+                'active'     => (bool) rand(0, 1),
+                'salary'     => rand(50000, 150000),
             ]);
         }
 
@@ -507,20 +507,20 @@ function createLargeDataset(int $userCount): void
 
     for ($i = 1; $i <= $userCount; $i++) {
         $user = PerformanceTestUser::create([
-            'name' => "User $i",
+            'name'  => "User $i",
             'email' => "user$i@example.com",
         ]);
 
         $properties = [
-            'age' => rand(22, 65),
-            'salary' => rand(40000, 200000),
-            'city' => $cities[array_rand($cities)],
+            'age'        => rand(22, 65),
+            'salary'     => rand(40000, 200000),
+            'city'       => $cities[array_rand($cities)],
             'department' => $departments[array_rand($departments)],
-            'active' => (bool) rand(0, 1),
-            'remote' => (bool) rand(0, 1),
-            'hire_date' => date('Y-m-d', strtotime('-'.rand(1, 2000).' days')),
+            'active'     => (bool) rand(0, 1),
+            'remote'     => (bool) rand(0, 1),
+            'hire_date'  => date('Y-m-d', strtotime('-'.rand(1, 2000).' days')),
             'birth_date' => date('Y-m-d', strtotime('-'.rand(8000, 20000).' days')),
-            'skills' => implode(', ', array_slice($skills, 0, rand(2, 5))),
+            'skills'     => implode(', ', array_slice($skills, 0, rand(2, 5))),
             'experience' => rand(0, 20),
         ];
 
@@ -530,8 +530,8 @@ function createLargeDataset(int $userCount): void
         if ($i % 3 === 0) {
             // Create bonus property if it doesn't exist
             Property::firstOrCreate(['name' => 'bonus'], [
-                'label' => 'Annual Bonus',
-                'type' => 'number',
+                'label'    => 'Annual Bonus',
+                'type'     => 'number',
                 'required' => false,
             ]);
             app(PropertyService::class)->setDynamicProperty($user, 'bonus', rand(5000, 25000));

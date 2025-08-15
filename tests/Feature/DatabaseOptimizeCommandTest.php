@@ -1,6 +1,6 @@
 <?php
 
-use DynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 beforeEach(function () {
     $this->propertyService = new PropertyService;
@@ -32,12 +32,12 @@ it('shows recommendations after optimization', function () {
 
 it('handles optimization failures gracefully', function () {
     // Mock the property service to throw an exception
-    $mockDbCompat = Mockery::mock(\DynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([
-            'driver' => 'mysql',
-            'features' => [],
+            'driver'           => 'mysql',
+            'features'         => [],
             'migration_config' => [],
         ]);
         $mock->shouldReceive('getDatabaseCompatibilityService')->andReturn($mockDbCompat);
@@ -52,12 +52,12 @@ it('handles optimization failures gracefully', function () {
 
 it('continues with force flag despite errors', function () {
     // Mock the property service to throw an exception
-    $mockDbCompat = Mockery::mock(\DynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([
-            'driver' => 'mysql',
-            'features' => [],
+            'driver'           => 'mysql',
+            'features'         => [],
             'migration_config' => [],
         ]);
         $mock->shouldReceive('getDatabaseCompatibilityService')->andReturn($mockDbCompat);
@@ -72,12 +72,12 @@ it('continues with force flag despite errors', function () {
 
 it('shows no optimizations message when none are applied', function () {
     // Mock the property service to return empty optimizations
-    $mockDbCompat = Mockery::mock(\DynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([
-            'driver' => 'unknown',
-            'features' => [],
+            'driver'           => 'unknown',
+            'features'         => [],
             'migration_config' => [],
         ]);
         $mock->shouldReceive('getDatabaseCompatibilityService')->andReturn($mockDbCompat);

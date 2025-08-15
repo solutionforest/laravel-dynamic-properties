@@ -1,10 +1,10 @@
 <?php
 
-namespace DynamicProperties\Tests;
+namespace SolutionForest\LaravelDynamicProperties\Tests;
 
-use DynamicProperties\DynamicPropertyServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -20,9 +20,9 @@ abstract class TestCase extends BaseTestCase
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
-            'driver' => 'sqlite',
+            'driver'   => 'sqlite',
             'database' => ':memory:',
-            'prefix' => '',
+            'prefix'   => '',
         ]);
     }
 

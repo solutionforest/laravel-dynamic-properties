@@ -5,12 +5,12 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "DynamicProperties\\": "src/"
+            "SolutionForest\\LaravelDynamicProperties\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "DynamicProperties\\Tests\\": "tests/"
+            "SolutionForest\\LaravelDynamicProperties\\Tests\\": "tests/"
         }
     },
     "require": {
@@ -26,10 +26,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "DynamicProperties\\DynamicPropertyServiceProvider"
+                "SolutionForest\\LaravelDynamicProperties\\DynamicPropertyServiceProvider"
             ],
             "aliases": {
-                "DynamicProperties": "DynamicProperties\\Facades\\DynamicProperties"
+                "DynamicProperties": "SolutionForest\\LaravelDynamicProperties\\Facades\\DynamicProperties"
             }
         }
     },

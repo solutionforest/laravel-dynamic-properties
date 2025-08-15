@@ -11,9 +11,9 @@ return [
     */
 
     'defaults' => [
-        'required' => false,
+        'required'   => false,
         'searchable' => true,
-        'cacheable' => true,
+        'cacheable'  => true,
     ],
 
     /*
@@ -31,12 +31,12 @@ return [
 
         // Database-specific optimizations
         'mysql' => [
-            'use_json_functions' => true,
+            'use_json_functions'     => true,
             'enable_fulltext_search' => true,
         ],
 
         'sqlite' => [
-            'use_json1_extension' => true,
+            'use_json1_extension'     => true,
             'fallback_to_like_search' => true,
         ],
     ],

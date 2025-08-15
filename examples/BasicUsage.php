@@ -8,49 +8,49 @@
  */
 
 use App\Models\User;
-use DynamicProperties\Facades\DynamicProperties;
-use DynamicProperties\Models\Property;
-use DynamicProperties\Services\PropertyService; // Assuming User model uses HasProperties trait
+use SolutionForest\LaravelDynamicProperties\Facades\DynamicProperties;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService; // Assuming User model uses HasProperties trait
 
 // Example 1: Creating Properties Programmatically
 function createProperties()
 {
     // Create different types of properties
     Property::create([
-        'name' => 'phone',
-        'type' => 'text',
-        'label' => 'Phone Number',
-        'required' => true,
+        'name'       => 'phone',
+        'type'       => 'text',
+        'label'      => 'Phone Number',
+        'required'   => true,
         'validation' => ['min_length' => 10, 'max_length' => 15],
     ]);
 
     Property::create([
-        'name' => 'age',
-        'type' => 'number',
-        'label' => 'Age',
-        'required' => false,
+        'name'       => 'age',
+        'type'       => 'number',
+        'label'      => 'Age',
+        'required'   => false,
         'validation' => ['min' => 0, 'max' => 120],
     ]);
 
     Property::create([
-        'name' => 'status',
-        'type' => 'select',
-        'label' => 'User Status',
+        'name'     => 'status',
+        'type'     => 'select',
+        'label'    => 'User Status',
         'required' => true,
-        'options' => ['active', 'inactive', 'pending', 'suspended'],
+        'options'  => ['active', 'inactive', 'pending', 'suspended'],
     ]);
 
     Property::create([
-        'name' => 'verified',
-        'type' => 'boolean',
-        'label' => 'Email Verified',
+        'name'     => 'verified',
+        'type'     => 'boolean',
+        'label'    => 'Email Verified',
         'required' => false,
     ]);
 
     Property::create([
-        'name' => 'birth_date',
-        'type' => 'date',
-        'label' => 'Birth Date',
+        'name'     => 'birth_date',
+        'type'     => 'date',
+        'label'    => 'Birth Date',
         'required' => false,
     ]);
 }
@@ -76,19 +76,19 @@ function setUserProperties()
 
     // Method 3: Setting multiple properties at once
     $user->setProperties([
-        'phone' => '+1234567890',
-        'age' => 25,
-        'status' => 'active',
-        'verified' => true,
+        'phone'      => '+1234567890',
+        'age'        => 25,
+        'status'     => 'active',
+        'verified'   => true,
         'birth_date' => '1999-01-15',
     ]);
 
     // Method 4: Using the facade
     DynamicProperties::setProperties($user, [
-        'phone' => '+1234567890',
-        'age' => 25,
-        'status' => 'active',
-        'verified' => true,
+        'phone'      => '+1234567890',
+        'age'        => 25,
+        'status'     => 'active',
+        'verified'   => true,
         'birth_date' => '1999-01-15',
     ]);
 }
@@ -111,8 +111,8 @@ function getUserProperties()
 
     return [
         'phone' => $phone,
-        'age' => $age,
-        'all' => $allProperties,
+        'age'   => $age,
+        'all'   => $allProperties,
     ];
 }
 
@@ -126,7 +126,7 @@ function searchUsersByProperties()
 
     // Multiple property search (AND logic)
     $activeVerifiedUsers = User::whereProperties([
-        'status' => 'active',
+        'status'   => 'active',
         'verified' => true,
     ])->get();
 
@@ -135,8 +135,8 @@ function searchUsersByProperties()
 
     // Search with operators
     $results = $propertyService->search('App\\Models\\User', [
-        'age' => ['value' => 25, 'operator' => '>='],
-        'status' => 'active',
+        'age'      => ['value' => 25, 'operator' => '>='],
+        'status'   => 'active',
         'verified' => true,
     ]);
 
@@ -168,14 +168,14 @@ function searchUsersByProperties()
     );
 
     return [
-        'active' => $activeUsers,
-        'verified' => $verifiedUsers,
-        'young' => $youngUsers,
+        'active'          => $activeUsers,
+        'verified'        => $verifiedUsers,
+        'young'           => $youngUsers,
         'active_verified' => $activeVerifiedUsers,
         'advanced_search' => $users,
-        'text_search' => User::whereIn('id', $textResults)->get(),
-        'age_range' => User::whereIn('id', $ageRangeResults)->get(),
-        'date_range' => User::whereIn('id', $dateRangeResults)->get(),
+        'text_search'     => User::whereIn('id', $textResults)->get(),
+        'age_range'       => User::whereIn('id', $ageRangeResults)->get(),
+        'date_range'      => User::whereIn('id', $dateRangeResults)->get(),
     ];
 }
 
@@ -186,7 +186,7 @@ function advancedSearchExamples()
 
     // OR logic search - users who are either young OR verified
     $results = $propertyService->advancedSearch('App\\Models\\User', [
-        'age' => ['value' => 25, 'operator' => '<'],
+        'age'      => ['value' => 25, 'operator' => '<'],
         'verified' => true,
     ], 'OR');
 
@@ -194,12 +194,12 @@ function advancedSearchExamples()
     $complexResults = $propertyService->search('App\\Models\\User', [
         'age' => [
             'operator' => 'between',
-            'min' => 25,
-            'max' => 35,
+            'min'      => 25,
+            'max'      => 35,
         ],
         'status' => [
             'operator' => 'in',
-            'value' => ['active', 'pending'],
+            'value'    => ['active', 'pending'],
         ],
     ]);
 
@@ -207,14 +207,14 @@ function advancedSearchExamples()
     $likeResults = $propertyService->search('App\\Models\\User', [
         'bio' => [
             'operator' => 'like',
-            'value' => 'developer',
-            'options' => ['case_sensitive' => false],
+            'value'    => 'developer',
+            'options'  => ['case_sensitive' => false],
         ],
     ]);
 
     return [
-        'or_logic' => User::whereIn('id', $results)->get(),
-        'complex' => User::whereIn('id', $complexResults)->get(),
+        'or_logic'    => User::whereIn('id', $results)->get(),
+        'complex'     => User::whereIn('id', $complexResults)->get(),
         'like_search' => User::whereIn('id', $likeResults)->get(),
     ];
 }
@@ -229,8 +229,8 @@ function jsonCacheExamples()
 
     // Set properties (automatically syncs to JSON cache if column exists)
     $user->setProperties([
-        'phone' => '+1234567890',
-        'age' => 25,
+        'phone'  => '+1234567890',
+        'age'    => 25,
         'status' => 'active',
     ]);
 
@@ -245,7 +245,7 @@ function jsonCacheExamples()
     $syncedCount = $propertyService->syncAllJsonColumns('App\\Models\\User', 100);
 
     return [
-        'properties' => $properties,
+        'properties'   => $properties,
         'synced_count' => $syncedCount,
     ];
 }
@@ -301,8 +301,8 @@ function bulkOperationExamples()
 
     foreach ($users as $user) {
         $user->setProperties([
-            'status' => 'active',
-            'verified' => true,
+            'status'       => 'active',
+            'verified'     => true,
             'last_updated' => now()->toDateString(),
         ]);
     }
@@ -338,7 +338,7 @@ function performanceExamples()
 
     $start = microtime(true);
     $results = $propertyService->search('App\\Models\\User', [
-        'status' => 'active',
+        'status'   => 'active',
         'verified' => true,
     ]);
     $end = microtime(true);

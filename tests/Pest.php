@@ -1,6 +1,6 @@
 <?php
 
-use DynamicProperties\Tests\TestCase;
+use SolutionForest\LaravelDynamicProperties\Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
