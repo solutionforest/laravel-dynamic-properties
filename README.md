@@ -65,6 +65,8 @@ php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\D
 
 ## Quick Start
 
+> **⚠️ IMPORTANT**: You must create Property definitions before setting property values. Attempting to set a property that doesn't have a definition will throw a `PropertyNotFoundException`.
+
 ### 1. Add the Trait to Your Models
 
 ```php
@@ -85,8 +87,10 @@ class User extends Model
 
 ### 2. Create Properties
 
+**⚠️ REQUIRED STEP**: Before setting any property values, you must first create the property definitions. This ensures type safety, validation, and optimal performance.
+
 ```php
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 // Create a text property
 Property::create([
@@ -118,13 +122,18 @@ Property::create([
 
 ### 3. Set and Get Properties
 
+**✅ Only after creating property definitions can you set values:**
+
 ```php
 $user = User::find(1);
 
-// Set properties
+// ✅ This works - property 'phone' was defined above
 $user->setDynamicProperty('phone', '+1234567890');
 $user->setDynamicProperty('age', 25);
 $user->setDynamicProperty('status', 'active');
+
+// ❌ This will throw PropertyNotFoundException
+$user->setDynamicProperty('undefined_property', 'value');
 
 // Or use magic methods
 $user->prop_phone = '+1234567890';
@@ -143,18 +152,78 @@ $user->setProperties([
 ]);
 ```
 
+> **💡 Pro Tip**: Use the Artisan command to create properties interactively:
+> ```bash
+> php artisan properties:create
+> ```
+
 ### 4. Search by Properties
 
+**🔍 Search works with or without property definitions, but defining properties first is strongly recommended for type safety:**
+
 ```php
-// Find users by single property
+// ✅ RECOMMENDED: Search with defined properties (uses correct column types)
 $activeUsers = User::whereProperty('status', 'active')->get();
 $youngUsers = User::whereProperty('age', '<', 30)->get();
+
+// ⚠️ FALLBACK: Search undefined properties (uses value-based type detection)
+$results = User::whereProperty('undefined_prop', 'some_value')->get();
 
 // Find users by multiple properties
 $users = User::whereProperties([
     'status' => 'active',
     'age' => 25
 ])->get();
+```
+
+## ⚠️ Common Pitfalls and Warnings
+
+### 1. Property Definition Required for Setting Values
+```php
+// ❌ WRONG - Will throw PropertyNotFoundException
+$user->setDynamicProperty('new_field', 'value'); // Property 'new_field' doesn't exist
+
+// ✅ CORRECT - Create property definition first
+Property::create([
+    'name' => 'new_field',
+    'label' => 'New Field',
+    'type' => 'text'
+]);
+$user->setDynamicProperty('new_field', 'value'); // Now it works
+```
+
+### 2. Type Safety Depends on Property Definitions
+```php
+// ✅ With property definition - Type safe
+Property::create(['name' => 'score', 'type' => 'number']);
+$users = User::whereProperty('score', '>', 80); // Uses number_value column correctly
+
+// ⚠️ Without property definition - Fallback behavior
+$users = User::whereProperty('undefined_score', '>', 80); // Uses value-based type detection
+```
+
+### 3. Validation Only Works with Property Definitions
+```php
+// ✅ With validation rules
+Property::create([
+    'name' => 'email',
+    'type' => 'text',
+    'validation' => ['email', 'required']
+]);
+$user->setDynamicProperty('email', 'invalid-email'); // Throws PropertyValidationException
+
+// ❌ Without property definition - No validation possible
+// (Would throw PropertyNotFoundException before validation could occur)
+```
+
+### 4. Performance Impact
+```php
+// ✅ FAST - Uses correct column and indexes
+Property::create(['name' => 'department', 'type' => 'text']);
+$users = User::whereProperty('department', 'engineering'); // Optimized query
+
+// ⚠️ SLOWER - Uses fallback type detection
+$users = User::whereProperty('undefined_dept', 'engineering'); // Less optimal
 ```
 
 ## Advanced Usage
@@ -447,6 +516,45 @@ return [
         ],
     ],
 ];
+```
+
+## Troubleshooting
+
+### Common Errors and Solutions
+
+#### `PropertyNotFoundException`
+```php
+// Error: "Property 'phone' not found"
+$user->setDynamicProperty('phone', '+1234567890');
+```
+**Solution**: Create the property definition first:
+```php
+Property::create(['name' => 'phone', 'type' => 'text']);
+$user->setDynamicProperty('phone', '+1234567890'); // Now works
+```
+
+#### `PropertyValidationException`
+```php
+// Error: "Validation failed for property 'age'"
+$user->setDynamicProperty('age', -5);
+```
+**Solution**: Check property validation rules:
+```php
+$property = Property::where('name', 'age')->first();
+var_dump($property->validation); // See what rules are defined
+$user->setDynamicProperty('age', 25); // Use valid value
+```
+
+#### Inconsistent Search Results
+```php
+// Getting different results for the same logical query
+$users1 = User::whereProperty('level', '>', 5)->get();   // 10 results
+$users2 = User::whereProperty('level', '>', '5')->get(); // 3 results
+```
+**Solution**: This happens when property definition is missing. Create it:
+```php
+Property::create(['name' => 'level', 'type' => 'number']);
+// Now both queries will return the same results
 ```
 
 ## Testing

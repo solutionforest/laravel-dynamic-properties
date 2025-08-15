@@ -16,9 +16,9 @@ This guide provides detailed instructions for installing and configuring the Lar
 
 ### System Requirements
 
-- **PHP**: 8.1 or higher
-- **Laravel**: 9.0 or higher
-- **Database**: MySQL 5.7+, PostgreSQL 12+, or SQLite 3.35+
+- **PHP**: 8.3 or higher
+- **Laravel**: 11.0 or higher
+- **Database**: MySQL 8.1+, PostgreSQL 12+, or SQLite 3.35+
 
 ### PHP Extensions
 
@@ -565,9 +565,48 @@ rm -rf database/migrations/*_create_entity_properties_table.php
 
 After successful installation:
 
+> **⚠️ IMPORTANT**: Before using dynamic properties, you must create property definitions first!
+
+### Quick Start
+
+1. **Create your first properties**:
+```bash
+# Interactive property creation
+php artisan properties:create
+```
+
+Or programmatically:
+```php
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+
+Property::create([
+    'name' => 'phone',
+    'label' => 'Phone Number', 
+    'type' => 'text'
+]);
+```
+
+2. **Add the trait to your models**:
+```php
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+
+class User extends Model 
+{
+    use HasProperties;
+}
+```
+
+3. **Start using properties**:
+```php
+$user = User::find(1);
+$user->setDynamicProperty('phone', '+1234567890'); // ✅ Works
+```
+
+### Additional Resources
+
 1. **Read the [Usage Examples](docs/EXAMPLES.md)** for common use cases
-2. **Review the [API Documentation](docs/API.md)** for detailed method references
+2. **Review the [API Documentation](docs/API.md)** for detailed method references  
 3. **Check the [Performance Guide](docs/PERFORMANCE.md)** for optimization strategies
 4. **Set up monitoring** for production environments
 
-The package is now ready to use! Start by adding the `HasProperties` trait to your models and creating your first properties.
+> **💡 Remember**: Always create Property definitions before setting values to avoid `PropertyNotFoundException`!

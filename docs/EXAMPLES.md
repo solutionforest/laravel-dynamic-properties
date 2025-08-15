@@ -2,6 +2,8 @@
 
 This document provides comprehensive examples of how to use the Laravel Dynamic Properties package in various scenarios.
 
+> **⚠️ CRITICAL**: Before setting any property values, you must first create property definitions using `Property::create()`. Attempting to set properties without definitions will throw `PropertyNotFoundException`.
+
 ## Table of Contents
 
 - [Basic Usage](#basic-usage)
@@ -16,13 +18,15 @@ This document provides comprehensive examples of how to use the Laravel Dynamic 
 
 ### Setting Up Your First Property
 
+> **📝 STEP 1**: Always create property definitions first!
+
 ```php
 <?php
 
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 use App\Models\User;
 
-// Create a simple text property
+// ✅ STEP 1: Create property definition first
 $phoneProperty = Property::create([
     'name' => 'phone',
     'label' => 'Phone Number',
@@ -30,7 +34,7 @@ $phoneProperty = Property::create([
     'required' => false
 ]);
 
-// Add the trait to your User model
+// ✅ STEP 2: Add the trait to your User model
 class User extends Model
 {
     use HasProperties;
@@ -38,12 +42,15 @@ class User extends Model
     // Your existing model code...
 }
 
-// Use the property
+// ✅ STEP 3: Now you can use the property
 $user = User::find(1);
-$user->setDynamicProperty('phone', '+1-555-123-4567');
+$user->setDynamicProperty('phone', '+1-555-123-4567'); // Works!
 
 echo $user->getDynamicProperty('phone'); // +1-555-123-4567
 echo $user->prop_phone; // +1-555-123-4567 (magic method)
+
+// ❌ WRONG: This would fail
+// $user->setDynamicProperty('undefined_prop', 'value'); // PropertyNotFoundException
 ```
 
 ### Working with Multiple Properties

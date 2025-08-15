@@ -1,5 +1,7 @@
 # API Documentation
 
+> **⚠️ IMPORTANT**: Property definitions must be created before setting property values. All `setDynamicProperty` methods will throw `PropertyNotFoundException` if the property doesn't exist. Search methods (`whereProperty`) will work but fall back to less optimal type detection without property definitions.
+
 ## Table of Contents
 
 - [Models](#models)
@@ -13,6 +15,37 @@
 - [Exceptions](#exceptions)
 - [Facades](#facades)
 - [Artisan Commands](#artisan-commands)
+
+## Getting Started
+
+### Property Definition Requirement
+
+**All dynamic property operations require property definitions to exist first.** Here's what happens in each scenario:
+
+| Operation | With Property Definition | Without Property Definition |
+|-----------|-------------------------|----------------------------|
+| `setDynamicProperty()` | ✅ Works with validation | ❌ Throws `PropertyNotFoundException` |
+| `setProperties()` | ✅ Works with validation | ❌ Throws `PropertyNotFoundException` |
+| `whereProperty()` | ✅ Optimal performance, type-safe | ⚠️ Works but uses fallback type detection |
+| `getDynamicProperty()` | ✅ Returns typed value | ✅ Returns value if exists |
+
+### Quick Setup Checklist
+
+1. **Create property definitions**:
+```php
+Property::create(['name' => 'phone', 'type' => 'text']);
+Property::create(['name' => 'age', 'type' => 'number']);
+```
+
+2. **Add trait to your models**:
+```php
+class User extends Model { use HasProperties; }
+```
+
+3. **Start using properties**:
+```php
+$user->setDynamicProperty('phone', '+1234567890');
+```
 
 ## Models
 
@@ -159,7 +192,13 @@ class User extends Model
 
 Sets a single property value with validation.
 
+> **⚠️ REQUIREMENT**: The property must exist in the `properties` table before calling this method.
+
 ```php
+// First create the property definition
+Property::create(['name' => 'phone', 'type' => 'text']);
+
+// Then set the value
 $user->setDynamicProperty('phone', '+1234567890');
 ```
 
@@ -192,7 +231,15 @@ $phone = $user->getDynamicProperty('phone');
 
 Sets multiple properties at once.
 
+> **⚠️ REQUIREMENT**: All properties must exist in the `properties` table before calling this method.
+
 ```php
+// Ensure all properties are defined first
+Property::create(['name' => 'phone', 'type' => 'text']);
+Property::create(['name' => 'age', 'type' => 'number']);
+Property::create(['name' => 'active', 'type' => 'boolean']);
+
+// Then set multiple values
 $user->setProperties([
     'phone' => '+1234567890',
     'age' => 25,
@@ -293,9 +340,18 @@ $entityProperties = $user->entityProperties;
 
 Filter entities by a single property value.
 
+> **💡 BEST PRACTICE**: While this method works without property definitions (using fallback type detection), defining properties first ensures optimal performance and type safety.
+
 ```php
+// ✅ RECOMMENDED: With property definition
+Property::create(['name' => 'active', 'type' => 'boolean']);
+Property::create(['name' => 'age', 'type' => 'number']);
+
 $activeUsers = User::whereProperty('active', true)->get();
 $youngUsers = User::whereProperty('age', '<', 30)->get();
+
+// ⚠️ WORKS BUT NOT OPTIMAL: Without property definition
+$results = User::whereProperty('undefined_prop', 'value')->get(); // Uses fallback logic
 ```
 
 **Parameters:**
@@ -372,8 +428,15 @@ Core service for managing dynamic properties.
 
 Sets a property value for an entity.
 
+> **⚠️ REQUIREMENT**: The property must exist in the `properties` table before calling this method.
+
 ```php
 $propertyService = app(PropertyService::class);
+
+// First ensure property exists
+Property::create(['name' => 'phone', 'type' => 'text']);
+
+// Then set the value
 $propertyService->setDynamicProperty($user, 'phone', '+1234567890');
 ```
 
