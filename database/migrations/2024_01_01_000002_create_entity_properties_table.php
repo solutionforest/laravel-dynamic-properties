@@ -28,12 +28,12 @@ return new class extends Migration
 
             // Indexes for fast search and retrieval
             $table->index(['entity_id', 'entity_type'], 'idx_entity');
-            
+
             // MySQL requires key length for TEXT columns, handled in database-specific optimizations
             if (Schema::getConnection()->getDriverName() !== 'mysql') {
                 $table->index(['entity_type', 'property_name', 'string_value'], 'idx_string_search');
             }
-            
+
             $table->index(['entity_type', 'property_name', 'number_value'], 'idx_number_search');
             $table->index(['entity_type', 'property_name', 'date_value'], 'idx_date_search');
             $table->index(['entity_type', 'property_name', 'boolean_value'], 'idx_boolean_search');
