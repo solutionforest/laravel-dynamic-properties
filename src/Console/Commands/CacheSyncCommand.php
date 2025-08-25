@@ -82,7 +82,7 @@ class CacheSyncCommand extends Command
     {
         // Resolve the actual model class (handles both full class names and morph names)
         $resolvedModelClass = $this->resolveModelClass($modelClass);
-        
+
         if (! $resolvedModelClass) {
             $this->error("Model class or morph name '{$modelClass}' not found.");
 

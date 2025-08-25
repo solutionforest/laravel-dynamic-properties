@@ -24,7 +24,7 @@ describe('CacheSyncCommand - Morph Name Handling', function () {
     beforeEach(function () {
         // Reset morph map to ensure clean state for each test
         Relation::morphMap([], false);
-        
+
         // Create users table for testing
         if (! Schema::hasTable('users')) {
             Schema::create('users', function ($table) {
@@ -58,7 +58,7 @@ describe('CacheSyncCommand - Morph Name Handling', function () {
     it('works with full model class name when no morph mapping is configured', function () {
         // Force reset morph map to ensure clean state for this test
         Relation::morphMap([], false);
-        
+
         // Create test user
         $user = CacheSyncTestUser::create([
             'name'  => 'Test User',
