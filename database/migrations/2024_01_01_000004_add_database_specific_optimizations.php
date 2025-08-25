@@ -52,9 +52,9 @@ return new class extends Migration
             // This is a placeholder for future JSON column optimizations
         }
 
-        // Add composite indexes for common search patterns
-        if (! $this->indexExists('entity_properties', 'idx_entity_property_value')) {
-            DB::statement('ALTER TABLE entity_properties ADD INDEX idx_entity_property_value (entity_type, property_name, string_value(100))');
+        // Add composite indexes for common search patterns (MySQL requires key length for TEXT columns)
+        if (! $this->indexExists('entity_properties', 'idx_string_search')) {
+            DB::statement('ALTER TABLE entity_properties ADD INDEX idx_string_search (entity_type, property_name, string_value(100))');
         }
 
         // Optimize table for InnoDB
@@ -154,8 +154,8 @@ return new class extends Migration
     protected function rollbackMySQL(): void
     {
         // Remove MySQL-specific optimizations
-        if ($this->indexExists('entity_properties', 'idx_entity_property_value')) {
-            DB::statement('ALTER TABLE entity_properties DROP INDEX idx_entity_property_value');
+        if ($this->indexExists('entity_properties', 'idx_string_search')) {
+            DB::statement('ALTER TABLE entity_properties DROP INDEX idx_string_search');
         }
     }
 
