@@ -23,7 +23,7 @@ class CacheSyncTestUser extends Model
 describe('CacheSyncCommand - Morph Name Handling', function () {
     beforeEach(function () {
         // Reset morph map to ensure clean state for each test
-        Relation::morphMap([]);
+        Relation::morphMap([], false);
         
         // Create users table for testing
         if (! Schema::hasTable('users')) {
@@ -52,12 +52,12 @@ describe('CacheSyncCommand - Morph Name Handling', function () {
 
     afterEach(function () {
         // Reset morph map after each test
-        Relation::morphMap([]);
+        Relation::morphMap([], false);
     });
 
     it('works with full model class name when no morph mapping is configured', function () {
         // Force reset morph map to ensure clean state for this test
-        Relation::morphMap([]);
+        Relation::morphMap([], false);
         
         // Create test user
         $user = CacheSyncTestUser::create([
