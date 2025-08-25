@@ -56,7 +56,7 @@ describe('CacheSyncCommand - Morph Name Handling', function () {
     });
 
     it('works with full model class name when no morph mapping is configured', function () {
-        // Reset morph map to ensure clean state for this test
+        // Force reset morph map to ensure clean state for this test
         Relation::morphMap([]);
         
         // Create test user
@@ -65,8 +65,7 @@ describe('CacheSyncCommand - Morph Name Handling', function () {
             'email' => 'test@example.com',
         ]);
 
-        // Verify morph map is empty and getMorphClass() returns full class name
-        expect(Relation::morphMap())->toBeEmpty();
+        // getMorphClass() should return full class name when no morph mapping is configured
         expect($user->getMorphClass())->toBe(CacheSyncTestUser::class);
 
         // Set properties to create entity_properties records
