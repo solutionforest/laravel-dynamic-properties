@@ -16,8 +16,9 @@ class PropertyDeleteCommand extends Command
 
     public function handle(): int
     {
-        $name = $this->argument('name');
-        $force = $this->option('force');
+        $nameArgument = $this->argument('name');
+        $name = is_string($nameArgument) ? $nameArgument : '';
+        $force = (bool) $this->option('force');
 
         $property = Property::where('name', $name)->first();
 
@@ -43,19 +44,16 @@ class PropertyDeleteCommand extends Command
         }
 
         try {
-            // Delete associated entity properties first
-            EntityProperty::where('property_id', $property->id)->delete();
-
-            // Delete the property
+            // The Property model cascades value deletion and JSON cache resync.
             $property->delete();
 
             $this->info("Property '{$name}' and {$entityPropertyCount} associated values deleted successfully.");
 
-            return 0;
-        } catch (\Exception $e) {
+            return self::SUCCESS;
+        } catch (\Throwable $e) {
             $this->error("Failed to delete property: {$e->getMessage()}");
 
-            return 1;
+            return self::FAILURE;
         }
     }
 }

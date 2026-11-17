@@ -1,16 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Exceptions;
 
 use Exception;
 
 /**
- * Base exception class for all property-related errors
+ * Base exception class for all property-related errors.
  */
 class PropertyException extends Exception
 {
+    /**
+     * @var array<string, mixed>
+     */
     protected array $context = [];
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
     public function __construct(string $message = '', int $code = 0, ?Exception $previous = null, array $context = [])
     {
         parent::__construct($message, $code, $previous);
@@ -18,7 +26,7 @@ class PropertyException extends Exception
     }
 
     /**
-     * Get additional context information about the error
+     * @return array<string, mixed>
      */
     public function getContext(): array
     {
@@ -26,7 +34,7 @@ class PropertyException extends Exception
     }
 
     /**
-     * Set additional context information
+     * @param  array<string, mixed>  $context
      */
     public function setContext(array $context): self
     {
@@ -36,7 +44,7 @@ class PropertyException extends Exception
     }
 
     /**
-     * Get a user-friendly error message suitable for API responses
+     * Get a user-friendly error message suitable for API responses.
      */
     public function getUserMessage(): string
     {
@@ -44,7 +52,7 @@ class PropertyException extends Exception
     }
 
     /**
-     * Get error data formatted for API responses
+     * @return array{error: string, message: string, context: array<string, mixed>}
      */
     public function toArray(): array
     {
