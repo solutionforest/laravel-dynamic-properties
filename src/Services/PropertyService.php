@@ -634,7 +634,9 @@ class PropertyService
 
         foreach ($this->dbCompat->createOptimizedIndexes('entity_properties') as $statement) {
             try {
-                DB::statement($statement);
+                // A savepoint keeps a failed statement from poisoning an enclosing
+                // transaction (PostgreSQL aborts it otherwise).
+                DB::transaction(static fn () => DB::statement($statement));
                 $applied[] = $statement;
                 Log::info('Database optimization applied', ['query' => $statement]);
             } catch (\Throwable $e) {

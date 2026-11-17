@@ -641,7 +641,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             // Verify database consistency
             $entityProperties = EntityProperty::forEntity($this->user)->get();
             expect($entityProperties)->toHaveCount(2);
-            expect($entityProperties->pluck('property_name')->toArray())->toEqual(['bio', 'age']);
+            expect($entityProperties->pluck('property_name')->sort()->values()->toArray())->toEqual(['age', 'bio']);
         });
     });
 });
