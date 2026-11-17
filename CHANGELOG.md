@@ -57,6 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composer `check`/`test`/`phpstan`/`pint` scripts and CI jobs for Pest,
   PHPStan and Pint (Pint now checks instead of auto-committing).
 
+### Removed
+
+- **BREAKING**: Dropped Laravel 11 support. The package now requires Laravel
+  12.0+ (and `orchestra/testbench` ^10.0|^11.0 for development). Laravel 11
+  minors are past their security window, which also made the CI matrix
+  unresolvable.
+
 ### Changed
 
 - The JSON cache is optional and off the source-of-truth path; the README no

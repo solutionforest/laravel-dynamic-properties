@@ -5,7 +5,7 @@ This document provides comprehensive examples of how to use the Laravel Dynamic 
 ## Requirements
 
 - **PHP**: 8.3 or higher
-- **Laravel**: 11.0 or higher
+- **Laravel**: 12.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
 
 > **⚠️ CRITICAL**: Before setting any property values, you must first create property definitions using `Property::create()`. Attempting to set properties without definitions will throw `PropertyNotFoundException`.
