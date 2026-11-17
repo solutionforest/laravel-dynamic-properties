@@ -206,9 +206,14 @@ trait HasProperties
         }
 
         if ($value === null) {
-            return $operator === '=' || $operator === 'IS'
-                ? $this->applyNullPropertyFilter($query, $name)
-                : $this->applyNullPropertyFilter($query, $name, false);
+            return match (strtolower((string) $operator)) {
+                '=', 'is'       => $this->applyNullPropertyFilter($query, $name),
+                '!=', '<>'      => $this->applyNullPropertyFilter($query, $name, false),
+                default         => throw new \InvalidArgumentException(
+                    "whereProperty('{$name}', '{$operator}') has no value to compare against. "
+                    ."Pass the value explicitly, e.g. whereProperty('{$name}', '{$operator}', \$value)."
+                ),
+            };
         }
 
         return $query->whereHas('entityProperties', function (Builder $q) use ($name, $operator, $value): void {
@@ -301,8 +306,7 @@ trait HasProperties
                 return;
             }
 
-            $like = $compatibility->likeCondition($searchTerm);
-            $q->where('string_value', $like['operator'], $like['value']);
+            $compatibility->applyLike($q, 'string_value', $searchTerm);
         });
     }
 
@@ -468,8 +472,7 @@ trait HasProperties
         }
 
         if (is_string($value) && in_array(strtolower($operator), ['like', 'ilike'], true)) {
-            $like = $this->propertiesService()->getDatabaseCompatibilityService()->likeCondition($value);
-            $q->where('string_value', $like['operator'], $like['value']);
+            $this->propertiesService()->getDatabaseCompatibilityService()->applyLike($q, 'string_value', $value);
 
             return;
         }

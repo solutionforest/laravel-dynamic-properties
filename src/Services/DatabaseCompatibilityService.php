@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SolutionForest\LaravelDynamicProperties\Services;
 
+use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilderContract;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -190,21 +193,78 @@ class DatabaseCompatibilityService
     }
 
     /**
+     * Escape character used in every LIKE predicate built by this package.
+     *
+     * A non-backslash character is used because SQLite has no default LIKE
+     * escape character, and `ESCAPE '!'` is portable across MySQL, PostgreSQL
+     * and SQLite without depending on backslash-escaping server modes.
+     */
+    public const LIKE_ESCAPE = '!';
+
+    /**
+     * Fixed LIKE predicates, one per operator and value column.
+     *
+     * Predicates are static literals (identifiers are plain and need no
+     * quoting) so no SQL is ever assembled from runtime input; the search term
+     * is always passed as a binding.
+     */
+    private const LIKE_PREDICATES = [
+        'LIKE' => [
+            'string_value'  => "string_value LIKE ? ESCAPE '!'",
+            'number_value'  => "number_value LIKE ? ESCAPE '!'",
+            'date_value'    => "date_value LIKE ? ESCAPE '!'",
+            'boolean_value' => "boolean_value LIKE ? ESCAPE '!'",
+        ],
+        'LIKE BINARY' => [
+            'string_value'  => "string_value LIKE BINARY ? ESCAPE '!'",
+            'number_value'  => "number_value LIKE BINARY ? ESCAPE '!'",
+            'date_value'    => "date_value LIKE BINARY ? ESCAPE '!'",
+            'boolean_value' => "boolean_value LIKE BINARY ? ESCAPE '!'",
+        ],
+        'ILIKE' => [
+            'string_value'  => "string_value ILIKE ? ESCAPE '!'",
+            'number_value'  => "number_value ILIKE ? ESCAPE '!'",
+            'date_value'    => "date_value ILIKE ? ESCAPE '!'",
+            'boolean_value' => "boolean_value ILIKE ? ESCAPE '!'",
+        ],
+    ];
+
+    /**
      * Build a parameterised LIKE condition for the current database.
      *
-     * The term is escaped for LIKE wildcards; the value is always bound by the
-     * query builder, never interpolated into SQL.
+     * The term is escaped for LIKE wildcards with {@see self::LIKE_ESCAPE}; the
+     * value is always bound by the query builder, never interpolated into SQL.
+     * Use {@see self::applyLike()} to add the matching `ESCAPE` clause.
      *
-     * @return array{operator: string, value: string}
+     * @return array{operator: string, value: string, escape: string}
      */
     public function likeCondition(string $searchTerm, bool $caseSensitive = false): array
     {
-        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm);
+        $escape = self::LIKE_ESCAPE;
+        $escaped = str_replace([$escape, '%', '_'], [$escape.$escape, $escape.'%', $escape.'_'], $searchTerm);
 
         return [
             'operator' => $this->likeOperator($caseSensitive),
             'value'    => '%'.$escaped.'%',
+            'escape'   => $escape,
         ];
+    }
+
+    /**
+     * Add a "contains" LIKE predicate with an explicit ESCAPE clause.
+     *
+     * @param  EloquentBuilder<*>|EloquentBuilderContract|QueryBuilder  $query
+     */
+    public function applyLike(mixed $query, string $column, string $searchTerm, bool $caseSensitive = false): void
+    {
+        $like = $this->likeCondition($searchTerm, $caseSensitive);
+        $sql = self::LIKE_PREDICATES[$like['operator']][$column] ?? null;
+
+        if ($sql === null) {
+            throw new \InvalidArgumentException("LIKE is not supported on column [{$column}].");
+        }
+
+        $query->whereRaw($sql, [$like['value']]);
     }
 
     /**
@@ -272,7 +332,11 @@ class DatabaseCompatibilityService
     {
         $indexes = [];
 
-        if ($this->driver === 'mysql' && $this->supports('fulltext_search')) {
+        // MySQL has no ADD ... IF NOT EXISTS for indexes: skip ones the migration
+        // already created so re-running optimize-db is idempotent.
+        if ($this->driver === 'mysql'
+            && $this->supports('fulltext_search')
+            && ! $this->mysqlIndexExists($tableName, 'ft_string_content')) {
             $indexes[] = "ALTER TABLE {$tableName} ADD FULLTEXT INDEX ft_string_content (string_value)";
         }
 
@@ -282,6 +346,18 @@ class DatabaseCompatibilityService
         }
 
         return $indexes;
+    }
+
+    protected function mysqlIndexExists(string $tableName, string $index): bool
+    {
+        try {
+            return DB::select(
+                'SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ? LIMIT 1',
+                [$tableName, $index]
+            ) !== [];
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

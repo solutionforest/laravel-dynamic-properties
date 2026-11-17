@@ -55,7 +55,7 @@ it('builds a like condition for the query builder', function () {
 it('escapes like wildcards', function () {
     $condition = $this->service->likeCondition('100% _done!_');
 
-    expect($condition['value'])->toBe('%100\\% \\_done!\\_%');
+    expect($condition['value'])->toBe('%100!% !_done!!!_%');
 });
 
 it('does not interpolate SQL in like conditions', function () {
@@ -65,7 +65,7 @@ it('does not interpolate SQL in like conditions', function () {
     expect(strtolower($condition['operator']))->toBe('like')
         // The value is escaped for LIKE and always passed as a query binding;
         // no SQL string is assembled from user input.
-        ->and($condition['value'])->toContain('\\%')
+        ->and($condition['value'])->toContain('!%')
         ->and($condition)->not->toHaveKey('sql');
 });
 

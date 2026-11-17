@@ -118,8 +118,8 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    EntityProperty::truncate();
-    Property::truncate();
+    EntityProperty::query()->delete();
+    Property::query()->delete();
 });
 
 it('provides database information correctly', function () {

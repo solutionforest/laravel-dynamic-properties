@@ -458,7 +458,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Should return JSON values, not entity_properties values
             expect($this->user->properties['bio'])->toBe('JSON bio');
-            expect($this->user->properties['age'])->toBe(30);
+            expect($this->user->properties['age'])->toBe(30.0);
             expect($this->user->properties['active'])->toBeFalse();
             expect($this->user->properties['extra'])->toBe('JSON only');
         });

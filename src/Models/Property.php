@@ -315,8 +315,11 @@ class Property extends Model
     /**
      * Re-map every stored value when the property type changes.
      *
-     * The operation is transactional: an invalid existing value aborts the
-     * update instead of leaving rows half-migrated.
+     * The operation is transactional: a stored value that cannot be converted
+     * to the new type aborts the update (and rolls back) instead of being
+     * silently nulled or flipped.
+     *
+     * @throws PropertyValidationException
      */
     protected function castStoredValuesToNewType(string $oldType): void
     {
@@ -329,13 +332,81 @@ class Property extends Model
                 continue;
             }
 
-            $newValue = $this->castValue($rawValue);
+            $newValue = $this->convertForTypeChange($rawValue, $oldType);
 
             (new PropertyValidationService)->validatePropertyValue($this, $newValue);
 
             $row->fill(static::valueColumnsForType((string) $this->type, $newValue));
             $row->save();
         }
+    }
+
+    /**
+     * Strictly convert a stored value to this property's (new) type.
+     *
+     * Unlike {@see self::castValue()}, this never degrades: a value with no
+     * faithful representation in the new type throws.
+     *
+     * @throws PropertyValidationException
+     */
+    protected function convertForTypeChange(mixed $value, string $oldType): mixed
+    {
+        $newType = (string) $this->type;
+        $converted = null;
+
+        switch ($newType) {
+            case 'text':
+            case 'select':
+                $converted = match (true) {
+                    $value instanceof \DateTimeInterface  => Carbon::instance($value)->toDateString(),
+                    is_float($value)                      => rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.'),
+                    default                               => self::castText($value),
+                };
+
+                break;
+
+            case 'number':
+                if (is_bool($value)) {
+                    $converted = $value ? 1.0 : 0.0;
+                } elseif (is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))) {
+                    $converted = (float) $value;
+                }
+
+                break;
+
+            case 'date':
+                if ($value instanceof \DateTimeInterface || (is_string($value) && self::isValidDate($value))) {
+                    $converted = self::castDate($value);
+                }
+
+                break;
+
+            case 'boolean':
+                $converted = match (true) {
+                    is_bool($value)                                                               => $value,
+                    $value === 1, $value === 1.0                                                  => true,
+                    $value === 0, $value === 0.0                                                  => false,
+                    is_string($value) && in_array(strtolower(trim($value)), ['1', 'true'], true)  => true,
+                    is_string($value) && in_array(strtolower(trim($value)), ['0', 'false'], true) => false,
+                    default                                                                       => null,
+                };
+
+                break;
+        }
+
+        if ($converted === null) {
+            $shown = $value instanceof \DateTimeInterface ? $value->format('c') : (is_scalar($value) ? (string) $value : get_debug_type($value));
+
+            throw new PropertyValidationException(
+                (string) $this->name,
+                $value,
+                ["Cannot convert stored value \"{$shown}\" from {$oldType} to {$newType}."],
+                $this,
+                ['operation' => 'change_property_type']
+            );
+        }
+
+        return $converted;
     }
 
     /**
