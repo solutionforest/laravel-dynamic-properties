@@ -70,7 +70,7 @@ function indexExists(string $table, string $index): bool
             'pgsql'  => ! empty(DB::select('SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?', [$table, $index])),
             default  => false
         };
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         return false;
     }
 }

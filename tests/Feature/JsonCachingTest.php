@@ -1,11 +1,13 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
 use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 uses(RefreshDatabase::class);
 
@@ -58,9 +60,9 @@ beforeEach(function () {
 function createTestUser(array $attributes = [])
 {
     // Create a simple test user model
-    return new class($attributes) extends \Illuminate\Database\Eloquent\Model
+    return new class($attributes) extends Model
     {
-        use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+        use HasProperties;
 
         protected $table = 'users';
 

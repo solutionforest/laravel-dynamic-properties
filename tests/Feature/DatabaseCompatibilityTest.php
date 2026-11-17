@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
@@ -134,7 +135,7 @@ it('provides database information correctly', function () {
 it('performs text search with database-specific optimizations', function () {
     $results = $this->propertyService->searchText('App\\Models\\User', 'description', 'test');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
     expect($results->contains(1))->toBeTrue();
 });
@@ -142,7 +143,7 @@ it('performs text search with database-specific optimizations', function () {
 it('performs case-insensitive text search', function () {
     $results = $this->propertyService->searchText('App\\Models\\User', 'description', 'TEST');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
     expect($results->contains(1))->toBeTrue();
 });
@@ -159,14 +160,14 @@ it('performs full-text search when supported', function () {
         ['full_text' => true]
     );
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
 });
 
 it('performs number range searches', function () {
     $results = $this->propertyService->searchNumberRange('App\\Models\\User', 'score', 80.0, 90.0);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeFalse(); // Score 92.0 is outside range
 });
@@ -179,14 +180,14 @@ it('performs date range searches', function () {
         '2024-01-31'
     );
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
 it('performs boolean searches', function () {
     $results = $this->propertyService->searchBoolean('App\\Models\\User', 'active', true);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
@@ -197,7 +198,7 @@ it('performs advanced searches with multiple criteria', function () {
         'active'      => true,
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
@@ -207,7 +208,7 @@ it('performs OR logic searches', function () {
         'score' => ['value' => 92.0, 'operator' => '='],
     ], 'OR');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
 });
 
@@ -216,7 +217,7 @@ it('handles BETWEEN operator correctly', function () {
         'score' => ['operator' => 'between', 'min' => 80, 'max' => 90],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeFalse();
 });
@@ -226,7 +227,7 @@ it('handles IN operator correctly', function () {
         'score' => ['operator' => 'in', 'value' => [85.5, 92.0]],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeTrue();
 });
@@ -249,7 +250,7 @@ it('handles NULL searches correctly', function () {
         'score' => ['operator' => 'null'],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(3))->toBeTrue();
     expect($results->contains(1))->toBeFalse();
     expect($results->contains(2))->toBeFalse();
@@ -278,24 +279,17 @@ describe('MySQL compatibility', function () {
 
     it('uses mysql json functions when available', function () {
         expect($this->dbCompat->supports('json_functions'))->toBeTrue();
-
-        $query = $this->dbCompat->buildJsonExtractQuery('data', 'name');
-        expect($query)->toContain('JSON_EXTRACT');
     });
 
     it('uses mysql fulltext search', function () {
         expect($this->dbCompat->supports('fulltext_search'))->toBeTrue();
-
-        $query = $this->dbCompat->buildFullTextSearchQuery('content', 'search');
-        expect($query)->toContain('MATCH');
-        expect($query)->toContain('AGAINST');
+        expect($this->dbCompat->fullTextCondition('content', 'search'))
+            ->toBe(['column' => 'content', 'value' => 'search']);
     });
 
     it('supports case sensitive searches', function () {
         expect($this->dbCompat->supports('case_sensitive_like'))->toBeTrue();
-
-        $query = $this->dbCompat->buildLikeSearchQuery('column', 'value', true);
-        expect($query)->toContain('LIKE BINARY');
+        expect($this->dbCompat->likeCondition('value', true)['operator'])->toBe('LIKE BINARY');
     });
 });
 
@@ -307,23 +301,13 @@ describe('SQLite compatibility', function () {
     });
 
     it('handles json functions based on extension availability', function () {
-        $jsonSupport = $this->dbCompat->supports('json_functions');
-        $query = $this->dbCompat->buildJsonExtractQuery('data', 'name');
-
-        if ($jsonSupport) {
-            expect($query)->toContain('json_extract');
-        } else {
-            expect($query)->toBe('NULL');
-        }
+        expect($this->dbCompat->supports('json_functions'))->toBeBool();
+        expect($this->dbCompat->supports('json1_extension'))->toBeBool();
     });
 
-    it('falls back to like search when fulltext is not available', function () {
-        $query = $this->dbCompat->buildFullTextSearchQuery('content', 'search');
-        expect($query)->toBeString();
-
-        if (! $this->dbCompat->supports('fulltext_search')) {
-            expect($query)->toContain('LIKE');
-        }
+    it('has no full text condition when fulltext is not available', function () {
+        expect($this->dbCompat->fullTextCondition('content', 'search'))->toBeNull();
+        expect($this->dbCompat->likeCondition('search')['value'])->toBe('%search%');
     });
 
     it('uses correct migration config for sqlite', function () {
@@ -340,23 +324,18 @@ describe('PostgreSQL compatibility', function () {
         }
     });
 
-    it('uses postgresql json operators', function () {
+    it('uses postgresql json features', function () {
         expect($this->dbCompat->supports('json_functions'))->toBeTrue();
-
-        $query = $this->dbCompat->buildJsonExtractQuery('data', 'name');
-        expect($query)->toContain('->');
+        expect($this->dbCompat->supports('jsonb_support'))->toBeTrue();
     });
 
     it('uses postgresql fulltext search', function () {
         expect($this->dbCompat->supports('fulltext_search'))->toBeTrue();
-
-        $query = $this->dbCompat->buildFullTextSearchQuery('content', 'search');
-        expect($query)->toContain('to_tsvector');
-        expect($query)->toContain('plainto_tsquery');
+        expect($this->dbCompat->fullTextCondition('content', 'search'))
+            ->toBe(['column' => 'content', 'value' => 'search']);
     });
 
     it('supports ilike for case insensitive searches', function () {
-        $query = $this->dbCompat->buildLikeSearchQuery('column', 'value', false);
-        expect($query)->toContain('ILIKE');
+        expect($this->dbCompat->likeCondition('value')['operator'])->toBe('ILIKE');
     });
 });

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService;
@@ -42,58 +44,44 @@ it('checks feature support correctly', function () {
     expect($this->service->supports('nonexistent_feature'))->toBeFalse();
 });
 
-it('builds json extract queries for different databases', function () {
-    $column = 'data';
-    $path = 'name';
+it('builds a like condition for the query builder', function () {
+    $condition = $this->service->likeCondition('test');
 
-    $query = $this->service->buildJsonExtractQuery($column, $path);
-    expect($query)->toBeString();
-
-    // Should contain the column and path
-    expect($query)->toContain($column);
-    expect($query)->toContain($path);
+    expect($condition)->toHaveKeys(['operator', 'value']);
+    expect(strtolower($condition['operator']))->toBe('like');
+    expect($condition['value'])->toBe('%test%');
 });
 
-it('builds like search queries with case sensitivity', function () {
-    $column = 'string_value';
-    $searchTerm = 'test';
+it('escapes like wildcards', function () {
+    $condition = $this->service->likeCondition('100% _done!_');
 
-    $caseSensitive = $this->service->buildLikeSearchQuery($column, $searchTerm, true);
-    $caseInsensitive = $this->service->buildLikeSearchQuery($column, $searchTerm, false);
-
-    expect($caseSensitive)->toBeString();
-    expect($caseInsensitive)->toBeString();
-    expect($caseSensitive)->toContain($column);
-    expect($caseSensitive)->toContain($searchTerm);
+    expect($condition['value'])->toBe('%100\\% \\_done!\\_%');
 });
 
-it('builds full text search queries', function () {
-    $column = 'string_value';
-    $searchTerm = 'test search';
+it('does not interpolate SQL in like conditions', function () {
+    $payload = "zzz%' OR 1=1 -- ";
+    $condition = $this->service->likeCondition($payload);
 
-    $query = $this->service->buildFullTextSearchQuery($column, $searchTerm);
-    expect($query)->toBeString();
-    expect($query)->toContain($column);
+    expect(strtolower($condition['operator']))->toBe('like')
+        // The value is escaped for LIKE and always passed as a query binding;
+        // no SQL string is assembled from user input.
+        ->and($condition['value'])->toContain('\\%')
+        ->and($condition)->not->toHaveKey('sql');
 });
 
-it('builds optimized search queries for different operators', function () {
-    $propertyType = 'text';
-    $column = 'string_value';
-    $value = 'test';
+it('only offers a full text condition when the driver supports it', function () {
+    $condition = $this->service->fullTextCondition('string_value', 'test search');
 
-    $equalQuery = $this->service->buildOptimizedSearchQuery($propertyType, $column, $value, '=');
-    $likeQuery = $this->service->buildOptimizedSearchQuery($propertyType, $column, $value, 'like');
-
-    expect($equalQuery)->toBeString();
-    expect($likeQuery)->toBeString();
-    expect($equalQuery)->toContain($column);
-    expect($likeQuery)->toContain($column);
+    if ($this->service->supports('fulltext_search')) {
+        expect($condition)->toBe(['column' => 'string_value', 'value' => 'test search']);
+    } else {
+        expect($condition)->toBeNull();
+    }
 });
 
 it('provides migration configuration for current database', function () {
     $config = $this->service->getMigrationConfig();
 
-    expect($config)->toBeArray();
     expect($config)->toHaveKeys([
         'supports_fulltext',
         'json_column_type',
@@ -108,34 +96,25 @@ it('provides migration configuration for current database', function () {
 });
 
 it('creates database-specific optimization queries', function () {
-    $tableName = 'test_table';
-    $optimizations = $this->service->createOptimizedIndexes($tableName);
+    $optimizations = $this->service->createOptimizedIndexes('test_table');
 
     expect($optimizations)->toBeArray();
 
     foreach ($optimizations as $query) {
         expect($query)->toBeString();
-        expect($query)->toContain($tableName);
+        expect($query)->toContain('test_table');
+        // Migrations run inside a transaction on PostgreSQL.
+        expect($query)->not->toContain('CONCURRENTLY');
     }
-});
-
-it('provides query hints for different query types', function () {
-    $searchHints = $this->service->getQueryHints('search');
-    $fulltextHints = $this->service->getQueryHints('fulltext');
-
-    expect($searchHints)->toBeArray();
-    expect($fulltextHints)->toBeArray();
 });
 
 it('caches feature detection results', function () {
     $driver = $this->service->getDriver();
     $cacheKey = 'dynamic_properties.db_features.'.$driver;
 
-    // First call should cache the results
     $features1 = $this->service->getFeatures();
     expect(Cache::has($cacheKey))->toBeTrue();
 
-    // Second call should use cached results
     $features2 = $this->service->getFeatures();
     expect($features1)->toEqual($features2);
 });
@@ -144,47 +123,16 @@ it('can clear feature cache', function () {
     $driver = $this->service->getDriver();
     $cacheKey = 'dynamic_properties.db_features.'.$driver;
 
-    // Populate cache
     $this->service->getFeatures();
     expect(Cache::has($cacheKey))->toBeTrue();
 
-    // Clear cache
     $this->service->clearFeatureCache();
 
-    // The cache should be cleared and then repopulated by detectFeatures()
-    // So we need to check that the cache was actually cleared and recreated
     $features1 = $this->service->getFeatures();
-    Cache::forget($cacheKey); // Manually clear it
+    Cache::forget($cacheKey);
     $features2 = $this->service->getFeatures();
 
-    // Both should be the same since they detect the same features
     expect($features1)->toEqual($features2);
-});
-
-// Database-specific tests
-describe('MySQL-specific features', function () {
-    beforeEach(function () {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('MySQL-specific test');
-        }
-    });
-
-    it('detects mysql features correctly', function () {
-        expect($this->service->supports('json_functions'))->toBeTrue();
-        expect($this->service->supports('fulltext_search'))->toBeTrue();
-        expect($this->service->supports('case_sensitive_like'))->toBeTrue();
-    });
-
-    it('builds mysql json extract queries', function () {
-        $query = $this->service->buildJsonExtractQuery('data', 'name');
-        expect($query)->toContain('JSON_EXTRACT');
-    });
-
-    it('builds mysql fulltext search queries', function () {
-        $query = $this->service->buildFullTextSearchQuery('content', 'search term');
-        expect($query)->toContain('MATCH');
-        expect($query)->toContain('AGAINST');
-    });
 });
 
 describe('SQLite-specific features', function () {
@@ -200,13 +148,31 @@ describe('SQLite-specific features', function () {
         expect($features)->toHaveKey('fts_extension');
     });
 
-    it('handles json queries for sqlite', function () {
-        $query = $this->service->buildJsonExtractQuery('data', 'name');
-        expect($query)->toBeString();
+    it('never reports full-text search on regular sqlite tables', function () {
+        expect($this->service->supports('fulltext_search'))->toBeFalse();
+    });
+});
 
-        if ($this->service->supports('json_extract')) {
-            expect($query)->toContain('json_extract');
+describe('MySQL-specific features', function () {
+    beforeEach(function () {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('MySQL-specific test');
         }
+    });
+
+    it('detects mysql features correctly', function () {
+        expect($this->service->supports('json_functions'))->toBeTrue();
+        expect($this->service->supports('fulltext_search'))->toBeTrue();
+        expect($this->service->supports('case_sensitive_like'))->toBeTrue();
+    });
+
+    it('offers a full text condition', function () {
+        expect($this->service->fullTextCondition('content', 'search term'))
+            ->toBe(['column' => 'content', 'value' => 'search term']);
+    });
+
+    it('uses a binary like operator for case sensitive searches', function () {
+        expect($this->service->likeCondition('value', true)['operator'])->toBe('LIKE BINARY');
     });
 });
 
@@ -223,8 +189,7 @@ describe('PostgreSQL-specific features', function () {
         expect($this->service->supports('generated_columns'))->toBeTrue();
     });
 
-    it('builds postgresql json queries', function () {
-        $query = $this->service->buildJsonExtractQuery('data', 'name');
-        expect($query)->toContain('->');
+    it('supports ilike for case insensitive searches', function () {
+        expect($this->service->likeCondition('value')['operator'])->toBe('ILIKE');
     });
 });
