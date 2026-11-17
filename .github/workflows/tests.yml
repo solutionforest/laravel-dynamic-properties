@@ -36,7 +36,9 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
-          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+          # Older Laravel minors carry known advisories; this job verifies
+          # compatibility with the supported version, not its security posture.
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-blocking
 
       - name: List installed dependencies
         run: composer show -D
