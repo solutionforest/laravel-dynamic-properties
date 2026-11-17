@@ -17,7 +17,7 @@ This guide provides detailed instructions for installing and configuring the Lar
 ### System Requirements
 
 - **PHP**: 8.3 or higher
-- **Laravel**: 11.0 or higher  
+- **Laravel**: 12.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
 
 ### PHP Extensions
@@ -75,18 +75,7 @@ This will create the following tables:
 - `properties` - Property definitions
 - `entity_properties` - Property values (EAV structure)
 
-### Step 4: Register Service Provider (Laravel < 11)
-
-If you're using Laravel 10 or earlier and package auto-discovery is disabled, add the service provider to `config/app.php`:
-
-```php
-'providers' => [
-    // Other providers...
-    SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider::class,
-],
-```
-
-### Step 5: Add Facade (Optional)
+### Step 4: Add Facade (Optional)
 
 Add the facade to `config/app.php`:
 

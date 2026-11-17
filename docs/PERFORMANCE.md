@@ -5,7 +5,7 @@ This document provides detailed information about the performance characteristic
 ## Requirements
 
 - **PHP**: 8.3 or higher
-- **Laravel**: 11.0 or higher
+- **Laravel**: 12.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
 
 ## Table of Contents

@@ -10,7 +10,7 @@ A dynamic property system for Laravel that allows any entity (users, companies, 
 ## Requirements
 
 - **PHP**: 8.3 or higher
-- **Laravel**: 11.0 or higher
+- **Laravel**: 12.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+ (with JSON support)
 
 ## Features
