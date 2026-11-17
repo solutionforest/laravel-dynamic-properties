@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-17
+
 ### Security
 
 - LIKE/full-text search values are no longer interpolated into SQL: the
@@ -392,7 +394,7 @@ The package includes comprehensive test coverage:
 
 ```bash
 # Install package
-composer require your-vendor/laravel-dynamic-properties
+composer require solution-forest/laravel-dynamic-properties
 
 # Publish and run migrations
 php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-migrations"
@@ -446,11 +448,11 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ### Credits
 
-- **Author**: [Your Name](https://github.com/yourusername)
+- **Author**: [Solution Forest](https://github.com/solutionforest)
 - **Contributors**: [All Contributors](../../contributors)
 
 ### Support
 
 - **Documentation**: [Package Documentation](README.md)
-- **Issues**: [GitHub Issues](https://github.com/your-vendor/laravel-dynamic-properties/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-vendor/laravel-dynamic-properties/discussions)
+- **Issues**: [GitHub Issues](https://github.com/solutionforest/laravel-dynamic-properties/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/solutionforest/laravel-dynamic-properties/discussions)
