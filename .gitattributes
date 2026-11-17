@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+/.github export-ignore
+/docs export-ignore
+/examples export-ignore
+/tests export-ignore
+/phpstan.neon.dist export-ignore
+/phpunit.xml export-ignore
+/pint.json export-ignore
+/CHANGELOG.md export-ignore
+/CONTRIBUTING.md export-ignore

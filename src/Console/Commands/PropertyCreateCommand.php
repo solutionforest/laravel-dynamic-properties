@@ -4,7 +4,8 @@ namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
-use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 class PropertyCreateCommand extends Command
 {
@@ -18,14 +19,42 @@ class PropertyCreateCommand extends Command
 
     protected $description = 'Create a new dynamic property';
 
-    public function handle(): int
+    public function handle(PropertyService $propertyService): int
     {
-        $name = $this->argument('name');
-        $type = $this->argument('type');
-        $label = $this->argument('label') ?: ucfirst(str_replace('_', ' ', $name));
-        $required = $this->option('required');
-        $options = $this->option('options');
-        $validationRules = $this->parseValidationRules($this->option('validation'));
+        $nameArgument = $this->argument('name');
+        $typeArgument = $this->argument('type');
+        $labelArgument = $this->argument('label');
+
+        $name = is_string($nameArgument) ? $nameArgument : '';
+        $type = is_string($typeArgument) ? $typeArgument : '';
+        $label = is_string($labelArgument) && $labelArgument !== ''
+            ? $labelArgument
+            : ucfirst(str_replace('_', ' ', $name));
+        $required = (bool) $this->option('required');
+
+        $options = [];
+        $optionsArgument = $this->option('options');
+
+        if (is_array($optionsArgument)) {
+            foreach ($optionsArgument as $option) {
+                if (is_string($option)) {
+                    $options[] = $option;
+                }
+            }
+        }
+
+        $validationArgument = $this->option('validation');
+        $validation = [];
+
+        if (is_array($validationArgument)) {
+            foreach ($validationArgument as $rule) {
+                if (is_string($rule)) {
+                    $validation[] = $rule;
+                }
+            }
+        }
+
+        $validationRules = $this->parseValidationRules($validation);
 
         // Validate input
         $validator = Validator::make([
@@ -55,11 +84,11 @@ class PropertyCreateCommand extends Command
         }
 
         try {
-            $property = Property::create([
+            $property = $propertyService->createProperty([
                 'name'       => $name,
                 'type'       => $type,
                 'label'      => $label,
-                'required'   => $required,
+                'required'   => (bool) $required,
                 'options'    => $type === 'select' ? $options : null,
                 'validation' => $validationRules,
             ]);
@@ -75,22 +104,41 @@ class PropertyCreateCommand extends Command
                 ['Validation', $property->validation ? json_encode($property->validation) : 'None'],
             ]);
 
-            return 0;
-        } catch (\Exception $e) {
+            return self::SUCCESS;
+        } catch (PropertyException $e) {
+            $this->error("Failed to create property: {$e->getUserMessage()}");
+
+            return self::FAILURE;
+        } catch (\Throwable $e) {
             $this->error("Failed to create property: {$e->getMessage()}");
 
-            return 1;
+            return self::FAILURE;
         }
     }
 
+    /**
+     * @param  array<int, string>  $rules
+     * @return array<string, mixed>
+     */
     private function parseValidationRules(array $rules): array
     {
         $parsed = [];
+
         foreach ($rules as $rule) {
-            if (strpos($rule, '=') !== false) {
-                [$key, $value] = explode('=', $rule, 2);
-                $parsed[$key] = is_numeric($value) ? (float) $value : $value;
+            if (! str_contains($rule, '=')) {
+                $parsed[$rule] = true;
+
+                continue;
             }
+
+            [$key, $value] = explode('=', $rule, 2);
+            $parsed[$key] = match (true) {
+                $value === 'true'                               => true,
+                $value === 'false'                              => false,
+                is_numeric($value) && str_contains($value, '.') => (float) $value,
+                is_numeric($value)                              => (int) $value,
+                default                                         => $value,
+            };
         }
 
         return $parsed;

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Services;
 
+use Carbon\Carbon;
 use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
@@ -9,18 +12,50 @@ use SolutionForest\LaravelDynamicProperties\Models\Property;
 class PropertyValidationService
 {
     /**
-     * Valid property types
+     * Valid property types.
+     *
+     * @var list<string>
      */
     public const VALID_TYPES = ['text', 'number', 'date', 'boolean', 'select'];
 
     /**
-     * Validate a property definition
+     * Validation rules accepted for every property type.
+     *
+     * @var list<string>
+     */
+    public const COMMON_RULES = ['required'];
+
+    /**
+     * Validation rules accepted for text and select properties.
+     *
+     * @var list<string>
+     */
+    public const TEXT_RULES = ['min', 'max', 'min_length', 'max_length', 'email', 'url'];
+
+    /**
+     * Validation rules accepted for number properties.
+     *
+     * @var list<string>
+     */
+    public const NUMBER_RULES = ['min', 'max', 'decimal_places', 'integer'];
+
+    /**
+     * Validation rules accepted for date properties.
+     *
+     * @var list<string>
+     */
+    public const DATE_RULES = ['after', 'before'];
+
+    /**
+     * Validate a property definition.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed> Keyed by field; an array of errors for `validation`.
      */
     public function validatePropertyDefinition(array $data): array
     {
         $errors = [];
 
-        // Validate required fields
         if (empty($data['name'])) {
             $errors['name'] = 'Property name is required.';
         } elseif (! is_string($data['name']) || ! preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $data['name'])) {
@@ -33,20 +68,19 @@ class PropertyValidationService
 
         if (empty($data['type'])) {
             $errors['type'] = 'Property type is required.';
-        } elseif (! in_array($data['type'], self::VALID_TYPES)) {
+        } elseif (! is_string($data['type']) || ! in_array($data['type'], self::VALID_TYPES, true)) {
             $errors['type'] = 'Property type must be one of: '.implode(', ', self::VALID_TYPES);
         }
 
-        // Validate type-specific requirements
         if (! empty($data['type'])) {
-            $typeErrors = $this->validateTypeSpecificRequirements($data);
-            $errors = array_merge($errors, $typeErrors);
+            $errors = array_merge($errors, $this->validateTypeSpecificRequirements($data));
         }
 
-        // Validate validation rules
         if (! empty($data['validation']) && is_array($data['validation'])) {
-            $validationErrors = $this->validateValidationRules($data['validation'], $data['type'] ?? null);
-            if (! empty($validationErrors)) {
+            $type = isset($data['type']) && is_string($data['type']) ? $data['type'] : null;
+            $validationErrors = $this->validateValidationRules($data['validation'], $type);
+
+            if ($validationErrors !== []) {
                 $errors['validation'] = $validationErrors;
             }
         }
@@ -55,145 +89,183 @@ class PropertyValidationService
     }
 
     /**
-     * Validate type-specific requirements
+     * Validate type-specific requirements.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, string>
      */
     private function validateTypeSpecificRequirements(array $data): array
     {
         $errors = [];
-        $type = $data['type'];
 
-        switch ($type) {
-            case 'select':
-                if (empty($data['options']) || ! is_array($data['options'])) {
-                    $errors['options'] = 'Select properties must have at least one option.';
-                } elseif (count($data['options']) === 0) {
-                    $errors['options'] = 'Select properties must have at least one option.';
-                } else {
-                    // Validate that all options are strings
-                    foreach ($data['options'] as $index => $option) {
-                        if (! is_string($option) || trim($option) === '') {
-                            $errors['options'] = "Option at index {$index} must be a non-empty string.";
+        if (($data['type'] ?? null) !== 'select') {
+            return $errors;
+        }
 
-                            break;
-                        }
-                    }
-                }
+        $options = $data['options'] ?? null;
+
+        if (! is_array($options) || $options === []) {
+            $errors['options'] = 'Select properties must have at least one option.';
+
+            return $errors;
+        }
+
+        foreach ($options as $index => $option) {
+            if (! is_string($option) || trim($option) === '') {
+                $errors['options'] = "Option at index {$index} must be a non-empty string.";
 
                 break;
+            }
         }
 
         return $errors;
     }
 
     /**
-     * Validate validation rules for a property type
+     * Validate validation rules for a property type.
+     *
+     * @param  array<int|string, mixed>  $rules
+     * @return array<string, string>
      */
     private function validateValidationRules(array $rules, ?string $type): array
     {
         $errors = [];
+        $normalized = $this->normalizeRules($rules);
 
-        foreach ($rules as $rule => $value) {
-            switch ($rule) {
-                case 'min':
-                case 'max':
-                    if ($type === 'text') {
-                        if (! is_int($value) || $value < 0) {
-                            $errors[$rule] = "Text {$rule} length must be a non-negative integer.";
-                        }
-                    } elseif ($type === 'number') {
-                        if (! is_numeric($value)) {
-                            $errors[$rule] = "Number {$rule} value must be numeric.";
-                        }
-                    } else {
-                        $errors[$rule] = "{$rule} validation is only supported for text and number properties.";
-                    }
+        foreach ($normalized as $rule => $constraint) {
+            if ($rule === 'required') {
+                if (! is_bool($constraint)) {
+                    $errors[$rule] = 'The required rule must be a boolean.';
+                }
 
-                    break;
-
-                case 'min_length':
-                case 'max_length':
-                    if ($type !== 'text') {
-                        $errors[$rule] = "{$rule} validation is only supported for text properties.";
-                    } elseif (! is_int($value) || $value < 0) {
-                        $errors[$rule] = "{$rule} must be a non-negative integer.";
-                    }
-
-                    break;
-
-                case 'after':
-                case 'before':
-                    if ($type !== 'date') {
-                        $errors[$rule] = "{$rule} validation is only supported for date properties.";
-                    } elseif (! is_string($value) || ($value !== 'today' && strtotime($value) === false)) {
-                        $errors[$rule] = "{$rule} must be 'today' or a valid date string.";
-                    }
-
-                    break;
-
-                default:
-                    $errors[$rule] = "Unknown validation rule: {$rule}";
-
-                    break;
+                continue;
             }
+
+            if ($rule === 'email' || $rule === 'url' || $rule === 'integer') {
+                if ($type !== 'text' && $rule !== 'integer') {
+                    $errors[$rule] = "{$rule} validation is only supported for text properties.";
+                } elseif ($type !== 'number' && $rule === 'integer') {
+                    $errors[$rule] = 'integer validation is only supported for number properties.';
+                } elseif (! is_bool($constraint)) {
+                    $errors[$rule] = "{$rule} must be a boolean.";
+                }
+
+                continue;
+            }
+
+            if ($rule === 'min' || $rule === 'max') {
+                if ($type === 'text') {
+                    if (! is_int($constraint) || $constraint < 0) {
+                        $errors[$rule] = "Text {$rule} length must be a non-negative integer.";
+                    }
+                } elseif ($type === 'number') {
+                    if (! is_numeric($constraint)) {
+                        $errors[$rule] = "Number {$rule} value must be numeric.";
+                    }
+                } else {
+                    $errors[$rule] = "{$rule} validation is only supported for text and number properties.";
+                }
+
+                continue;
+            }
+
+            if ($rule === 'min_length' || $rule === 'max_length') {
+                if ($type !== 'text') {
+                    $errors[$rule] = "{$rule} validation is only supported for text properties.";
+                } elseif (! is_int($constraint) || $constraint < 0) {
+                    $errors[$rule] = "{$rule} must be a non-negative integer.";
+                }
+
+                continue;
+            }
+
+            if ($rule === 'decimal_places') {
+                if ($type !== 'number') {
+                    $errors[$rule] = 'decimal_places validation is only supported for number properties.';
+                } elseif (! is_int($constraint) || $constraint < 0) {
+                    $errors[$rule] = 'decimal_places must be a non-negative integer.';
+                }
+
+                continue;
+            }
+
+            if ($rule === 'after' || $rule === 'before') {
+                if ($type !== 'date') {
+                    $errors[$rule] = "{$rule} validation is only supported for date properties.";
+                } elseif (! is_string($constraint) || ($constraint !== 'today' && strtotime($constraint) === false)) {
+                    $errors[$rule] = "{$rule} must be 'today' or a valid date string.";
+                }
+
+                continue;
+            }
+
+            $errors[$rule] = "Unknown validation rule: {$rule}";
         }
 
-        // Validate min/max relationships
-        if (isset($rules['min']) && isset($rules['max'])) {
-            if ($rules['min'] > $rules['max']) {
+        if (isset($normalized['min'], $normalized['max']) && is_numeric($normalized['min']) && is_numeric($normalized['max'])) {
+            if ($normalized['min'] > $normalized['max']) {
                 $errors['min'] = 'Minimum value cannot be greater than maximum value.';
             }
         }
 
-        if (isset($rules['min_length']) && isset($rules['max_length'])) {
-            if ($rules['min_length'] > $rules['max_length']) {
-                $errors['min_length'] = 'Minimum length cannot be greater than maximum length.';
-            }
+        if (isset($normalized['min_length'], $normalized['max_length'])
+            && is_numeric($normalized['min_length'])
+            && is_numeric($normalized['max_length'])
+            && $normalized['min_length'] > $normalized['max_length']) {
+            $errors['min_length'] = 'Minimum length cannot be greater than maximum length.';
         }
 
         return $errors;
     }
 
     /**
-     * Validate a property value against a property definition
+     * Validate a property value against a property definition.
+     *
+     * @throws PropertyValidationException
      */
     public function validatePropertyValue(Property $property, mixed $value): void
     {
-        $errors = [];
+        $rules = $this->normalizeRules(is_array($property->validation) ? $property->validation : []);
+        $required = $property->required || ($rules['required'] ?? false) === true;
 
-        // Check if required property has a value
-        if ($property->required && $this->isEmpty($value)) {
+        if ($required && $this->isEmpty($value)) {
             throw new PropertyValidationException(
-                $property->name,
+                (string) $property->name,
                 $value,
                 ["The {$property->label} field is required."],
                 $property
             );
         }
 
-        // Allow null/empty values for non-required properties
-        if (! $property->required && $this->isEmpty($value)) {
+        if (! $required && $this->isEmpty($value)) {
+            if ($value === '' && $property->type === 'select') {
+                throw new PropertyValidationException(
+                    (string) $property->name,
+                    $value,
+                    ["The {$property->label} must have a value selected."],
+                    $property
+                );
+            }
+
             return;
         }
 
-        // Type validation
+        $errors = [];
         $typeError = $this->validateType($property, $value);
-        if ($typeError) {
+
+        if ($typeError !== null) {
             $errors[] = $typeError;
+        } else {
+            $errors = $this->validateAgainstRules($property, $value, $rules);
         }
 
-        // Custom validation rules
-        if ($property->validation && is_array($property->validation)) {
-            $ruleErrors = $this->validateAgainstRules($property, $value, $property->validation);
-            $errors = array_merge($errors, $ruleErrors);
-        }
-
-        if (! empty($errors)) {
-            throw new PropertyValidationException($property->name, $value, $errors, $property);
+        if ($errors !== []) {
+            throw new PropertyValidationException((string) $property->name, $value, $errors, $property);
         }
     }
 
     /**
-     * Check if a value is considered empty
+     * Check if a value is considered empty.
      */
     private function isEmpty(mixed $value): bool
     {
@@ -201,7 +273,7 @@ class PropertyValidationService
     }
 
     /**
-     * Validate value type
+     * Validate value type.
      */
     private function validateType(Property $property, mixed $value): ?string
     {
@@ -223,14 +295,14 @@ class PropertyValidationService
                 break;
 
             case 'date':
-                if (! $this->isValidDate($value)) {
+                if (! Property::isValidDate($value)) {
                     return "The {$label} must be a valid date.";
                 }
 
                 break;
 
             case 'boolean':
-                if (! $this->isValidBoolean($value)) {
+                if (! Property::isValidBoolean($value)) {
                     return "The {$label} must be true or false.";
                 }
 
@@ -240,7 +312,8 @@ class PropertyValidationService
                 if ($this->isEmpty($value)) {
                     return "The {$label} must have a value selected.";
                 }
-                if (! in_array($value, $property->options ?? [])) {
+
+                if (! in_array($value, $property->options ?? [], true)) {
                     $options = implode(', ', $property->options ?? []);
 
                     return "The {$label} must be one of: {$options}.";
@@ -249,7 +322,7 @@ class PropertyValidationService
                 break;
 
             default:
-                throw new InvalidPropertyTypeException($property->type, self::VALID_TYPES, [
+                throw new InvalidPropertyTypeException((string) $property->type, self::VALID_TYPES, [
                     'property_name' => $property->name,
                 ]);
         }
@@ -258,67 +331,130 @@ class PropertyValidationService
     }
 
     /**
-     * Validate against custom validation rules
+     * Validate against custom validation rules.
+     *
+     * @param  array<string, mixed>  $rules
+     * @return list<string>
      */
     private function validateAgainstRules(Property $property, mixed $value, array $rules): array
     {
         $errors = [];
         $label = $property->label;
+        $text = Property::castText($value);
 
         foreach ($rules as $rule => $constraint) {
             switch ($rule) {
+                case 'required':
+                    if ($constraint === true && $this->isEmpty($value)) {
+                        $errors[] = "The {$label} field is required.";
+                    }
+
+                    break;
+
                 case 'min':
+                    $limit = $this->numericValue($constraint);
+
+                    if ($limit === null) {
+                        break;
+                    }
+
                     if ($property->type === 'text') {
-                        if (strlen((string) $value) < $constraint) {
-                            $errors[] = "The {$label} must be at least {$constraint} characters.";
+                        if (strlen($text) < (int) $limit) {
+                            $errors[] = "The {$label} must be at least {$limit} characters minimum.";
                         }
                     } elseif ($property->type === 'number') {
-                        if ((float) $value < $constraint) {
-                            $errors[] = "The {$label} must be at least {$constraint}.";
+                        if ($this->numericValue($value) !== null && $this->numericValue($value) < $limit) {
+                            $errors[] = "The {$label} must be at least {$limit}.";
                         }
                     }
 
                     break;
 
                 case 'max':
+                    $limit = $this->numericValue($constraint);
+
+                    if ($limit === null) {
+                        break;
+                    }
+
                     if ($property->type === 'text') {
-                        if (strlen((string) $value) > $constraint) {
-                            $errors[] = "The {$label} may not be greater than {$constraint} characters.";
+                        if (strlen($text) > (int) $limit) {
+                            $errors[] = "The {$label} may not be greater than {$limit} characters maximum.";
                         }
                     } elseif ($property->type === 'number') {
-                        if ((float) $value > $constraint) {
-                            $errors[] = "The {$label} may not be greater than {$constraint}.";
+                        if ($this->numericValue($value) !== null && $this->numericValue($value) > $limit) {
+                            $errors[] = "The {$label} may not be greater than {$limit}.";
                         }
                     }
 
                     break;
 
                 case 'min_length':
-                    if (strlen((string) $value) < $constraint) {
-                        $errors[] = "The {$label} must be at least {$constraint} characters.";
+                    $limit = $this->numericValue($constraint);
+
+                    if ($limit !== null && strlen($text) < (int) $limit) {
+                        $errors[] = "The {$label} must be at least {$limit} characters.";
                     }
 
                     break;
 
                 case 'max_length':
-                    if (strlen((string) $value) > $constraint) {
-                        $errors[] = "The {$label} may not be greater than {$constraint} characters.";
+                    $limit = $this->numericValue($constraint);
+
+                    if ($limit !== null && strlen($text) > (int) $limit) {
+                        $errors[] = "The {$label} may not be greater than {$limit} characters.";
+                    }
+
+                    break;
+
+                case 'email':
+                    if ($constraint === true && filter_var($text, FILTER_VALIDATE_EMAIL) === false) {
+                        $errors[] = "The {$label} must be a valid email address.";
+                    }
+
+                    break;
+
+                case 'url':
+                    if ($constraint === true && filter_var($text, FILTER_VALIDATE_URL) === false) {
+                        $errors[] = "The {$label} must be a valid URL.";
+                    }
+
+                    break;
+
+                case 'integer':
+                    $number = $this->numericValue($value);
+
+                    if ($constraint === true && $number !== null && $number !== (float) (int) $number) {
+                        $errors[] = "The {$label} must be an integer.";
+                    }
+
+                    break;
+
+                case 'decimal_places':
+                    $limit = $this->numericValue($constraint);
+
+                    if ($limit !== null && $this->countDecimalPlaces($text) > $limit) {
+                        $errors[] = "The {$label} may not have more than {$limit} decimal places.";
                     }
 
                     break;
 
                 case 'after':
-                    if (! $this->isDateAfter($value, $constraint)) {
-                        $constraintText = $constraint === 'today' ? 'today' : $constraint;
-                        $errors[] = "The {$label} must be after {$constraintText}.";
+                    $date = Property::castDate($value);
+                    $constraintDate = $this->constraintDate($constraint);
+
+                    if ($date !== null && $constraintDate !== null && ! $date->isAfter($constraintDate)) {
+                        $errors[] = "The {$label} must be after {$this->displayConstraint($constraint)}.";
                     }
 
                     break;
 
                 case 'before':
-                    if (! $this->isDateBefore($value, $constraint)) {
-                        $constraintText = $constraint === 'today' ? 'today' : $constraint;
-                        $errors[] = "The {$label} must be before {$constraintText}.";
+                    $date = Property::castDate($value);
+                    $constraintDate = $this->constraintDate($constraint);
+
+                    if ($date !== null && $constraintDate !== null && ! $date->isBefore($constraintDate)) {
+                        $errors[] = "The {$label} must be before {$this->displayConstraint($constraint)}.";
                     }
 
                     break;
@@ -329,59 +465,69 @@ class PropertyValidationService
     }
 
     /**
-     * Check if a value is a valid date
+     * Normalise both map-style (`['min' => 1]`) and list-style (`['required']`)
+     * rule declarations into a single map.
+     *
+     * @param  array<int|string, mixed>  $rules
+     * @return array<string, mixed>
      */
-    private function isValidDate(mixed $value): bool
+    private function normalizeRules(array $rules): array
     {
-        if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
-            return true;
+        $normalized = [];
+
+        foreach ($rules as $key => $value) {
+            if (is_int($key)) {
+                if (is_string($value)) {
+                    $normalized[$value] = true;
+                }
+
+                continue;
+            }
+
+            $normalized[$key] = $value;
         }
 
-        if (is_string($value)) {
-            return strtotime($value) !== false;
-        }
-
-        return false;
+        return $normalized;
     }
 
     /**
-     * Check if a value is a valid boolean
+     * Narrow a rule constraint to a number when possible.
      */
-    private function isValidBoolean(mixed $value): bool
+    private function numericValue(mixed $value): ?float
     {
-        return is_bool($value) ||
-               $value === 1 || $value === 0 ||
-               $value === '1' || $value === '0' ||
-               (is_string($value) && (strtolower($value) === 'true' || strtolower($value) === 'false'));
+        return is_numeric($value) ? (float) $value : null;
     }
 
     /**
-     * Check if date is after constraint
+     * Resolve a before/after constraint into a Carbon instance.
      */
-    private function isDateAfter(mixed $value, string $constraint): bool
+    private function constraintDate(mixed $constraint): ?Carbon
     {
-        try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
-
-            return $date->isAfter($constraintDate);
-        } catch (\Exception $e) {
-            return false;
+        if ($constraint === 'today') {
+            return Carbon::today();
         }
+
+        if (! is_string($constraint)) {
+            return null;
+        }
+
+        return Property::castDate($constraint);
+    }
+
+    private function displayConstraint(mixed $constraint): string
+    {
+        return is_scalar($constraint) ? (string) $constraint : 'the configured date';
     }
 
     /**
-     * Check if date is before constraint
+     * Number of digits after the decimal separator.
      */
-    private function isDateBefore(mixed $value, string $constraint): bool
+    private function countDecimalPlaces(string $value): int
     {
-        try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
-
-            return $date->isBefore($constraintDate);
-        } catch (\Exception $e) {
-            return false;
+        if (! str_contains($value, '.')) {
+            return 0;
         }
+
+        return strlen(rtrim(substr($value, strpos($value, '.') + 1), '0'));
     }
 }

@@ -4,6 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
@@ -437,14 +438,13 @@ describe('Performance and Edge Cases', function () {
         expect($results)->toBeEmpty();
     });
 
-    it('handles search for non-existent properties gracefully', function () {
-        $user = SearchTestUser::create(['name' => 'John', 'email' => 'john@example.com']);
+    it('throws for searches against an undefined property', function () {
+        SearchTestUser::create(['name' => 'John', 'email' => 'john@example.com']);
 
-        $results = $this->propertyService->search(SearchTestUser::class, [
+        // Fail closed: an undefined property must never match every entity.
+        expect(fn () => $this->propertyService->search(SearchTestUser::class, [
             'non_existent_property' => 'some_value',
-        ]);
-
-        expect($results)->toBeEmpty();
+        ]))->toThrow(PropertyNotFoundException::class);
     });
 
     it('handles large result sets efficiently', function () {

@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties;
 
+use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use SolutionForest\LaravelDynamicProperties\Console\Commands\CacheSyncCommand;
 use SolutionForest\LaravelDynamicProperties\Console\Commands\DatabaseOptimizeCommand;
@@ -48,16 +52,26 @@ class DynamicPropertyServiceProvider extends ServiceProvider
         );
 
         // Register services
-        $this->app->singleton(PropertyService::class, function ($app) {
-            return new PropertyService($app['config']['dynamic-properties']);
+        $this->app->singleton(PropertyService::class, function (Application $app): PropertyService {
+            $repository = $app->make('config');
+            $value = $repository instanceof Repository ? $repository->get('dynamic-properties', []) : [];
+            $config = [];
+
+            if (is_array($value)) {
+                foreach ($value as $key => $item) {
+                    $config[(string) $key] = $item;
+                }
+            }
+
+            return new PropertyService($config);
         });
 
         // Register aliases
         $this->app->alias(PropertyService::class, 'dynamic-properties');
 
         // Register facade
-        $this->app->bind('dynamic-properties.facade', function ($app) {
-            return $app[PropertyService::class];
+        $this->app->bind('dynamic-properties.facade', static function (Application $app): PropertyService {
+            return $app->make(PropertyService::class);
         });
     }
 }

@@ -149,10 +149,10 @@ We follow PSR-12 coding standards with some additional conventions:
 ```php
 <?php
 
-namespace YourVendor\DynamicProperties\Services;
+namespace SolutionForest\LaravelDynamicProperties\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 class PropertyService
 {
@@ -240,7 +240,7 @@ return new class extends Migration
 ```php
 <?php
 
-namespace YourVendor\DynamicProperties\Models;
+namespace SolutionForest\LaravelDynamicProperties\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -296,8 +296,8 @@ tests/
 ```php
 <?php
 
-use YourVendor\DynamicProperties\Models\Property;
-use YourVendor\DynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 describe('PropertyService', function () {
     beforeEach(function () {
@@ -331,7 +331,7 @@ describe('PropertyService', function () {
 <?php
 
 use App\Models\User;
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 describe('Property Search', function () {
     beforeEach(function () {

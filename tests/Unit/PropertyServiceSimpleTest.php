@@ -1,8 +1,13 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 describe('PropertyService - Comprehensive Tests', function () {
     beforeEach(function () {
@@ -42,9 +47,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         $this->service = new PropertyService;
 
         // Create test user
-        $userClass = new class extends \Illuminate\Database\Eloquent\Model
+        $userClass = new class extends Model
         {
-            use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+            use HasProperties;
 
             protected $table = 'users';
 
@@ -107,16 +112,16 @@ describe('PropertyService - Comprehensive Tests', function () {
         $propertyService = app(PropertyService::class);
 
         expect(fn () => $propertyService->setDynamicProperty($this->user, 'non_existent', 'value'))
-            ->toThrow(\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException::class);
+            ->toThrow(PropertyNotFoundException::class);
     });
 
     it('can search entities by property values', function () {
         $propertyService = app(PropertyService::class);
 
         // Create another user
-        $user2 = new class extends \Illuminate\Database\Eloquent\Model
+        $user2 = new class extends Model
         {
-            use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+            use HasProperties;
 
             protected $table = 'users';
 
@@ -193,9 +198,9 @@ describe('PropertyService - Comprehensive Tests', function () {
                 ]);
             }
 
-            $userClass = new class extends \Illuminate\Database\Eloquent\Model
+            $userClass = new class extends Model
             {
-                use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+                use HasProperties;
 
                 protected $table = 'users';
 
@@ -286,7 +291,7 @@ describe('PropertyService - Comprehensive Tests', function () {
                 'name'  => 'bio', // Already exists
                 'label' => 'Duplicate Bio',
                 'type'  => 'text',
-            ]))->toThrow(\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException::class);
+            ]))->toThrow(PropertyValidationException::class);
         });
 
         it('validates property definition before creation', function () {
@@ -296,7 +301,7 @@ describe('PropertyService - Comprehensive Tests', function () {
                 'name'  => '', // Invalid name
                 'label' => 'Test',
                 'type'  => 'invalid_type', // Invalid type
-            ]))->toThrow(\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException::class);
+            ]))->toThrow(PropertyValidationException::class);
         });
     });
 
@@ -339,9 +344,9 @@ describe('PropertyService - Comprehensive Tests', function () {
             }
 
             // Create test users
-            $userClass = new class extends \Illuminate\Database\Eloquent\Model
+            $userClass = new class extends Model
             {
-                use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+                use HasProperties;
 
                 protected $table = 'users';
 
@@ -451,9 +456,9 @@ describe('PropertyService - Comprehensive Tests', function () {
                 ]);
             }
 
-            $userClass = new class extends \Illuminate\Database\Eloquent\Model
+            $userClass = new class extends Model
             {
-                use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+                use HasProperties;
 
                 protected $table = 'users';
 
@@ -502,9 +507,9 @@ describe('PropertyService - Comprehensive Tests', function () {
         it('throws exception when setting property on unsaved entity', function () {
             $propertyService = app(PropertyService::class);
 
-            $unsavedUser = new class extends \Illuminate\Database\Eloquent\Model
+            $unsavedUser = new class extends Model
             {
-                use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+                use HasProperties;
 
                 protected $table = 'users';
 
@@ -514,7 +519,7 @@ describe('PropertyService - Comprehensive Tests', function () {
             // Don't save the user
 
             expect(fn () => $propertyService->setDynamicProperty($unsavedUser, 'bio', 'Test'))
-                ->toThrow(\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException::class);
+                ->toThrow(PropertyOperationException::class);
         });
 
         it('handles validation errors in batch property setting', function () {
@@ -531,7 +536,7 @@ describe('PropertyService - Comprehensive Tests', function () {
                 'bio'            => 'Valid bio',
                 'required_field' => null, // Invalid - required
                 'non_existent'   => 'value', // Invalid - doesn't exist
-            ]))->toThrow(\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException::class);
+            ]))->toThrow(PropertyValidationException::class);
         });
     });
 });

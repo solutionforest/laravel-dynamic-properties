@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       fail-fast: false
       matrix:
@@ -20,27 +20,68 @@ jobs:
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ matrix.php }}
-        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
-        coverage: none
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+          coverage: none
 
-    - name: Setup problem matchers
-      run: |
-        echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+      - name: Setup problem matchers
+        run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
 
-    - name: Install dependencies
-      run: |
-        composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
-        composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
+          # Older Laravel minors carry known advisories; this job verifies
+          # compatibility with the supported version, not its security posture.
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-blocking
 
-    - name: List Installed Dependencies
-      run: composer show -D
+      - name: List installed dependencies
+        run: composer show -D
 
-    - name: Execute tests
-      run: vendor/bin/pest
+      - name: Execute tests
+        run: vendor/bin/pest
+
+  phpstan:
+    runs-on: ubuntu-latest
+
+    name: PHPStan (level 10)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+  composer:
+    runs-on: ubuntu-latest
+
+    name: Composer validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-publish

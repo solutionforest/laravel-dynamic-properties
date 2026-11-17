@@ -6,10 +6,11 @@ use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationExceptio
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 class TestUser extends Model
 {
-    use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+    use HasProperties;
 
     protected $table = 'test_users';
 

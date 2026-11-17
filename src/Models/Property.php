@@ -1,12 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyValidationService;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $label
+ * @property string $type
+ * @property bool $required
+ * @property array<int, string>|null $options
+ * @property array<string, mixed>|null $validation
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class Property extends Model
 {
+    /**
+     * Every property type supported by the package.
+     *
+     * @var list<string>
+     */
+    public const TYPES = ['text', 'number', 'date', 'boolean', 'select'];
+
     protected $fillable = [
         'name',
         'label',
@@ -23,7 +50,109 @@ class Property extends Model
     ];
 
     /**
-     * Get all entity properties for this property definition
+     * Entity types/ids whose JSON cache must be resynchronised after a delete.
+     *
+     * @var list<array{entity_type: string, entity_id: int|string}>
+     */
+    protected array $cacheSyncTargets = [];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Property $property): void {
+            if (! is_string($property->label) || trim($property->label) === '') {
+                $property->label = is_string($property->name) ? Str::headline($property->name) : '';
+            }
+
+            $errors = (new PropertyValidationService)->validatePropertyDefinition($property->definitionAttributes());
+
+            if ($errors !== []) {
+                throw new PropertyValidationException(
+                    (string) ($property->name ?? 'property definition'),
+                    $property->definitionAttributes(),
+                    $errors,
+                    null,
+                    ['operation' => 'save_property']
+                );
+            }
+        });
+
+        static::saved(function (Property $property): void {
+            PropertyService::forgetDefinitionCache($property->name);
+        });
+
+        static::updating(function (Property $property): void {
+            if (! Schema::hasTable('entity_properties')) {
+                return;
+            }
+
+            if ($property->isDirty('name')) {
+                EntityProperty::query()
+                    ->where('property_id', $property->getKey())
+                    ->update(['property_name' => (string) $property->name]);
+            }
+
+            $originalType = $property->getOriginal('type');
+
+            if ($property->isDirty('type') && is_string($originalType)) {
+                DB::transaction(function () use ($property, $originalType): void {
+                    $property->castStoredValuesToNewType($originalType);
+                });
+            }
+        });
+
+        static::updated(function (Property $property): void {
+            if (! $property->wasChanged('name') && ! $property->wasChanged('type')) {
+                return;
+            }
+
+            if ($property->wasChanged('name')) {
+                $originalName = $property->getOriginal('name');
+
+                if (is_string($originalName)) {
+                    PropertyService::forgetDefinitionCache($originalName);
+                }
+            }
+
+            app(PropertyService::class)->syncJsonForProperty($property);
+        });
+
+        static::deleting(function (Property $property): void {
+            if (! Schema::hasTable('entity_properties')) {
+                return;
+            }
+
+            $targets = [];
+
+            // @var EntityProperty $row
+            foreach (EntityProperty::query()
+                ->where('property_id', $property->getKey())
+                ->select(['entity_type', 'entity_id'])
+                ->distinct()
+                ->get() as $row) {
+                $targets[] = [
+                    'entity_type' => (string) $row->entity_type,
+                    'entity_id'   => $row->entity_id,
+                ];
+            }
+
+            $property->cacheSyncTargets = $targets;
+
+            EntityProperty::query()->where('property_id', $property->getKey())->delete();
+        });
+
+        static::deleted(function (Property $property): void {
+            PropertyService::forgetDefinitionCache($property->name);
+
+            if ($property->cacheSyncTargets !== []) {
+                app(PropertyService::class)->syncJsonForTargets($property->cacheSyncTargets);
+            }
+        });
+    }
+
+    /**
+     * Get all entity properties for this property definition.
+     *
+     * @return HasMany<EntityProperty, $this>
      */
     public function entityProperties(): HasMany
     {
@@ -31,151 +160,151 @@ class Property extends Model
     }
 
     /**
-     * Validate a value against this property's type and validation rules
+     * The value column used by a given property type.
+     */
+    public static function valueColumn(string $type): string
+    {
+        return match ($type) {
+            'number'         => 'number_value',
+            'date'           => 'date_value',
+            'boolean'        => 'boolean_value',
+            'text', 'select' => 'string_value',
+            default          => 'string_value',
+        };
+    }
+
+    /**
+     * The full set of value columns for a given type: exactly one is populated.
+     *
+     * @return array<string, mixed>
+     */
+    public static function valueColumnsForType(string $type, mixed $value): array
+    {
+        $columns = [
+            'string_value'  => null,
+            'number_value'  => null,
+            'date_value'    => null,
+            'boolean_value' => null,
+        ];
+
+        $columns[self::valueColumn($type)] = $value;
+
+        return $columns;
+    }
+
+    /**
+     * Validate a value against this property's type and validation rules.
      */
     public function validateValue(mixed $value): bool
     {
-        // Handle required validation
-        if ($this->required && ($value === null || $value === '')) {
-            return false;
-        }
+        try {
+            (new PropertyValidationService)->validatePropertyValue($this, $value);
 
-        // Allow null for optional fields, but not empty string for select types
-        if (! $this->required && $value === null) {
             return true;
-        }
-
-        // For select types, empty string is not valid even if optional
-        if (! $this->required && $value === '' && $this->type === 'select') {
+        } catch (PropertyValidationException) {
             return false;
         }
-
-        // Allow empty string for other optional field types
-        if (! $this->required && $value === '' && $this->type !== 'select') {
-            return true;
-        }
-
-        // Type validation
-        $typeValid = match ($this->type) {
-            'text'    => is_string($value) || is_numeric($value),
-            'number'  => is_numeric($value),
-            'date'    => $this->isValidDate($value),
-            'boolean' => $this->isValidBoolean($value),
-            'select'  => $value !== '' && $value !== null && in_array($value, $this->options ?? []),
-            default   => false
-        };
-
-        if (! $typeValid) {
-            return false;
-        }
-
-        // Additional validation rules
-        if ($this->validation) {
-            return $this->validateAgainstRules($value, $this->validation);
-        }
-
-        return true;
     }
 
     /**
-     * Cast a value to the appropriate type for this property
+     * Cast a value to the type used for storage.
      */
     public function castValue(mixed $value): mixed
     {
+        if ($value === null) {
+            return null;
+        }
+
         return match ($this->type) {
-            'text', 'select' => (string) $value,
-            'number'  => is_numeric($value) ? (float) $value : $value,
-            'date'    => $this->castToDate($value),
-            'boolean' => $this->castToBoolean($value),
-            default   => $value
+            'text', 'select' => self::castText($value),
+            'number'         => is_numeric($value) ? (float) $value : $value,
+            'date'           => self::castDate($value),
+            'boolean'        => self::castBoolean($value),
+            default          => $value,
         };
     }
 
     /**
-     * Get validation error message for a value
+     * Get validation error message for a value.
      */
     public function getValidationError(mixed $value): string
     {
-        if ($this->required && ($value === null || $value === '')) {
-            return "The {$this->label} field is required.";
+        try {
+            (new PropertyValidationService)->validatePropertyValue($this, $value);
+        } catch (PropertyValidationException $e) {
+            return $e->getUserMessage();
         }
 
-        if ($this->type === 'text' && $this->validation) {
-            if (isset($this->validation['min']) && strlen($value) < $this->validation['min']) {
-                return "The {$this->label} must be at least {$this->validation['min']} characters minimum.";
-            }
-            if (isset($this->validation['max']) && strlen($value) > $this->validation['max']) {
-                return "The {$this->label} may not be greater than {$this->validation['max']} characters maximum.";
-            }
-        }
-
-        if ($this->type === 'number' && $this->validation) {
-            if (isset($this->validation['min']) && $value < $this->validation['min']) {
-                return "The {$this->label} must be at least {$this->validation['min']}.";
-            }
-            if (isset($this->validation['max']) && $value > $this->validation['max']) {
-                return "The {$this->label} may not be greater than {$this->validation['max']}.";
-            }
-        }
-
-        return "The {$this->label} field is invalid.";
+        return '';
     }
 
     /**
-     * Check if a value is a valid boolean
+     * Cast a value to the string used by text and select properties.
      */
-    private function isValidBoolean(mixed $value): bool
+    public static function castText(mixed $value): string
     {
-        return is_bool($value) ||
-               $value === 1 || $value === 0 ||
-               $value === '1' || $value === '0';
+        return match (true) {
+            is_string($value)                => $value,
+            is_int($value), is_float($value) => (string) $value,
+            is_bool($value)                  => $value ? '1' : '0',
+            $value instanceof \Stringable    => (string) $value,
+            default                          => '',
+        };
     }
 
     /**
-     * Cast value to boolean
+     * Check if a value can be stored in a boolean property.
      */
-    private function castToBoolean(mixed $value): bool
+    public static function isValidBoolean(mixed $value): bool
+    {
+        return is_bool($value)
+            || $value === 1
+            || $value === 0
+            || $value === '1'
+            || $value === '0';
+    }
+
+    /**
+     * Cast a value to a boolean.
+     */
+    public static function castBoolean(mixed $value): bool
     {
         if (is_bool($value)) {
             return $value;
         }
 
-        return in_array($value, [1, '1', true], true);
+        return $value === 1 || $value === '1';
     }
 
     /**
-     * Check if a value is a valid date
+     * Check if a value is a valid date representation.
      */
-    private function isValidDate(mixed $value): bool
+    public static function isValidDate(mixed $value): bool
     {
-        if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
+        if ($value instanceof \DateTimeInterface) {
             return true;
         }
 
-        if (is_string($value)) {
-            return strtotime($value) !== false;
-        }
-
-        return false;
+        return is_string($value) && strtotime($value) !== false;
     }
 
     /**
-     * Cast value to date
+     * Cast a value to a Carbon instance.
      */
-    private function castToDate(mixed $value): ?\Carbon\Carbon
+    public static function castDate(mixed $value): ?Carbon
     {
-        if ($value instanceof \Carbon\Carbon) {
+        if ($value instanceof Carbon) {
             return $value;
         }
 
-        if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
-            return \Carbon\Carbon::instance($value);
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value);
         }
 
         if (is_string($value)) {
             try {
-                return \Carbon\Carbon::parse($value);
-            } catch (\Exception $e) {
+                return Carbon::parse($value);
+            } catch (\Exception) {
                 return null;
             }
         }
@@ -184,56 +313,45 @@ class Property extends Model
     }
 
     /**
-     * Validate value against custom validation rules
+     * Re-map every stored value when the property type changes.
+     *
+     * The operation is transactional: an invalid existing value aborts the
+     * update instead of leaving rows half-migrated.
      */
-    private function validateAgainstRules(mixed $value, array $rules): bool
+    protected function castStoredValuesToNewType(string $oldType): void
     {
-        foreach ($rules as $rule => $constraint) {
-            $valid = match ($rule) {
-                'min'        => $this->type === 'text' ? strlen($value) >= $constraint : $value >= $constraint,
-                'max'        => $this->type === 'text' ? strlen($value) <= $constraint : $value <= $constraint,
-                'min_length' => is_string($value) && strlen($value) >= $constraint,
-                'max_length' => is_string($value) && strlen($value) <= $constraint,
-                'after'      => $this->type === 'date' && $this->isDateAfter($value, $constraint),
-                'before'     => $this->type === 'date' && $this->isDateBefore($value, $constraint),
-                default      => true
-            };
+        $rows = EntityProperty::query()->where('property_id', $this->getKey())->get();
 
-            if (! $valid) {
-                return false;
+        foreach ($rows as $row) {
+            $rawValue = $row->value;
+
+            if ($rawValue === null) {
+                continue;
             }
-        }
 
-        return true;
-    }
+            $newValue = $this->castValue($rawValue);
 
-    /**
-     * Check if date is after constraint
-     */
-    private function isDateAfter(mixed $value, string $constraint): bool
-    {
-        try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+            (new PropertyValidationService)->validatePropertyValue($this, $newValue);
 
-            return $date->isAfter($constraintDate);
-        } catch (\Exception $e) {
-            return false;
+            $row->fill(static::valueColumnsForType((string) $this->type, $newValue));
+            $row->save();
         }
     }
 
     /**
-     * Check if date is before constraint
+     * Attributes passed to the definition validator.
+     *
+     * @return array<string, mixed>
      */
-    private function isDateBefore(mixed $value, string $constraint): bool
+    protected function definitionAttributes(): array
     {
-        try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
-
-            return $date->isBefore($constraintDate);
-        } catch (\Exception $e) {
-            return false;
-        }
+        return [
+            'name'       => $this->name,
+            'label'      => $this->label,
+            'type'       => $this->type,
+            'required'   => (bool) $this->required,
+            'options'    => $this->options,
+            'validation' => $this->validation,
+        ];
     }
 }

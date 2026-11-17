@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
 use Illuminate\Console\Command;

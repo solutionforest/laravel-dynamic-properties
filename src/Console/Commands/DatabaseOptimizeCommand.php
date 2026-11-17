@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -72,11 +74,38 @@ class DatabaseOptimizeCommand extends Command
 
         try {
             $optimizations = $this->propertyService->optimizeDatabase();
+            $failures = $this->propertyService->getLastOptimizationFailures();
 
-            if (empty($optimizations)) {
-                $this->warn('No optimizations were applied. Database may already be optimized or driver not supported.');
+            if ($optimizations === [] && $failures !== []) {
+                $this->error('No optimizations could be applied:');
+
+                foreach ($failures as $statement => $error) {
+                    $this->line("  <fg=red>✗</> {$statement}");
+                    $this->line("    {$error}");
+                }
+
+                if (! $this->option('force')) {
+                    $this->warn('Use --force to continue despite errors.');
+
+                    return 1;
+                }
+
+                $this->warn('Continuing despite errors due to --force flag.');
+                $this->showRecommendations();
 
                 return 0;
+            }
+
+            if ($optimizations === []) {
+                $this->warn('No optimizations were applied. Database may already be optimized or driver not supported.');
+                $this->showRecommendations();
+
+                return 0;
+            }
+
+            foreach ($failures as $statement => $error) {
+                $this->line("  <fg=red>✗</> {$statement}");
+                $this->line("    {$error}");
             }
 
             $this->info('Applied optimizations:');
@@ -92,7 +121,7 @@ class DatabaseOptimizeCommand extends Command
 
             return 0;
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->error('Database optimization failed: '.$e->getMessage());
 
             if (! $this->option('force')) {

@@ -1,11 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\LaravelDynamicProperties\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
 
+/**
+ * @property int $id
+ * @property int|string $entity_id
+ * @property string $entity_type
+ * @property int $property_id
+ * @property string $property_name
+ * @property string|null $string_value
+ * @property float|null $number_value
+ * @property Carbon|null $date_value
+ * @property bool|null $boolean_value
+ * @property-read Property|null $property
+ * @property-read mixed $value
+ */
 class EntityProperty extends Model
 {
     protected $fillable = [
@@ -26,7 +44,9 @@ class EntityProperty extends Model
     ];
 
     /**
-     * Get the entity that owns this property value (polymorphic)
+     * Get the entity that owns this property value (polymorphic).
+     *
+     * @return MorphTo<Model, $this>
      */
     public function entity(): MorphTo
     {
@@ -34,7 +54,9 @@ class EntityProperty extends Model
     }
 
     /**
-     * Get the property definition this value belongs to
+     * Get the property definition this value belongs to.
+     *
+     * @return BelongsTo<Property, $this>
      */
     public function property(): BelongsTo
     {
@@ -42,12 +64,10 @@ class EntityProperty extends Model
     }
 
     /**
-     * Get the actual typed value based on which column is populated
-     * This accessor returns the appropriate value based on property type
+     * Get the actual typed value based on which column is populated.
      */
     public function getValueAttribute(): mixed
     {
-        // Return the non-null value from the appropriate column
         if ($this->string_value !== null) {
             return $this->string_value;
         }
@@ -68,103 +88,67 @@ class EntityProperty extends Model
     }
 
     /**
-     * Get the typed value based on the property definition
-     * This ensures proper type casting based on the property type
+     * Get the typed value based on the property definition.
      */
     public function getTypedValueAttribute(): mixed
     {
-        if (! $this->property) {
+        $property = $this->property;
+
+        if (! $property instanceof Property) {
             return $this->value;
         }
 
         $rawValue = $this->value;
 
-        if ($rawValue === null) {
-            return null;
-        }
-
-        return $this->property->castValue($rawValue);
+        return $rawValue === null ? null : $property->castValue($rawValue);
     }
 
     /**
-     * Set the value in the appropriate column based on property type
+     * Set the value in the appropriate column based on property type.
+     *
+     * @throws InvalidPropertyTypeException
      */
     public function setValue(mixed $value, string $propertyType): void
     {
-        // Clear all value columns first
+        if (! in_array($propertyType, Property::TYPES, true)) {
+            throw new InvalidPropertyTypeException($propertyType, Property::TYPES);
+        }
+
         $this->string_value = null;
         $this->number_value = null;
         $this->date_value = null;
         $this->boolean_value = null;
 
-        // Set the appropriate column based on property type
-        match ($propertyType) {
-            'text', 'select' => $this->string_value = $value,
-            'number'  => $this->number_value = $value,
-            'date'    => $this->date_value = $value,
-            'boolean' => $this->boolean_value = $value,
-        };
+        $this->setAttribute(Property::valueColumn($propertyType), $value);
     }
 
     /**
-     * Get the column name that should store the value for a given property type
+     * Get the column name that should store the value for a given property type.
      */
     public static function getValueColumnForType(string $type): string
     {
-        return match ($type) {
-            'text', 'select' => 'string_value',
-            'number'  => 'number_value',
-            'date'    => 'date_value',
-            'boolean' => 'boolean_value',
-            default   => 'string_value'
-        };
+        return Property::valueColumn($type);
     }
 
     /**
-     * Get the value columns data for storing a value of a specific type
+     * Get the value columns data for storing a value of a specific type.
+     *
+     * @return array<string, mixed>
      */
     public static function getValueColumnsForType(string $type, mixed $value): array
     {
-        return match ($type) {
-            'text', 'select' => [
-                'string_value'  => $value,
-                'number_value'  => null,
-                'date_value'    => null,
-                'boolean_value' => null,
-            ],
-            'number' => [
-                'string_value'  => null,
-                'number_value'  => $value,
-                'date_value'    => null,
-                'boolean_value' => null,
-            ],
-            'date' => [
-                'string_value'  => null,
-                'number_value'  => null,
-                'date_value'    => $value,
-                'boolean_value' => null,
-            ],
-            'boolean' => [
-                'string_value'  => null,
-                'number_value'  => null,
-                'date_value'    => null,
-                'boolean_value' => $value,
-            ],
-            default => [
-                'string_value'  => $value,
-                'number_value'  => null,
-                'date_value'    => null,
-                'boolean_value' => null,
-            ]
-        };
+        return Property::valueColumnsForType($type, $value);
     }
 
     /**
-     * Scope to filter by entity
+     * Scope to filter by entity.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeForEntity($query, Model $entity)
+    public function scopeForEntity(Builder $query, Model $entity): Builder
     {
-        return $query->where('entity_id', $entity->id)
-            ->where('entity_type', get_class($entity));
+        return $query->where('entity_id', $entity->getKey())
+            ->where('entity_type', $entity->getMorphClass());
     }
 }
