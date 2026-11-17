@@ -106,7 +106,7 @@ return new class extends Migration
                 // Populate existing data
                 DB::statement('INSERT INTO entity_properties_fts(rowid, string_value) SELECT id, string_value FROM entity_properties WHERE string_value IS NOT NULL');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // FTS setup failed, continue without it
             }
         }
@@ -120,7 +120,7 @@ return new class extends Migration
         if ($this->dbCompat->supports('json1_extension')) {
             try {
                 DB::statement('SELECT load_extension("json1")');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Extension loading failed, continue without it
             }
         }
@@ -167,7 +167,7 @@ return new class extends Migration
             DB::statement('DROP TRIGGER IF EXISTS entity_properties_fts_delete');
             DB::statement('DROP TRIGGER IF EXISTS entity_properties_fts_update');
             DB::statement('DROP TABLE IF EXISTS entity_properties_fts');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Ignore errors during rollback
         }
 
@@ -197,7 +197,7 @@ return new class extends Migration
                 'pgsql'  => ! empty(DB::select('SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?', [$table, $index])),
                 default  => false
             };
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }

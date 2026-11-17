@@ -5,6 +5,19 @@ All notable changes to the Laravel Dynamic Properties package will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-11-17
+
+### Security
+
+- Fixed SQL injection in the raw search builders of
+  `DatabaseCompatibilityService` (`buildLikeSearchQuery`,
+  `buildFullTextSearchQuery`, `buildJsonSearchQuery`,
+  `buildOptimizedSearchQuery`), reachable through
+  `PropertyService::search()` with a `like` / `ilike` / `fulltext` operator.
+  User-controlled terms are now quoted with the database driver, number values
+  must be numeric and unsupported operators are rejected.
+  Users of 1.x should upgrade; 2.x is not affected.
+
 ## [Unreleased]
 
 ### Changed

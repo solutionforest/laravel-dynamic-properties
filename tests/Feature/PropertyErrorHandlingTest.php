@@ -1,15 +1,17 @@
 <?php
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
-class TestEntity extends \Illuminate\Database\Eloquent\Model
+class TestEntity extends Model
 {
-    use \SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+    use HasProperties;
 
     protected $table = 'test_entities';
 
@@ -223,7 +225,7 @@ describe('Property Error Handling', function () {
         it('handles null and empty values correctly', function () {
             // Non-required field should accept null
             expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_number', null))
-                ->not->toThrow(\Exception::class);
+                ->not->toThrow(Exception::class);
 
             // Required field should reject null
             expect(fn () => $this->service->setDynamicProperty($this->entity, 'error_test_text', null))

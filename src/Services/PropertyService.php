@@ -3,6 +3,7 @@
 namespace SolutionForest\LaravelDynamicProperties\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -394,9 +395,9 @@ class PropertyService
      *
      * @param  string  $entityType  The entity class name (e.g., 'App\Models\User')
      * @param  array  $filters  Array of property filters
-     * @return \Illuminate\Support\Collection Collection of entity IDs that match the criteria
+     * @return Collection Collection of entity IDs that match the criteria
      */
-    public function search(string $entityType, array $filters): \Illuminate\Support\Collection
+    public function search(string $entityType, array $filters): Collection
     {
         if (empty($filters)) {
             return collect();
@@ -515,7 +516,7 @@ class PropertyService
      * @param  array  $filters  Array of property filters with advanced options
      * @param  string  $logic  Logic operator between filters ('AND' or 'OR')
      */
-    public function advancedSearch(string $entityType, array $filters, string $logic = 'AND'): \Illuminate\Support\Collection
+    public function advancedSearch(string $entityType, array $filters, string $logic = 'AND'): Collection
     {
         if (strtoupper($logic) === 'OR') {
             return $this->searchWithOrLogic($entityType, $filters);
@@ -527,7 +528,7 @@ class PropertyService
     /**
      * Search entities where ANY of the property filters match (OR logic)
      */
-    private function searchWithOrLogic(string $entityType, array $filters): \Illuminate\Support\Collection
+    private function searchWithOrLogic(string $entityType, array $filters): Collection
     {
         $query = EntityProperty::where('entity_type', $entityType);
 
@@ -715,10 +716,10 @@ class PropertyService
     {
         return match ($type) {
             'text', 'select' => 'string_value',
-            'number'  => 'number_value',
-            'date'    => 'date_value',
-            'boolean' => 'boolean_value',
-            default   => 'string_value'
+            'number'         => 'number_value',
+            'date'           => 'date_value',
+            'boolean'        => 'boolean_value',
+            default          => 'string_value'
         };
     }
 
@@ -730,7 +731,7 @@ class PropertyService
      * @param  string  $searchTerm  The search term
      * @param  array  $options  Search options (full_text, case_sensitive, etc.)
      */
-    public function searchText(string $entityType, string $propertyName, string $searchTerm, array $options = []): \Illuminate\Support\Collection
+    public function searchText(string $entityType, string $propertyName, string $searchTerm, array $options = []): Collection
     {
         $property = Property::where('name', $propertyName)->first();
         if (! $property || $property->type !== 'text') {
@@ -755,7 +756,7 @@ class PropertyService
      * @param  float  $min  Minimum value
      * @param  float  $max  Maximum value
      */
-    public function searchNumberRange(string $entityType, string $propertyName, float $min, float $max): \Illuminate\Support\Collection
+    public function searchNumberRange(string $entityType, string $propertyName, float $min, float $max): Collection
     {
         $property = Property::where('name', $propertyName)->first();
         if (! $property || $property->type !== 'number') {
@@ -778,7 +779,7 @@ class PropertyService
      * @param  mixed  $startDate  Start date
      * @param  mixed  $endDate  End date
      */
-    public function searchDateRange(string $entityType, string $propertyName, mixed $startDate, mixed $endDate): \Illuminate\Support\Collection
+    public function searchDateRange(string $entityType, string $propertyName, mixed $startDate, mixed $endDate): Collection
     {
         $property = Property::where('name', $propertyName)->first();
         if (! $property || $property->type !== 'date') {
@@ -804,7 +805,7 @@ class PropertyService
      * @param  string  $propertyName  The property to search in
      * @param  bool  $value  The boolean value to search for
      */
-    public function searchBoolean(string $entityType, string $propertyName, bool $value): \Illuminate\Support\Collection
+    public function searchBoolean(string $entityType, string $propertyName, bool $value): Collection
     {
         $property = Property::where('name', $propertyName)->first();
         if (! $property || $property->type !== 'boolean') {

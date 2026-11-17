@@ -1,5 +1,6 @@
 <?php
 
+use SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 beforeEach(function () {
@@ -32,7 +33,7 @@ it('shows recommendations after optimization', function () {
 
 it('handles optimization failures gracefully', function () {
     // Mock the property service to throw an exception
-    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([
@@ -41,7 +42,7 @@ it('handles optimization failures gracefully', function () {
             'migration_config' => [],
         ]);
         $mock->shouldReceive('getDatabaseCompatibilityService')->andReturn($mockDbCompat);
-        $mock->shouldReceive('optimizeDatabase')->andThrow(new \Exception('Test error'));
+        $mock->shouldReceive('optimizeDatabase')->andThrow(new Exception('Test error'));
     });
 
     $this->artisan('dynamic-properties:optimize-db')
@@ -52,7 +53,7 @@ it('handles optimization failures gracefully', function () {
 
 it('continues with force flag despite errors', function () {
     // Mock the property service to throw an exception
-    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([
@@ -61,7 +62,7 @@ it('continues with force flag despite errors', function () {
             'migration_config' => [],
         ]);
         $mock->shouldReceive('getDatabaseCompatibilityService')->andReturn($mockDbCompat);
-        $mock->shouldReceive('optimizeDatabase')->andThrow(new \Exception('Test error'));
+        $mock->shouldReceive('optimizeDatabase')->andThrow(new Exception('Test error'));
     });
 
     $this->artisan('dynamic-properties:optimize-db --force')
@@ -72,7 +73,7 @@ it('continues with force flag despite errors', function () {
 
 it('shows no optimizations message when none are applied', function () {
     // Mock the property service to return empty optimizations
-    $mockDbCompat = Mockery::mock(\SolutionForest\LaravelDynamicProperties\Services\DatabaseCompatibilityService::class);
+    $mockDbCompat = Mockery::mock(DatabaseCompatibilityService::class);
 
     $this->mock(PropertyService::class, function ($mock) use ($mockDbCompat) {
         $mock->shouldReceive('getDatabaseInfo')->andReturn([

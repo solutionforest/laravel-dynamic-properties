@@ -2,6 +2,7 @@
 
 namespace SolutionForest\LaravelDynamicProperties\Services;
 
+use Carbon\Carbon;
 use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
 use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
@@ -361,8 +362,8 @@ class PropertyValidationService
     private function isDateAfter(mixed $value, string $constraint): bool
     {
         try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+            $date = Carbon::parse($value);
+            $constraintDate = $constraint === 'today' ? Carbon::today() : Carbon::parse($constraint);
 
             return $date->isAfter($constraintDate);
         } catch (\Exception $e) {
@@ -376,8 +377,8 @@ class PropertyValidationService
     private function isDateBefore(mixed $value, string $constraint): bool
     {
         try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+            $date = Carbon::parse($value);
+            $constraintDate = $constraint === 'today' ? Carbon::today() : Carbon::parse($constraint);
 
             return $date->isBefore($constraintDate);
         } catch (\Exception $e) {

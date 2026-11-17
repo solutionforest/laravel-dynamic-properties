@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
@@ -149,11 +150,11 @@ it('handles string vs numeric level comparison edge cases', function () {
     expect($results)->toHaveCount(2);
 
     // Check what's actually stored in the database
-    $numericProperty = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::where('entity_id', $userNumeric->id)
+    $numericProperty = EntityProperty::where('entity_id', $userNumeric->id)
         ->where('property_name', 'level')
         ->first();
 
-    $stringProperty = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::where('entity_id', $userString->id)
+    $stringProperty = EntityProperty::where('entity_id', $userString->id)
         ->where('property_name', 'level')
         ->first();
 
@@ -212,10 +213,10 @@ it('verifies property definition affects comparison behavior', function () {
     expect($results)->toHaveCount(2); // Both '5' > '1' and '10' > '1'
 
     // Check storage
-    $property1 = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::where('entity_id', $user1->id)
+    $property1 = EntityProperty::where('entity_id', $user1->id)
         ->where('property_name', 'text_level')
         ->first();
-    $property2 = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::where('entity_id', $user2->id)
+    $property2 = EntityProperty::where('entity_id', $user2->id)
         ->where('property_name', 'text_level')
         ->first();
 

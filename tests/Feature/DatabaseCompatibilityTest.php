@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
@@ -134,7 +135,7 @@ it('provides database information correctly', function () {
 it('performs text search with database-specific optimizations', function () {
     $results = $this->propertyService->searchText('App\\Models\\User', 'description', 'test');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
     expect($results->contains(1))->toBeTrue();
 });
@@ -142,7 +143,7 @@ it('performs text search with database-specific optimizations', function () {
 it('performs case-insensitive text search', function () {
     $results = $this->propertyService->searchText('App\\Models\\User', 'description', 'TEST');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
     expect($results->contains(1))->toBeTrue();
 });
@@ -159,14 +160,14 @@ it('performs full-text search when supported', function () {
         ['full_text' => true]
     );
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
 });
 
 it('performs number range searches', function () {
     $results = $this->propertyService->searchNumberRange('App\\Models\\User', 'score', 80.0, 90.0);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeFalse(); // Score 92.0 is outside range
 });
@@ -179,14 +180,14 @@ it('performs date range searches', function () {
         '2024-01-31'
     );
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
 it('performs boolean searches', function () {
     $results = $this->propertyService->searchBoolean('App\\Models\\User', 'active', true);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
@@ -197,7 +198,7 @@ it('performs advanced searches with multiple criteria', function () {
         'active'      => true,
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
 });
 
@@ -207,7 +208,7 @@ it('performs OR logic searches', function () {
         'score' => ['value' => 92.0, 'operator' => '='],
     ], 'OR');
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->count())->toBeGreaterThan(0);
 });
 
@@ -216,7 +217,7 @@ it('handles BETWEEN operator correctly', function () {
         'score' => ['operator' => 'between', 'min' => 80, 'max' => 90],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeFalse();
 });
@@ -226,7 +227,7 @@ it('handles IN operator correctly', function () {
         'score' => ['operator' => 'in', 'value' => [85.5, 92.0]],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(1))->toBeTrue();
     expect($results->contains(2))->toBeTrue();
 });
@@ -249,7 +250,7 @@ it('handles NULL searches correctly', function () {
         'score' => ['operator' => 'null'],
     ]);
 
-    expect($results)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($results)->toBeInstanceOf(Collection::class);
     expect($results->contains(3))->toBeTrue();
     expect($results->contains(1))->toBeFalse();
     expect($results->contains(2))->toBeFalse();

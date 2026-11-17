@@ -100,9 +100,9 @@ class EntityProperty extends Model
         // Set the appropriate column based on property type
         match ($propertyType) {
             'text', 'select' => $this->string_value = $value,
-            'number'  => $this->number_value = $value,
-            'date'    => $this->date_value = $value,
-            'boolean' => $this->boolean_value = $value,
+            'number'         => $this->number_value = $value,
+            'date'           => $this->date_value = $value,
+            'boolean'        => $this->boolean_value = $value,
         };
     }
 
@@ -113,10 +113,10 @@ class EntityProperty extends Model
     {
         return match ($type) {
             'text', 'select' => 'string_value',
-            'number'  => 'number_value',
-            'date'    => 'date_value',
-            'boolean' => 'boolean_value',
-            default   => 'string_value'
+            'number'         => 'number_value',
+            'date'           => 'date_value',
+            'boolean'        => 'boolean_value',
+            default          => 'string_value'
         };
     }
 

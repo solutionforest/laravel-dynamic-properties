@@ -4,7 +4,12 @@ namespace SolutionForest\LaravelDynamicProperties\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Schema;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 trait HasProperties
@@ -47,9 +52,9 @@ trait HasProperties
     /**
      * Set a dynamic property value using the PropertyService
      *
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException
+     * @throws PropertyNotFoundException
+     * @throws PropertyValidationException
+     * @throws PropertyOperationException
      */
     public function setDynamicProperty(string $name, mixed $value): void
     {
@@ -67,9 +72,9 @@ trait HasProperties
     /**
      * Set multiple properties at once using the PropertyService
      *
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException
-     * @throws \SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException
+     * @throws PropertyNotFoundException
+     * @throws PropertyValidationException
+     * @throws PropertyOperationException
      */
     public function setProperties(array $properties): void
     {
@@ -109,7 +114,7 @@ trait HasProperties
         if (str_starts_with($key, 'prop_')) {
             try {
                 $this->setDynamicProperty(substr($key, 5), $value);
-            } catch (\SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException $e) {
+            } catch (PropertyException $e) {
                 // Convert to generic exception for magic method compatibility
                 throw new \InvalidArgumentException($e->getUserMessage(), $e->getCode(), $e);
             }
@@ -179,7 +184,7 @@ trait HasProperties
             $q->where('property_name', $name);
 
             // Get property definition to determine the correct column
-            $property = \SolutionForest\LaravelDynamicProperties\Models\Property::where('name', $name)->first();
+            $property = Property::where('name', $name)->first();
 
             if ($property) {
                 // Use property type to determine column and cast value appropriately
@@ -223,10 +228,10 @@ trait HasProperties
     {
         return match ($type) {
             'text', 'select' => 'string_value',
-            'number'  => 'number_value',
-            'date'    => 'date_value',
-            'boolean' => 'boolean_value',
-            default   => 'string_value'
+            'number'         => 'number_value',
+            'date'           => 'date_value',
+            'boolean'        => 'boolean_value',
+            default          => 'string_value'
         };
     }
 

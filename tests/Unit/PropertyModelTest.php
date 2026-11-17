@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 describe('Property Model - Comprehensive Tests', function () {
@@ -207,13 +208,13 @@ describe('Property Model - Comprehensive Tests', function () {
 
         // Date property
         $date = $this->dateProperty->castValue('2023-05-15');
-        expect($date)->toBeInstanceOf(\Carbon\Carbon::class);
+        expect($date)->toBeInstanceOf(Carbon::class);
         expect($date->format('Y-m-d'))->toBe('2023-05-15');
     });
 
     it('has proper relationships', function () {
         // Create an entity property to test the relationship
-        $entityProperty = \SolutionForest\LaravelDynamicProperties\Models\EntityProperty::create([
+        $entityProperty = EntityProperty::create([
             'entity_id'     => 1,
             'entity_type'   => 'App\\Models\\User',
             'property_id'   => $this->textProperty->id,

@@ -379,7 +379,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
         it('throws appropriate exceptions for magic setter with invalid properties', function () {
             expect(fn () => $this->user->prop_non_existent = 'value')
-                ->toThrow(\InvalidArgumentException::class);
+                ->toThrow(InvalidArgumentException::class);
         });
 
         it('falls back to parent magic methods for non-property attributes', function () {

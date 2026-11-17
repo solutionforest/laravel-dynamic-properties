@@ -2,6 +2,7 @@
 
 namespace SolutionForest\LaravelDynamicProperties\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -84,10 +85,10 @@ class Property extends Model
     {
         return match ($this->type) {
             'text', 'select' => (string) $value,
-            'number'  => is_numeric($value) ? (float) $value : $value,
-            'date'    => $this->castToDate($value),
-            'boolean' => $this->castToBoolean($value),
-            default   => $value
+            'number'         => is_numeric($value) ? (float) $value : $value,
+            'date'           => $this->castToDate($value),
+            'boolean'        => $this->castToBoolean($value),
+            default          => $value
         };
     }
 
@@ -162,19 +163,19 @@ class Property extends Model
     /**
      * Cast value to date
      */
-    private function castToDate(mixed $value): ?\Carbon\Carbon
+    private function castToDate(mixed $value): ?Carbon
     {
-        if ($value instanceof \Carbon\Carbon) {
+        if ($value instanceof Carbon) {
             return $value;
         }
 
         if ($value instanceof \DateTime || $value instanceof \DateTimeInterface) {
-            return \Carbon\Carbon::instance($value);
+            return Carbon::instance($value);
         }
 
         if (is_string($value)) {
             try {
-                return \Carbon\Carbon::parse($value);
+                return Carbon::parse($value);
             } catch (\Exception $e) {
                 return null;
             }
@@ -213,8 +214,8 @@ class Property extends Model
     private function isDateAfter(mixed $value, string $constraint): bool
     {
         try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+            $date = Carbon::parse($value);
+            $constraintDate = $constraint === 'today' ? Carbon::today() : Carbon::parse($constraint);
 
             return $date->isAfter($constraintDate);
         } catch (\Exception $e) {
@@ -228,8 +229,8 @@ class Property extends Model
     private function isDateBefore(mixed $value, string $constraint): bool
     {
         try {
-            $date = \Carbon\Carbon::parse($value);
-            $constraintDate = $constraint === 'today' ? \Carbon\Carbon::today() : \Carbon\Carbon::parse($constraint);
+            $date = Carbon::parse($value);
+            $constraintDate = $constraint === 'today' ? Carbon::today() : Carbon::parse($constraint);
 
             return $date->isBefore($constraintDate);
         } catch (\Exception $e) {

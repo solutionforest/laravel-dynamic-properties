@@ -199,12 +199,10 @@ class DatabaseCompatibilityService
     public function buildJsonSearchQuery(string $column, string $searchTerm): string
     {
         return match ($this->driver) {
-            'mysql'  => "JSON_SEARCH({$column}, 'one', '%{$searchTerm}%') IS NOT NULL",
-            'sqlite' => $this->supports('json_extract')
-                ? "{$column} LIKE '%{$searchTerm}%'"
-                : "{$column} LIKE '%{$searchTerm}%'",
-            'pgsql' => "{$column}::text ILIKE '%{$searchTerm}%'",
-            default => "{$column} LIKE '%{$searchTerm}%'"
+            'mysql'  => "JSON_SEARCH({$column}, 'one', {$this->quote('%'.$searchTerm.'%')}) IS NOT NULL",
+            'sqlite' => "{$column} LIKE {$this->quote('%'.$searchTerm.'%')}",
+            'pgsql'  => "{$column}::text ILIKE {$this->quote('%'.$searchTerm.'%')}",
+            default  => "{$column} LIKE {$this->quote('%'.$searchTerm.'%')}"
         };
     }
 
@@ -218,9 +216,9 @@ class DatabaseCompatibilityService
         }
 
         return match ($this->driver) {
-            'mysql'  => "MATCH({$column}) AGAINST('{$searchTerm}' IN BOOLEAN MODE)",
+            'mysql'  => "MATCH({$column}) AGAINST({$this->quote($searchTerm)} IN BOOLEAN MODE)",
             'sqlite' => $this->buildLikeSearchQuery($column, $searchTerm), // SQLite FTS only works on virtual tables
-            'pgsql'  => "to_tsvector({$column}) @@ plainto_tsquery('{$searchTerm}')",
+            'pgsql'  => "to_tsvector({$column}) @@ plainto_tsquery({$this->quote($searchTerm)})",
             default  => $this->buildLikeSearchQuery($column, $searchTerm)
         };
     }
@@ -231,7 +229,7 @@ class DatabaseCompatibilityService
     public function buildLikeSearchQuery(string $column, string $searchTerm, bool $caseSensitive = false): string
     {
         $operator = 'LIKE';
-        $searchValue = "'%{$searchTerm}%'";
+        $searchValue = $this->quote('%'.$searchTerm.'%');
 
         if ($caseSensitive && $this->supports('case_sensitive_like')) {
             $operator = match ($this->driver) {
@@ -264,6 +262,10 @@ class DatabaseCompatibilityService
         }
 
         // Standard comparison operators
+        if (! in_array($operator, ['=', '!=', '<>', '<', '>', '<=', '>='], true)) {
+            throw new \InvalidArgumentException("Unsupported search operator [{$operator}].");
+        }
+
         $escapedValue = $this->escapeValue($value, $propertyType);
 
         return "{$column} {$operator} {$escapedValue}";
@@ -275,12 +277,24 @@ class DatabaseCompatibilityService
     protected function escapeValue(mixed $value, string $propertyType): string
     {
         return match ($propertyType) {
-            'text', 'select' => "'".addslashes($value)."'",
-            'number'  => (string) $value,
-            'date'    => "'".$value."'",
+            'number'  => is_numeric($value)
+                ? (string) ($value + 0)
+                : throw new \InvalidArgumentException('Number properties require a numeric value.'),
             'boolean' => $value ? '1' : '0',
-            default   => "'".addslashes($value)."'",
+            default   => $this->quote($value),
         };
+    }
+
+    /**
+     * Quote a value as an SQL string literal using the driver's own quoting.
+     */
+    protected function quote(mixed $value): string
+    {
+        $string = $value instanceof \DateTimeInterface
+            ? $value->format('Y-m-d H:i:s')
+            : (string) $value;
+
+        return DB::connection()->getPdo()->quote($string);
     }
 
     /**
