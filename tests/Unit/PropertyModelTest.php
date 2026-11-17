@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use SolutionForest\LaravelDynamicProperties\Models\EntityProperty;
 use SolutionForest\LaravelDynamicProperties\Models\Property;
 
@@ -65,11 +66,12 @@ describe('Property Model - Comprehensive Tests', function () {
             'type'  => 'text',
         ]);
 
-        expect(fn () => Property::create([
+        // A savepoint keeps PostgreSQL from aborting the whole test transaction.
+        expect(fn () => DB::transaction(fn () => Property::create([
             'name'  => 'unique_test',
             'label' => 'Second Property',
             'type'  => 'number',
-        ]))->toThrow(QueryException::class);
+        ])))->toThrow(QueryException::class);
     });
 
     it('casts options to array', function () {

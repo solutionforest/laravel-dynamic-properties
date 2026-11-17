@@ -458,7 +458,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
 
             // Should return JSON values, not entity_properties values
             expect($this->user->properties['bio'])->toBe('JSON bio');
-            expect($this->user->properties['age'])->toBe(30);
+            expect($this->user->properties['age'])->toBe(30.0);
             expect($this->user->properties['active'])->toBeFalse();
             expect($this->user->properties['extra'])->toBe('JSON only');
         });
@@ -641,7 +641,7 @@ describe('HasProperties Trait - Comprehensive Integration Tests', function () {
             // Verify database consistency
             $entityProperties = EntityProperty::forEntity($this->user)->get();
             expect($entityProperties)->toHaveCount(2);
-            expect($entityProperties->pluck('property_name')->toArray())->toEqual(['bio', 'age']);
+            expect($entityProperties->pluck('property_name')->sort()->values()->toArray())->toEqual(['age', 'bio']);
         });
     });
 });

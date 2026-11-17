@@ -45,7 +45,7 @@ it('creates a property through the artisan command', function () {
 
     $property = Property::query()->where('name', 'nickname')->firstOrFail();
     expect($property->label)->toBe('Nickname')
-        ->and($property->validation)->toBe(['min' => 2, 'max' => 20]);
+        ->and($property->validation)->toEqual(['min' => 2, 'max' => 20]);
 });
 
 it('rejects an invalid select property through the artisan command', function () {

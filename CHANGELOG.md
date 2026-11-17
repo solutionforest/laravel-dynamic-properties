@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-17
+
+### Fixed
+
+- Changing a property's type no longer destroys data: stored values are
+  converted strictly (text/number/date/boolean) and the change is aborted with
+  a `PropertyValidationException` when a value has no faithful representation
+  (e.g. `"hello world"` -> `date`), instead of silently writing `NULL`/`false`.
+- LIKE searches now match literal `%`, `_`, `\` and `!` on SQLite: predicates
+  use an explicit `ESCAPE '!'` clause (SQLite has no default escape character).
+- `whereProperty('name', '>')` / `whereProperty('name', 'like')` (an operator
+  with no value) now throws `InvalidArgumentException` instead of silently
+  matching every entity that has the property.
+- The JSON cache is read and written through the entity model's own database
+  connection instead of the default connection (regression from 1.x).
+- Values read from the JSON cache are cast through the property definition, so
+  dates are `Carbon` and numbers are `float` exactly as when reading from the
+  `entity_properties` table.
+- `orderByProperty()` places entities without a value consistently on every
+  driver (smallest: first ascending, last descending); PostgreSQL previously
+  reversed this.
+- `optimizeDatabase()` runs each statement in a savepoint so one failure no
+  longer aborts an enclosing PostgreSQL transaction.
+- `dynamic-properties:optimize-db` is idempotent on MySQL: it no longer fails
+  with "Duplicate key name" when the full-text index already exists.
+
+### Changed
+
+- CI now runs the suite against real MySQL 8.0 and PostgreSQL 16 services and
+  adds a `prefer-lowest` job (the suite also passes locally on MariaDB 10.11 and
+  PostgreSQL 15); the test suite selects its database through
+  `DB_CONNECTION` (default: SQLite in memory).
+
 ### Documentation
 
 - Added a README version-compatibility and 2.0 changes/support matrix.

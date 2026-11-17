@@ -22,6 +22,16 @@ use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 trait HasProperties
 {
     /**
+     * Static ORDER BY fragments that place NULLs consistently on every driver.
+     */
+    private const NULL_ORDER = [
+        'string_value'  => ['asc' => 'ep_order.string_value IS NOT NULL asc', 'desc' => 'ep_order.string_value IS NOT NULL desc'],
+        'number_value'  => ['asc' => 'ep_order.number_value IS NOT NULL asc', 'desc' => 'ep_order.number_value IS NOT NULL desc'],
+        'date_value'    => ['asc' => 'ep_order.date_value IS NOT NULL asc', 'desc' => 'ep_order.date_value IS NOT NULL desc'],
+        'boolean_value' => ['asc' => 'ep_order.boolean_value IS NOT NULL asc', 'desc' => 'ep_order.boolean_value IS NOT NULL desc'],
+    ];
+
+    /**
      * Get all entity properties for this model (polymorphic relationship).
      *
      * @return MorphMany<EntityProperty, $this>
@@ -206,9 +216,14 @@ trait HasProperties
         }
 
         if ($value === null) {
-            return $operator === '=' || $operator === 'IS'
-                ? $this->applyNullPropertyFilter($query, $name)
-                : $this->applyNullPropertyFilter($query, $name, false);
+            return match (strtolower((string) $operator)) {
+                '=', 'is'       => $this->applyNullPropertyFilter($query, $name),
+                '!=', '<>'      => $this->applyNullPropertyFilter($query, $name, false),
+                default         => throw new \InvalidArgumentException(
+                    "whereProperty('{$name}', '{$operator}') has no value to compare against. "
+                    ."Pass the value explicitly, e.g. whereProperty('{$name}', '{$operator}', \$value)."
+                ),
+            };
         }
 
         return $query->whereHas('entityProperties', function (Builder $q) use ($name, $operator, $value): void {
@@ -301,8 +316,7 @@ trait HasProperties
                 return;
             }
 
-            $like = $compatibility->likeCondition($searchTerm);
-            $q->where('string_value', $like['operator'], $like['value']);
+            $compatibility->applyLike($q, 'string_value', $searchTerm);
         });
     }
 
@@ -410,6 +424,10 @@ trait HasProperties
                     ->where('ep_order.entity_type', '=', $this->getMorphClass())
                     ->where('ep_order.property_name', '=', $name);
             })
+            // Explicit, driver-independent NULL placement: entities without a
+            // value sort as the smallest (first ascending, last descending);
+            // PostgreSQL would otherwise treat NULL as the largest value.
+            ->orderByRaw(self::NULL_ORDER[$column][$direction] ?? self::NULL_ORDER['string_value'][$direction])
             ->orderBy('ep_order.'.$column, $direction)
             ->orderBy($this->getTable().'.'.$this->getKeyName(), $direction);
     }
@@ -468,8 +486,7 @@ trait HasProperties
         }
 
         if (is_string($value) && in_array(strtolower($operator), ['like', 'ilike'], true)) {
-            $like = $this->propertiesService()->getDatabaseCompatibilityService()->likeCondition($value);
-            $q->where('string_value', $like['operator'], $like['value']);
+            $this->propertiesService()->getDatabaseCompatibilityService()->applyLike($q, 'string_value', $value);
 
             return;
         }

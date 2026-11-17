@@ -224,7 +224,7 @@ class PropertyService
         $properties = $this->propertiesFromDatabase($entity);
         $payload = (string) json_encode($properties);
 
-        DB::table($entity->getTable())
+        $entity->getConnection()->table($entity->getTable())
             ->where($entity->getKeyName(), $entity->getKey())
             ->update(['dynamic_properties' => $payload]);
 
@@ -634,7 +634,9 @@ class PropertyService
 
         foreach ($this->dbCompat->createOptimizedIndexes('entity_properties') as $statement) {
             try {
-                DB::statement($statement);
+                // A savepoint keeps a failed statement from poisoning an enclosing
+                // transaction (PostgreSQL aborts it otherwise).
+                DB::transaction(static fn () => DB::statement($statement));
                 $applied[] = $statement;
                 Log::info('Database optimization applied', ['query' => $statement]);
             } catch (\Throwable $e) {
@@ -713,7 +715,7 @@ class PropertyService
             return true;
         }
 
-        if (Schema::hasColumn($entity->getTable(), 'dynamic_properties')) {
+        if ($entity->getConnection()->getSchemaBuilder()->hasColumn($entity->getTable(), 'dynamic_properties')) {
             $this->jsonColumnCache[$key] = true;
 
             return true;
@@ -845,6 +847,16 @@ class PropertyService
      */
     protected function cachedProperties(Model $entity): ?array
     {
+        $raw = $this->decodeCachedProperties($entity);
+
+        return $raw === null ? null : $this->castCachedProperties($raw);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function decodeCachedProperties(Model $entity): ?array
+    {
         if (! $this->hasJsonColumn($entity)) {
             return null;
         }
@@ -870,6 +882,31 @@ class PropertyService
         }
 
         return null;
+    }
+
+    /**
+     * Cast JSON-cache values through their definitions so cached reads return
+     * the same types as reads from the entity_properties table (Carbon for
+     * dates, float for numbers, bool for booleans).
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    protected function castCachedProperties(array $values): array
+    {
+        foreach ($values as $name => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            $property = $this->findProperty($name);
+
+            if ($property instanceof Property) {
+                $values[$name] = $property->castValue($value);
+            }
+        }
+
+        return $values;
     }
 
     /**
@@ -1152,8 +1189,7 @@ class PropertyService
             return;
         }
 
-        $like = $this->dbCompat->likeCondition($value, $caseSensitive);
-        $query->where($column, $like['operator'], $like['value']);
+        $this->dbCompat->applyLike($query, $column, $value, $caseSensitive);
     }
 
     /**
