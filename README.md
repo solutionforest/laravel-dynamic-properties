@@ -13,6 +13,8 @@ A dynamic property system for Laravel that allows any entity (users, companies, 
 - **Laravel**: 12.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+ (with JSON support)
 
+See [Version Compatibility](#version-compatibility) for the support matrix.
+
 ## Features
 
 - **Simple Architecture**: Clean 2-table design with optional JSON caching
@@ -22,6 +24,47 @@ A dynamic property system for Laravel that allows any entity (users, companies, 
 - **Easy Integration**: Simple trait-based implementation
 - **Database Agnostic**: Works with MySQL, PostgreSQL, and SQLite
 - **Validation**: Built-in property validation with custom rules
+
+## Version Compatibility
+
+| Version | Released | PHP | Laravel | Testbench | Status |
+|---------|----------|-----|---------|-----------|--------|
+| **2.x** (`v2.0.0`) | 2026-11-17 | 8.3+ | 12.x, 13.x | `^10.0 \| ^11.0` | **Supported** |
+| 1.0.x (`v1.0.3`) | 2025-08 – 2026-09 | 8.3+ | 11.x, 12.x, 13.x | `^9.0 \| ^10.0 \| ^11.0` | End of life |
+| 1.0.x (`v1.0.0`–`v1.0.2`) | 2025-08 | 8.3+ | 11.x, 12.x | `^9.0 \| ^10.0` | End of life |
+
+Use `^2.0` in new projects. `2.0.0` is the current major line; it receives bug
+fixes and security fixes. The `1.0.x` line is no longer maintained — upgrade to
+`2.0` if you are still on Laravel 11 or need the fixes below.
+
+### What changed in 2.0
+
+| Area | 1.0.x | 2.0.0 |
+|------|-------|-------|
+| Search safety | LIKE/full-text values interpolated into raw SQL | Bound values only; wildcards escaped |
+| Undefined property search | Silently matches every entity | `search()` / `advancedSearch()` throw `PropertyNotFoundException` (query scope keeps best-effort fallback) |
+| `orderByProperty()` | Joined columns could overwrite the hydrated primary key | Selects the model table explicitly |
+| Boolean values | `'true'` validated but stored as `false` | One accepted set: `true`/`false`/`1`/`0`/`'1'`/`'0'` |
+| JSON cache | Required `$fillable` + `array` cast; flag ignored; saved unrelated attributes | Targeted write: no wiring needed, `enable_json_cache` honoured, timestamps untouched |
+| Renames / type changes / deletes | Value rows and caches could go stale | Cascaded and resynchronised transactionally |
+| Definition validation | Service-only | Enforced on the model too |
+| Writes | Select-then-insert race on first write | `upsert()` on the unique entity/property key |
+| Batch reads | One query per model | `withProperties()` and `getPropertiesFor()` |
+| Migrations (PostgreSQL) | `CREATE INDEX CONCURRENTLY` fails inside transactions | Plain `CREATE INDEX` |
+| Quality gates | Pest only | Pest matrix, PHPStan level 10, Pint check in CI |
+
+**Breaking changes in 2.0.0**
+
+- Laravel 11 is no longer supported (minimum is Laravel 12).
+- `PropertyService::search()` and `advancedSearch()` fail closed for undefined
+  properties instead of returning every entity.
+- The raw SQL builders on `DatabaseCompatibilityService`
+  (`buildLikeSearchQuery()`, `buildFullTextSearchQuery()`,
+  `buildOptimizedSearchQuery()`, `buildJsonExtractQuery()`,
+  `buildJsonSearchQuery()`, `getQueryHints()`) were replaced by
+  `likeCondition()` / `fullTextCondition()`.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ## Installation
 
