@@ -11,16 +11,16 @@ A dynamic property system for Laravel that allows any entity (users, companies, 
 
 - **PHP**: 8.3 or higher
 - **Laravel**: 11.0 or higher
-- **Database**: MySQL 8.0+ or SQLite 3.35+ (with JSON support)
+- **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+ (with JSON support)
 
 ## Features
 
 - **Simple Architecture**: Clean 2-table design with optional JSON caching
 - **Type Safety**: Support for text, number, date, boolean, and select properties
-- **Fast Performance**: < 1ms property retrieval with JSON cache, < 20ms without
+- **Fast Performance**: one query (or zero, with the JSON cache) to load a model's properties
 - **Flexible Search**: Property-based filtering with multiple operators
 - **Easy Integration**: Simple trait-based implementation
-- **Database Agnostic**: Works with MySQL and SQLite
+- **Database Agnostic**: Works with MySQL, PostgreSQL, and SQLite
 - **Validation**: Built-in property validation with custom rules
 
 ## Installation
@@ -34,14 +34,14 @@ composer require solution-forest/laravel-dynamic-properties
 Publish and run the migrations:
 
 ```bash
-php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-migrations"
 php artisan migrate
 ```
 
 Optionally, publish the configuration file:
 
 ```bash
-php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="config"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-config"
 ```
 
 ## Quick Start
@@ -140,21 +140,23 @@ $user->setProperties([
 
 ### 4. Search by Properties
 
-**🔍 Search works with or without property definitions, but defining properties first is strongly recommended for type safety:**
+**🔍 Define properties first — it gives you the correct column types and indexes.**
 
 ```php
 // ✅ RECOMMENDED: Search with defined properties (uses correct column types)
 $activeUsers = User::whereProperty('status', 'active')->get();
 $youngUsers = User::whereProperty('age', '<', 30)->get();
 
-// ⚠️ FALLBACK: Search undefined properties (uses value-based type detection)
-$results = User::whereProperty('undefined_prop', 'some_value')->get();
-
 // Find users by multiple properties
 $users = User::whereProperties([
     'status' => 'active',
     'age' => 25
 ])->get();
+
+// The query scope still accepts undefined properties with a best-effort
+// type guess, but PropertyService::search() throws PropertyNotFoundException
+// for them instead of silently matching every entity.
+$results = User::whereProperty('undefined_prop', 'some_value')->get();
 ```
 
 ## ⚠️ Common Pitfalls and Warnings
@@ -179,8 +181,12 @@ $user->setDynamicProperty('new_field', 'value'); // Now it works
 Property::create(['name' => 'score', 'type' => 'number']);
 $users = User::whereProperty('score', '>', 80); // Uses number_value column correctly
 
-// ⚠️ Without property definition - Fallback behavior
-$users = User::whereProperty('undefined_score', '>', 80); // Uses value-based type detection
+// ⚠️ Without property definition - best-effort type detection (query scope only)
+$users = User::whereProperty('undefined_score', '>', 80);
+
+// ❌ PropertyService::search() fails closed for undefined properties
+$propertyService->search(User::class, ['undefined_score' => ['value' => 80, 'operator' => '>']]);
+// throws PropertyNotFoundException
 ```
 
 ### 3. Validation Only Works with Property Definitions
@@ -199,7 +205,7 @@ $user->setDynamicProperty('email', 'invalid-email'); // Throws PropertyValidatio
 
 ### 4. Performance Impact
 ```php
-// ✅ FAST - Uses correct column and indexes
+// ✅ FAST - Uses the correct column and indexes, with a bound LIKE value
 Property::create(['name' => 'department', 'type' => 'text']);
 $users = User::whereProperty('department', 'engineering'); // Optimized query
 
@@ -290,10 +296,23 @@ Schema::table('companies', function (Blueprint $table) {
 });
 ```
 
+The package writes that column directly on every property write, so you do
+**not** need to add `dynamic_properties` to `$fillable`. Adding an `array` cast
+is optional but recommended for convenient `$user->dynamic_properties` access:
+
+```php
+protected $casts = ['dynamic_properties' => 'array'];
+```
+
 This provides:
-- **< 1ms** property retrieval (vs ~20ms without cache)
-- Automatic synchronization when properties change
-- Transparent fallback to EAV structure when cache is unavailable
+- Property reads without touching `entity_properties` (no second query)
+- Automatic synchronization when properties change, including renames and
+  type changes
+- Transparent fallback to the EAV table when the column is absent, or when
+  `database.enable_json_cache` is `false`
+
+> **Note:** the JSON cache is a read optimisation, not the source of truth. If
+> you backfill or repair it, use `php artisan dynamic-properties:sync-cache --all`.
 
 #### Search Performance
 
@@ -305,14 +324,31 @@ INDEX idx_string_search (entity_type, property_name, string_value)
 INDEX idx_number_search (entity_type, property_name, number_value)
 INDEX idx_date_search (entity_type, property_name, date_value)
 INDEX idx_boolean_search (entity_type, property_name, boolean_value)
-FULLTEXT INDEX ft_string_content (string_value)
+FULLTEXT INDEX ft_string_content (string_value)  -- MySQL only
+```
+
+#### Avoiding N+1 Reads
+
+Reading `$user->properties` loads one property query per model. Eager-load the
+relation instead:
+
+```php
+$users = User::withProperties()->get();
+
+foreach ($users as $user) {
+    // No additional query: the entityProperties relation is already loaded.
+    $properties = $user->properties;
+}
+
+// Or batch-load an arbitrary collection in a single query:
+$properties = app(PropertyService::class)->getPropertiesFor($users);
 ```
 
 ### Advanced Search
 
 #### Complex Queries
 ```php
-use YourVendor\DynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 $propertyService = app(PropertyService::class);
 
@@ -339,8 +375,8 @@ $users = User::whereRaw(
 The package provides comprehensive error handling:
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyNotFoundException;
-use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 
 try {
     $user->setDynamicProperty('nonexistent_property', 'value');
@@ -404,13 +440,21 @@ The package includes helpful Artisan commands:
 
 ### Query Scopes
 
-**whereProperty(string $name, mixed $value, string $operator = '='): Builder**
+**whereProperty(string $name, string $operator = '=', mixed $value = null): Builder**
 - Filter entities by a single property
-- Supports operators: =, !=, <, >, <=, >=, LIKE
+- The two-argument shorthand `whereProperty($name, $value)` compares for equality
+- Supports operators: =, !=, <>, <, >, <=, >=, LIKE, ILIKE
+- `whereProperty($name, '=', null)` matches `NULL` values
 
 **whereProperties(array $properties): Builder**
 - Filter entities by multiple properties
 - Uses AND logic between properties
+
+**withProperties(): Builder**
+- Eager-loads the `entityProperties` relation to avoid N+1 reads
+
+**wherePropertyNull(string $name): Builder** / **wherePropertyNotNull(string $name): Builder**
+- Filter entities whose property value is, or is not, `NULL`
 
 ### PropertyService
 
@@ -421,19 +465,27 @@ The package includes helpful Artisan commands:
 **setProperties(Model $entity, array $properties): void**
 - Set multiple properties efficiently
 
+**findProperty(string $name): ?Property**
+- Resolve a definition, using the configured definition cache
+
+**getPropertiesFor(Collection $entities): array**
+- Load the properties of many entities in a single query
+
 **search(string $entityType, array $filters): Collection**
 - Advanced search with complex criteria
 - Supports multiple operators and property types
+- Throws `PropertyNotFoundException` for undefined properties
 
 ## Performance Characteristics
 
 ### Single Entity Property Retrieval
 
-| Method | Performance | Use Case |
-|--------|-------------|----------|
-| JSON Column Cache | < 1ms | Entities with many properties (50+) |
-| EAV Fallback | < 20ms | Entities with few properties |
-| Mixed Access | Automatic | Transparent performance optimization |
+| Method | Queries per entity | Use Case |
+|--------|-------------------|----------|
+| JSON column cache | 0 (already on the row) | Entities with many properties (50+) |
+| EAV fallback | 1 | Entities with few properties, or no cache column |
+| Eager loaded (`withProperties()`) | 1 total for the whole collection | Listing pages |
+| Mixed access | Automatic | Transparent performance optimisation |
 
 ### Search Performance
 
@@ -456,42 +508,69 @@ The package includes helpful Artisan commands:
 - Full-text search capabilities
 - Optimal performance with all features
 
+### PostgreSQL
+- JSON/JSONB support and GIN indexes
+- Full-text search through `whereFullText()`
+- All core functionality supported
+
 ### SQLite
 - JSON stored as TEXT with JSON1 extension
-- Basic text search with LIKE queries
+- Text search with LIKE queries
 - All core functionality supported
 
 ## Configuration
 
-Publish the config file to customize behavior:
+Publish the config file to customise behaviour:
 
 ```php
 // config/dynamic-properties.php
 return [
-    // Default property validation rules
-    'default_validation' => [
-        'text' => ['max' => 1000],
-        'number' => ['min' => -999999, 'max' => 999999],
+    'database' => [
+        // Write the optional dynamic_properties JSON column when it exists.
+        'enable_json_cache' => env('DYNAMIC_PROPERTIES_JSON_CACHE', true),
     ],
-    
-    // Enable/disable JSON caching
-    'json_cache_enabled' => true,
-    
-    // Cache sync strategy
-    'cache_sync_strategy' => 'immediate', // 'immediate', 'deferred', 'manual'
-    
-    // Database-specific optimizations
-    'database_optimizations' => [
-        'mysql' => [
-            'use_json_functions' => true,
-            'enable_fulltext_search' => true,
-        ],
-        'sqlite' => [
-            'use_json1_extension' => true,
-        ],
+
+    'performance' => [
+        // Cache property definitions between operations.
+        'cache_property_definitions' => env('DYNAMIC_PROPERTIES_CACHE_DEFINITIONS', true),
+
+        // Definition cache TTL in seconds.
+        'cache_ttl' => env('DYNAMIC_PROPERTIES_CACHE_TTL', 3600),
+
+        // Batch size for bulk JSON cache syncing.
+        'batch_size' => env('DYNAMIC_PROPERTIES_BATCH_SIZE', 100),
     ],
 ];
 ```
+
+All keys are optional: the package uses these defaults when the config file is
+not published.
+
+## Validation Rules
+
+Definitions are validated on both `Property::create()` and
+`PropertyService::createProperty()`. Supported rules:
+
+| Type | Rules |
+|------|-------|
+| All | `required` (boolean, alias for the `required` column), `email`, `url` (text only) |
+| text, select | `min`, `max`, `min_length`, `max_length`, `email`, `url` |
+| number | `min`, `max`, `decimal_places`, `integer` |
+| date | `after`, `before` (`today` or a date string) |
+
+Rules can be declared as a map (`['min' => 3]`) or a list (`['required', 'email']`).
+
+## Value Semantics
+
+- Supported boolean inputs are `true`, `false`, `1`, `0`, `'1'`, and `'0'`.
+  Strings like `'true'` are rejected rather than coerced.
+- Setting an optional property to `null` stores an explicit `NULL` row; the key
+  remains in `$model->properties`. Use `removeProperty($name)` to delete the
+  value entirely.
+- Renaming a property cascades to existing value rows and JSON caches. Changing
+  its type re-casts every stored value, and invalid values abort the change.
+- `number` values are stored in a `decimal(15, 4)` column; values outside that
+  range/precision are lossy.
 
 ## Troubleshooting
 
@@ -504,7 +583,7 @@ $user->setDynamicProperty('phone', '+1234567890');
 ```
 **Solution**: Create the property definition first:
 ```php
-Property::create(['name' => 'phone', 'type' => 'text']);
+Property::create(['name' => 'phone', 'label' => 'Phone', 'type' => 'text']);
 $user->setDynamicProperty('phone', '+1234567890'); // Now works
 ```
 
@@ -526,11 +605,13 @@ $user->setDynamicProperty('age', 25); // Use valid value
 $users1 = User::whereProperty('level', '>', 5)->get();   // 10 results
 $users2 = User::whereProperty('level', '>', '5')->get(); // 3 results
 ```
-**Solution**: This happens when property definition is missing. Create it:
+**Solution**: This happens when the property definition is missing. Create it:
 ```php
 Property::create(['name' => 'level', 'type' => 'number']);
 // Now both queries will return the same results
 ```
+`PropertyService::search()` never falls back: an undefined property throws
+`PropertyNotFoundException` instead of matching every entity.
 
 ## Testing
 
@@ -554,7 +635,7 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute t
 
 ## License
 
-This package is open-sourced software licensed under the [MIT license](LICENSE.md).
+This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ## Changelog
 

@@ -317,7 +317,7 @@ Property::create([
 ### Handling Validation Errors
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 
 try {
     $user->setDynamicProperty('employee_id', 'INVALID-FORMAT');
@@ -361,7 +361,7 @@ $seniorEngineers = User::whereProperties([
 ### Advanced Search with Operators
 
 ```php
-use YourVendor\DynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 $propertyService = app(PropertyService::class);
 
@@ -432,10 +432,10 @@ Schema::table('users', function (Blueprint $table) {
 
 // Properties are now automatically cached
 $user = User::find(1);
-$properties = $user->properties; // < 1ms (reads from JSON column)
+$properties = $user->properties; // reads the JSON column, no extra query
 
 // Manual cache sync if needed
-use YourVendor\DynamicProperties\Services\PropertyService;
+use SolutionForest\LaravelDynamicProperties\Services\PropertyService;
 
 $propertyService = app(PropertyService::class);
 $propertyService->syncJsonColumn($user);

@@ -45,24 +45,24 @@ This guide provides detailed instructions for installing and configuring the Lar
 ### Step 1: Install via Composer
 
 ```bash
-composer require your-vendor/laravel-dynamic-properties
+composer require solution-forest/laravel-dynamic-properties
 ```
 
 ### Step 2: Publish Package Assets
 
 #### Publish Migrations
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-migrations"
 ```
 
 #### Publish Configuration (Optional)
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="config"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-config"
 ```
 
 #### Publish All Assets
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider"
 ```
 
 ### Step 3: Run Migrations
@@ -82,7 +82,7 @@ If you're using Laravel 10 or earlier and package auto-discovery is disabled, ad
 ```php
 'providers' => [
     // Other providers...
-    YourVendor\DynamicProperties\DynamicPropertyServiceProvider::class,
+    SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider::class,
 ],
 ```
 
@@ -93,7 +93,7 @@ Add the facade to `config/app.php`:
 ```php
 'aliases' => [
     // Other aliases...
-    'DynamicProperties' => YourVendor\DynamicProperties\Facades\DynamicProperties::class,
+    'DynamicProperties' => SolutionForest\LaravelDynamicProperties\Facades\DynamicProperties::class,
 ],
 ```
 
@@ -104,7 +104,7 @@ Add the facade to `config/app.php`:
 The package works out of the box with default settings. For custom configuration, publish the config file:
 
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="config"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-config"
 ```
 
 This creates `config/dynamic-properties.php`:
@@ -113,105 +113,31 @@ This creates `config/dynamic-properties.php`:
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Default Property Validation Rules
-    |--------------------------------------------------------------------------
-    |
-    | Default validation rules applied to properties by type.
-    |
-    */
-    'default_validation' => [
-        'text' => [
-            'max' => 1000,
-        ],
-        'number' => [
-            'min' => -999999999,
-            'max' => 999999999,
-        ],
-        'date' => [
-            'after' => '1900-01-01',
-            'before' => '2100-12-31',
-        ],
+    'database' => [
+        // Write the optional dynamic_properties JSON column when the table has one.
+        'enable_json_cache' => env('DYNAMIC_PROPERTIES_JSON_CACHE', true),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | JSON Cache Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Settings for the optional JSON caching feature.
-    |
-    */
-    'json_cache' => [
-        'enabled' => true,
-        'column_name' => 'dynamic_properties',
-        'sync_strategy' => 'immediate', // immediate, deferred, manual
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Database Optimizations
-    |--------------------------------------------------------------------------
-    |
-    | Database-specific optimization settings.
-    |
-    */
-    'database_optimizations' => [
-        'mysql' => [
-            'use_json_functions' => true,
-            'enable_fulltext_search' => true,
-            'index_length' => 191, // For older MySQL versions
-        ],
-        'postgresql' => [
-            'use_jsonb' => true,
-            'enable_gin_indexes' => true,
-        ],
-        'sqlite' => [
-            'use_json1_extension' => true,
-            'enable_fts' => false,
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Performance Settings
-    |--------------------------------------------------------------------------
-    |
-    | Settings that affect package performance.
-    |
-    */
     'performance' => [
-        'chunk_size' => 1000, // For bulk operations
-        'cache_ttl' => 3600, // Application cache TTL in seconds
-        'enable_query_cache' => true,
-    ],
+        // Cache property definitions between operations.
+        'cache_property_definitions' => env('DYNAMIC_PROPERTIES_CACHE_DEFINITIONS', true),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Validation Settings
-    |--------------------------------------------------------------------------
-    |
-    | Global validation configuration.
-    |
-    */
-    'validation' => [
-        'strict_mode' => false, // Throw exceptions on validation failures
-        'auto_cast_types' => true, // Automatically cast values to correct types
+        // Definition cache TTL in seconds.
+        'cache_ttl' => env('DYNAMIC_PROPERTIES_CACHE_TTL', 3600),
+
+        // Batch size for bulk JSON cache syncing.
+        'batch_size' => env('DYNAMIC_PROPERTIES_BATCH_SIZE', 100),
     ],
 ];
 ```
 
 ### Environment Variables
 
-You can override configuration using environment variables:
-
 ```env
-# .env file
-DYNAMIC_PROPERTIES_JSON_CACHE_ENABLED=true
-DYNAMIC_PROPERTIES_SYNC_STRATEGY=immediate
-DYNAMIC_PROPERTIES_STRICT_MODE=false
-DYNAMIC_PROPERTIES_CHUNK_SIZE=1000
+DYNAMIC_PROPERTIES_JSON_CACHE=true
+DYNAMIC_PROPERTIES_CACHE_DEFINITIONS=true
+DYNAMIC_PROPERTIES_CACHE_TTL=3600
+DYNAMIC_PROPERTIES_BATCH_SIZE=100
 ```
 
 ## Database Setup
@@ -229,7 +155,7 @@ php artisan migrate
 If you need custom table names, publish the migrations and modify them before running:
 
 ```bash
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-migrations"
 ```
 
 Edit the migration files in `database/migrations/` to change table names:
@@ -392,7 +318,7 @@ Create a simple test to verify everything is working:
 <?php
 
 // In tinker or a test file
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 use App\Models\User;
 
 // Create a test property
@@ -435,7 +361,7 @@ If you've installed the package for development:
 Test performance with your data:
 
 ```bash
-php artisan properties:performance-test --users=1000 --properties=50
+php artisan dynamic-properties:optimize-db
 ```
 
 ## Troubleshooting
@@ -540,8 +466,8 @@ If you encounter issues not covered here:
 
 1. **Check the logs**: `storage/logs/laravel.log`
 2. **Enable debug mode**: Set `APP_DEBUG=true` in `.env`
-3. **Run diagnostics**: `php artisan properties:diagnose` (if available)
-4. **Check GitHub issues**: [Package Issues](https://github.com/your-vendor/laravel-dynamic-properties/issues)
+3. **Check the schema**: `php artisan dynamic-properties:optimize-db --check`
+4. **Check GitHub issues**: [Package Issues](https://github.com/solutionforest/laravel-dynamic-properties/issues)
 
 ### Uninstallation
 
@@ -549,7 +475,7 @@ To completely remove the package:
 
 ```bash
 # Remove package
-composer remove your-vendor/laravel-dynamic-properties
+composer remove solution-forest/laravel-dynamic-properties
 
 # Drop tables (WARNING: This will delete all data)
 php artisan migrate:rollback --path=database/migrations/xxxx_create_properties_table.php
@@ -572,7 +498,7 @@ After successful installation:
 1. **Create your first properties**:
 ```bash
 # Interactive property creation
-php artisan properties:create
+php artisan dynamic-properties:create
 ```
 
 Or programmatically:

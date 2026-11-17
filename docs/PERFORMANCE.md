@@ -30,17 +30,21 @@ The package uses a hybrid approach combining Entity-Attribute-Value (EAV) storag
 
 2. **Optional Cache**: JSON column in original tables
    - Single column stores all properties
-   - Ultra-fast retrieval (< 1ms)
+   - Retrieval without a second query
    - Automatic synchronization
 
 ### Performance Trade-offs
 
 | Aspect | EAV Only | JSON Cache | Hybrid (Recommended) |
 |--------|----------|------------|---------------------|
-| Single Entity Retrieval | ~20ms | < 1ms | < 1ms |
-| Search Performance | Excellent | Limited | Excellent |
+| Single Entity Retrieval | 1 extra query | 0 extra queries | 0 extra queries |
+| Search Performance | Excellent | Limited (no search on the cache) | Excellent |
 | Storage Efficiency | High | Medium | Medium |
 | Query Complexity | High | Low | Medium |
+
+> These are algorithmic differences, not benchmark numbers. Absolute timings
+> depend on hardware, database size, indexes and connection latency; measure
+> your own workload before optimising.
 
 ## Performance Characteristics
 
@@ -49,7 +53,7 @@ The package uses a hybrid approach combining Entity-Attribute-Value (EAV) storag
 #### Without JSON Cache
 ```php
 $user = User::find(1);
-$properties = $user->properties; // ~20ms for 100 properties
+$properties = $user->properties; // one indexed query regardless of property count
 ```
 
 **Query Pattern:**
@@ -59,27 +63,26 @@ FROM entity_properties
 WHERE entity_id = 1 AND entity_type = 'App\\Models\\User'
 ```
 
-**Performance:**
-- 1-10 properties: < 5ms
-- 11-50 properties: 5-15ms
-- 51-100 properties: 15-25ms
-- 100+ properties: 25ms+
+**Performance:** one query returning one row per property. Index
+`idx_entity` covers the `(entity_id, entity_type)` lookup, so cost grows with
+the number of properties per entity, not with table size.
 
 #### With JSON Cache
 ```php
 $user = User::find(1);
-$properties = $user->properties; // < 1ms regardless of property count
+$properties = $user->properties; // decoded from the already-loaded row
 ```
 
-**Query Pattern:**
+**Query Pattern:** none — the JSON column is read from the entity row you
+already fetched. If you only need the cache column, select it explicitly:
+
 ```sql
-SELECT dynamic_properties FROM users WHERE id = 1
+SELECT id, dynamic_properties FROM users WHERE id = 1
 ```
 
-**Performance:**
-- Any number of properties: < 1ms
-- Memory usage: ~50% less than EAV queries
-- Network overhead: Minimal
+**Performance:** zero extra round-trips; decoding cost grows with the number of
+properties. Prefer `withProperties()` when iterating over many entities (see
+below).
 
 ### Search Performance
 
@@ -154,13 +157,14 @@ Schema::table('users', function (Blueprint $table) {
 
 // Properties are automatically cached
 $user->setDynamicProperty('phone', '+1234567890'); // Updates both EAV and JSON
-$phone = $user->getDynamicProperty('phone'); // Reads from JSON (< 1ms)
+$phone = $user->getDynamicProperty('phone'); // Reads from the loaded row
 ```
 
 **Performance Gain:**
-- 95% reduction in query time
-- 50% reduction in memory usage
-- Eliminates N+1 query problems
+- Removes one query per entity read
+- Does **not** remove N+1: reading `$user->properties` in a loop still reads
+  one cache row per model. Use `User::withProperties()->get()` (or
+  `getPropertiesFor()`) to load a whole collection in one query.
 
 ### 2. Optimize Database Indexes
 
@@ -202,16 +206,13 @@ foreach ($users as $user) {
 }
 
 // Good: Eager loading
-$users = User::with('entityProperties')->get();
+$users = User::withProperties()->get();
 foreach ($users as $user) {
     echo $user->getDynamicProperty('department'); // No additional queries
 }
 
-// Best: JSON cache
+// Or select the JSON cache column when you only need cached values.
 $users = User::select(['id', 'name', 'dynamic_properties'])->get();
-foreach ($users as $user) {
-    echo $user->getDynamicProperty('department'); // < 1ms per access
-}
 ```
 
 #### Optimized Search Queries
@@ -353,14 +354,10 @@ WHERE dynamic_properties->>'is_active' = 'true';
 
 ### Single Entity Retrieval
 
-| Method | Properties | Time | Memory |
-|--------|------------|------|--------|
-| EAV Only | 10 | 8ms | 2MB |
-| EAV Only | 50 | 18ms | 8MB |
-| EAV Only | 100 | 35ms | 15MB |
-| JSON Cache | 10 | 0.8ms | 1MB |
-| JSON Cache | 50 | 0.9ms | 2MB |
-| JSON Cache | 100 | 1.1ms | 3MB |
+Benchmarks are hardware- and workload-specific; this package does not ship
+fixed timing claims. To measure your own dataset, enable the query log or
+Laravel Telescope and compare query counts before and after enabling the
+cache column.
 
 ### Search Performance
 

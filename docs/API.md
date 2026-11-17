@@ -6,7 +6,7 @@
 - **Laravel**: 11.0 or higher
 - **Database**: MySQL 8.0+, PostgreSQL 12+, or SQLite 3.35+
 
-> **⚠️ IMPORTANT**: Property definitions must be created before setting property values. All `setDynamicProperty` methods will throw `PropertyNotFoundException` if the property doesn't exist. Search methods (`whereProperty`) will work but fall back to less optimal type detection without property definitions.
+> **⚠️ IMPORTANT**: Property definitions must be created before setting property values. All `setDynamicProperty` methods will throw `PropertyNotFoundException` if the property doesn't exist. The `whereProperty` query scope still works without a definition (using best-effort type detection), but `PropertyService::search()` and `advancedSearch()` throw `PropertyNotFoundException` for undefined properties.
 
 ## Table of Contents
 
@@ -32,7 +32,8 @@
 |-----------|-------------------------|----------------------------|
 | `setDynamicProperty()` | ✅ Works with validation | ❌ Throws `PropertyNotFoundException` |
 | `setProperties()` | ✅ Works with validation | ❌ Throws `PropertyNotFoundException` |
-| `whereProperty()` | ✅ Optimal performance, type-safe | ⚠️ Works but uses fallback type detection |
+| `whereProperty()` | ✅ Optimal performance, type-safe | ⚠️ Works but uses best-effort type detection |
+| `PropertyService::search()` | ✅ Optimal performance, type-safe | ❌ Throws `PropertyNotFoundException` |
 | `getDynamicProperty()` | ✅ Returns typed value | ✅ Returns value if exists |
 
 ### Quick Setup Checklist
@@ -184,7 +185,7 @@ Add dynamic property functionality to any Eloquent model.
 #### Usage
 
 ```php
-use YourVendor\DynamicProperties\Traits\HasProperties;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
 
 class User extends Model
 {
@@ -346,7 +347,7 @@ $entityProperties = $user->entityProperties;
 
 Filter entities by a single property value.
 
-> **💡 BEST PRACTICE**: While this method works without property definitions (using fallback type detection), defining properties first ensures optimal performance and type safety.
+> **💡 BEST PRACTICE**: While this scope works without property definitions (using best-effort type detection), defining properties first ensures optimal performance and type safety. The service-level `search()` methods do not fall back.
 
 ```php
 // ✅ RECOMMENDED: With property definition
@@ -357,13 +358,16 @@ $activeUsers = User::whereProperty('active', true)->get();
 $youngUsers = User::whereProperty('age', '<', 30)->get();
 
 // ⚠️ WORKS BUT NOT OPTIMAL: Without property definition
-$results = User::whereProperty('undefined_prop', 'value')->get(); // Uses fallback logic
+$results = User::whereProperty('undefined_prop', 'value')->get(); // Best-effort type detection
 ```
 
 **Parameters:**
 - `$name` (string): Property name
-- `$operator` (string): Comparison operator (=, !=, <, >, <=, >=, LIKE)
+- `$operator` (string): Comparison operator (=, !=, <>, <, >, <=, >=, LIKE, ILIKE)
 - `$value` (mixed): Property value to compare
+
+Two shorthand forms are also accepted: `whereProperty($name, $value)` for
+equality, and the value-first `whereProperty($name, $value, $operator)`.
 
 ---
 
@@ -506,6 +510,7 @@ $properties = $propertyService->getProperties($user);
 ---
 
 **search(string $entityType, array $filters): Collection**
+- Throws `PropertyNotFoundException` when a filter references an undefined property (fails closed instead of matching everything)
 
 Search entities by property values.
 
@@ -593,7 +598,7 @@ $result = $validationService->validateWithMessages($property, 'invalid_value');
 Base exception class for all property-related errors.
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyException;
 
 try {
     // Property operations
@@ -607,7 +612,7 @@ try {
 Thrown when trying to access a property that doesn't exist.
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyNotFoundException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyNotFoundException;
 
 try {
     $user->setDynamicProperty('nonexistent', 'value');
@@ -624,7 +629,7 @@ try {
 Thrown when a property value fails validation.
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyValidationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyValidationException;
 
 try {
     $user->setDynamicProperty('age', 'not_a_number');
@@ -643,7 +648,7 @@ try {
 Thrown when an invalid property type is specified.
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\InvalidPropertyTypeException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\InvalidPropertyTypeException;
 
 try {
     Property::create(['name' => 'test', 'type' => 'invalid_type']);
@@ -662,7 +667,7 @@ try {
 Thrown when a property operation fails for system reasons.
 
 ```php
-use YourVendor\DynamicProperties\Exceptions\PropertyOperationException;
+use SolutionForest\LaravelDynamicProperties\Exceptions\PropertyOperationException;
 
 try {
     // Some property operation
@@ -678,7 +683,7 @@ try {
 Provides convenient access to PropertyService methods.
 
 ```php
-use YourVendor\DynamicProperties\Facades\DynamicProperties;
+use SolutionForest\LaravelDynamicProperties\Facades\DynamicProperties;
 
 // Set property
 DynamicProperties::setDynamicProperty($user, 'phone', '+1234567890');
@@ -704,12 +709,25 @@ $results = DynamicProperties::search('App\\Models\\User', [
 
 ## Artisan Commands
 
-### properties:list
+### dynamic-properties:create
 
-Lists all defined properties.
+Create a property definition.
 
 ```bash
-php artisan properties:list
+php artisan dynamic-properties:create phone text "Phone Number" --required
+
+# Options:
+--required             # Make the property required
+--options=Foo --options=Bar   # Options for select properties
+--validation=min=10 --validation=max=15
+```
+
+### dynamic-properties:list
+
+List all defined properties.
+
+```bash
+php artisan dynamic-properties:list
 
 # Options:
 --type=text          # Filter by property type
@@ -717,84 +735,37 @@ php artisan properties:list
 --format=table       # Output format: table, json
 ```
 
-### properties:create
+### dynamic-properties:delete
 
-Interactive command to create a new property.
+Delete a property and all its values (the JSON cache of affected entities is
+resynchronised).
 
 ```bash
-php artisan properties:create
-
-# Or with options:
-php artisan properties:create --name=phone --type=text --label="Phone Number"
+php artisan dynamic-properties:delete phone --force
 ```
 
-**Options:**
-- `--name`: Property name
-- `--type`: Property type (text, number, date, boolean, select)
-- `--label`: Display label
-- `--required`: Make property required
-- `--options`: JSON array of options for select type
+### dynamic-properties:sync-cache
 
-### properties:delete
-
-Delete a property and all its values.
+Synchronise JSON cache columns with entity properties.
 
 ```bash
-php artisan properties:delete phone
+php artisan dynamic-properties:sync-cache --all
+
+# Or a single model / morph alias:
+php artisan dynamic-properties:sync-cache "App\Models\User"
 
 # Options:
---force              # Skip confirmation prompt
+--all                # Sync every entity type present in entity_properties
+--batch-size=100     # Records per batch
+--dry-run            # Report without writing
 ```
 
-### properties:cache-sync
+### dynamic-properties:optimize-db
 
-Synchronize JSON cache columns for all entities.
+Apply database-specific indexes and print recommendations.
 
 ```bash
-php artisan properties:cache-sync
-
-# Options:
---model=User         # Sync only specific model
---chunk=1000         # Process in chunks of specified size
---force              # Force sync even if cache is up to date
+php artisan dynamic-properties:optimize-db --check
+php artisan dynamic-properties:optimize-db
 ```
 
-### properties:validate
-
-Validate all property values against their definitions.
-
-```bash
-php artisan properties:validate
-
-# Options:
---fix                # Attempt to fix invalid values
---model=User         # Validate only specific model
---property=phone     # Validate only specific property
-```
-
-### properties:export
-
-Export property definitions and values.
-
-```bash
-php artisan properties:export
-
-# Options:
---format=json        # Export format: json, csv, xlsx
---output=file.json   # Output file path
---model=User         # Export only specific model
---properties-only    # Export only property definitions, not values
-```
-
-### properties:import
-
-Import property definitions and values.
-
-```bash
-php artisan properties:import file.json
-
-# Options:
---format=json        # Import format: json, csv, xlsx
---merge              # Merge with existing properties
---validate           # Validate before importing
-```

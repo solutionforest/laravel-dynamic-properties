@@ -7,33 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- **BREAKING**: Updated minimum PHP requirement to 8.3+
-- **BREAKING**: Updated minimum Laravel requirement to 11.0+
-- **BREAKING**: Updated minimum MySQL requirement to 8.0+
-- Removed support for Laravel 12.0 (not yet stable)
+### Security
+
+- LIKE/full-text search values are no longer interpolated into SQL: the
+  database layer now only supplies query-builder operators and bound values.
+  Wildcards in search terms are escaped.
+- `PropertyService::search()` / `advancedSearch()` now fail closed with
+  `PropertyNotFoundException` for undefined properties instead of matching
+  every entity, which could leak unrelated records.
 
 ### Fixed
-- **BREAKING**: Fixed critical bug in `whereProperty` comparison operators where column type was incorrectly determined by search value type instead of property definition type
-- **BREAKING**: Updated `scopeWhereProperty` parameter order to `($query, $name, $operator = '=', $value = null)` for consistency with Laravel conventions
-- Fixed inconsistent behavior when searching properties with mixed value types (e.g., searching numeric properties with string values)
+
+- `orderByProperty()` no longer overwrites the hydrated model's primary key
+  (it selects the model table's columns explicitly).
+- Boolean validation and casting agree on the accepted values
+  (`true`/`false`/`1`/`0`/`'1'`/`'0'`); `'true'` is rejected instead of being
+  silently stored as `false`.
+- The JSON cache is written with a targeted query, so it works without a
+  `$fillable` entry, does not persist unrelated dirty attributes, does not bump
+  timestamps, and reads work without an `array` cast.
+- `database.enable_json_cache` is honoured; the option was previously ignored.
+- Property renames cascade to value rows and JSON caches; type changes re-cast
+  stored values transactionally and abort on invalid data.
+- Deleting a property (or using `dynamic-properties:delete`) removes its values
+  and resynchronises affected JSON caches.
+- Property definitions are validated on the model as well as the service.
+- `EntityProperty::forEntity()` uses `getMorphClass()`, restoring morph-map
+  support.
+- Concurrent writes use `upsert()` on the unique entity/property key, removing
+  the select-then-insert race.
+- `setProperties()` rejects unsaved entities and no longer embeds the submitted
+  values in the exception/log context.
+- Optimization failures are reported by `dynamic-properties:optimize-db`
+  instead of being silently swallowed; `--force` now has an effect.
+- PostgreSQL indexes use plain `CREATE INDEX` (no `CONCURRENTLY`), so they run
+  inside Laravel's migration transaction.
+- Removed the empty helper migration and the `ALTER TABLE ... ENGINE` /
+  `load_extension()` statements from the migrations.
 
 ### Added
-- Support for Laravel 11
-- Enhanced PostgreSQL JSONB support
-- Advanced search operators (BETWEEN, NOT IN)
-- Property inheritance system
-- Bulk property validation command
-- Comprehensive documentation warnings about property definition requirements
+
+- `withProperties()` scope and `PropertyService::getPropertiesFor()` for
+  query-free/batched property reads.
+- `wherePropertyNull()` and `wherePropertyNotNull()` scopes.
+- `decimal_places`, `integer`, `email`, `url`, and `required` validation rules;
+  list-style rule declarations (`['required', 'email']`) are supported.
+- PHPStan (larastan) at level 10 with a clean run, plus regression tests for
+  every fix above.
+- Composer `check`/`test`/`phpstan`/`pint` scripts and CI jobs for Pest,
+  PHPStan and Pint (Pint now checks instead of auto-committing).
 
 ### Changed
-- Improved query performance for large datasets
-- Enhanced error messages for validation failures
-- Updated minimum PHP version to 8.3
 
-### Fixed
-- Memory leak in bulk operations
-- Race condition in JSON cache synchronization
+- The JSON cache is optional and off the source-of-truth path; the README no
+  longer claims sub-millisecond retrieval without qualification.
+- Trimmed unused configuration keys (`default_validation`, `json_cache`,
+  `database_optimizations`, `validation`, `api`, `defaults`).
+- Corrected stale documentation: placeholder `YourVendor` namespaces, publish
+  tags, `whereProperty` signature, validation examples, command names,
+  supported databases, and license link.
 
 ## [1.0.0] - 2024-01-15
 
@@ -356,11 +388,11 @@ The package includes comprehensive test coverage:
 composer require your-vendor/laravel-dynamic-properties
 
 # Publish and run migrations
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-migrations"
 php artisan migrate
 
 # Publish configuration (optional)
-php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPropertyServiceProvider" --tag="config"
+php artisan vendor:publish --provider="SolutionForest\LaravelDynamicProperties\DynamicPropertyServiceProvider" --tag="dynamic-properties-config"
 ```
 
 ### Basic Usage
@@ -368,8 +400,8 @@ php artisan vendor:publish --provider="YourVendor\DynamicProperties\DynamicPrope
 ```php
 <?php
 
-use YourVendor\DynamicProperties\Traits\HasProperties;
-use YourVendor\DynamicProperties\Models\Property;
+use SolutionForest\LaravelDynamicProperties\Traits\HasProperties;
+use SolutionForest\LaravelDynamicProperties\Models\Property;
 
 // Add trait to your model
 class User extends Model
@@ -403,7 +435,7 @@ $users = User::whereProperty('phone', 'LIKE', '+1%')->get();
 
 ### License
 
-This package is open-sourced software licensed under the [MIT license](LICENSE.md).
+This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 ### Credits
 
