@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 10
+    paths:
+        - src
+        - config
+        - database
+        - tests/Fixtures
+    excludePaths:
+        - vendor
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
+    # Package config files legitimately use env(): they are the config files.
+    noEnvCallsOutsideOfConfig: false
